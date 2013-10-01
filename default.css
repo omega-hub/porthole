@@ -1,0 +1,21 @@
+.div-aligned {
+    margin: 0 auto;
+    text-align: center;
+    position:relative;
+}
+.div-aligned fieldset {
+    display: inline;
+}
+
+#color_picker 
+{
+    margin: 0 auto;
+    text-align: center;
+    position:relative;
+}
+
+input.ui-slider-input {
+        display : none !important;
+}
+
+div.ui-slider{width:95%;}

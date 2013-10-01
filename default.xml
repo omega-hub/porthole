@@ -1,0 +1,16 @@
+<gui>
+  <elements>
+    <element id="camera" type="camera_stream" camera="custom"/>
+  </elements>
+  
+  <interfaces>
+    <interface minWidth="0" minHeight="0" id="small">
+      <portrait layout="vertical">
+        <element width="100%" height="100%" id="camera"/>
+      </portrait>
+      <landscape layout="vertical">
+        <element width="100%" height="100%" id="camera"/>
+      </landscape>
+    </interface>
+  </interfaces>
+</gui>

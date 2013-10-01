@@ -1,0 +1,106 @@
+<!--
+  Call this to start porthole in baybridge
+  PortholeService.createAndInitialize(4080,"porthole/baybridge.xml","porthole/porthello.css")
+-->
+
+<gui>
+  
+  <elements>
+    
+    <element id="move_ctrl" type="HTML">
+      <div class="div-aligned">
+        <fieldset  data-type="horizontal" class="">
+          <input type="button" data-role="button" onmousedown="if(isMaster()): camera=getCameraById(%id%); position = camera.getPosition(); position[1] += 0.025; camera.setPosition(position);" data-shadow="false" data-inline="true" data-corner="false" data-iconpos="notext" data-icon="arrow-u" data-continuous="true" class="ui-btn ui-btn-icon-notext"/>
+          <input type="button" data-role="button" onmousedown="if(isMaster()): camera=getCameraById(%id%); position=camera.getPosition(); position[1] -= 0.025; camera.setPosition(position);" data-shadow="false" data-inline="true" data-corner="false" data-iconpos="notext" data-icon="arrow-d" data-continuous="true" class="ui-btn ui-btn-icon-notext"/>
+          <input type="button" data-role="button" onmousedown="if(isMaster()): camera=getCameraById(%id%); position=camera.getPosition(); position[0] -= 0.025; camera.setPosition(position);" data-shadow="false" data-inline="true" data-corner="false" data-iconpos="notext" data-icon="arrow-l" data-continuous="true" class="ui-btn ui-btn-icon-notext"/>
+          <input type="button" data-role="button" onmousedown="if(isMaster()): camera=getCameraById(%id%); position=camera.getPosition(); position[0] += 0.025; camera.setPosition(position);" data-shadow="false" data-inline="true" data-corner="false" data-iconpos="notext" data-icon="arrow-r" data-continuous="true" class="ui-btn ui-btn-icon-notext"/>
+        </fieldset>
+      </div>
+    </element>
+    
+    <element id="element2" type="googlemap" />
+    
+    <element id="camera" type="camera_stream" camera="custom"/>
+
+    <element id="zoom_slider" type="HTML">
+      <div>
+          <input type="range" name="slider" id="slider" value="0" min="-800" max="800" data-highlight="true" onchange="camera=getCameraById(%id%); position=camera.getPosition(); position[2] = float(%value%)/100; camera.setPosition(position);"/>
+      </div>
+    </element>
+
+    <element id="zoom_ctrl" type="HTML">
+      <div class="div-aligned">
+        <fieldset  data-type="horizontal" class="">
+          <input type="button" data-role="button" onmousedown="camera=getCameraById(%id%); position=camera.getPosition(); position[2] -= 0.025; camera.setPosition(position);" data-shadow="false" data-inline="true" data-corner="false" data-iconpos="notext" data-icon="plus" data-continuous="true" class="ui-btn ui-btn-icon-notext"/>
+          <input type="button" data-role="button" onmousedown="camera=getCameraById(%id%); position=camera.getPosition(); position[2] += 0.025; camera.setPosition(position);" data-shadow="false" data-inline="true" data-corner="false" data-iconpos="notext" data-icon="minus" data-continuous="true" class="ui-btn ui-btn-icon-notext"/>
+        </fieldset>
+      </div>
+    </element>
+
+    <element id="color_ctrl" type="HTML">
+      <div class="div-aligned">
+        <input type="hidden" id="color_label" name="color_label" value="#000000" data-role="none" data-inline="true" onchange="print('%value%');"/>
+        <div id="color_picker" data-role="none" data-inline="true" ></div>
+      </div>
+    </element>
+
+    <element id="baybridge_buttons" type="HTML">
+      <input type="button" data-role="button" value="Drainage" onclick="if(isMaster()): global models; models['Drainage'].setVisible(not models['Drainage'].isVisible())" data-shadow="false" data-corner="false" data-continuous="false" class="ui-btn"/>
+      <input type="button" data-role="button" value="Top Slab Rebar" onclick="if(isMaster()): global models; models['Top Slab Rebar'].setVisible(not models['Top Slab Rebar'].isVisible())" data-shadow="false" data-corner="false" data-continuous="false" class="ui-btn"/>
+      <input type="button" data-role="button" value="Bottom Slab Rebar" onclick="if(isMaster()): global models; models['Bottom Slab Rebar'].setVisible(not models['Bottom Slab Rebar'].isVisible())" data-shadow="false" data-corner="false" data-continuous="false" class="ui-btn"/>
+      <input type="button" data-role="button" value="Steel Struct" onclick="if(isMaster()): global models; models['Steel Struct'].setVisible(not models['Steel Struct'].isVisible())" data-shadow="false" data-corner="false" data-continuous="false" class="ui-btn"/>
+      <input type="button" data-role="button" value="Cutout Rebar" onclick="if(isMaster()): global models; models['Cutout Rebar'].setVisible(not models['Cutout Rebar'].isVisible())" data-shadow="false" data-corner="false" data-continuous="false" class="ui-btn"/>
+      <input type="button" data-role="button" value="Walls" onclick="if(isMaster()): global models; models['Walls'].setVisible(not models['Walls'].isVisible())" data-shadow="false" data-corner="false" data-continuous="false" class="ui-btn"/>
+      <input type="button" data-role="button" value="Fender Rebars" onclick="if(isMaster()): global models; models['Fender Rebars'].setVisible(not models['Fender Rebars'].isVisible())" data-shadow="false" data-corner="false" data-continuous="false" class="ui-btn"/>
+      <input type="button" data-role="button" value="Skirt Rebar" onclick="if(isMaster()): global models; models['Skirt Rebar'].setVisible(not models['Skirt Rebar'].isVisible())" data-shadow="false" data-corner="false" data-continuous="false" class="ui-btn"/>
+      <input type="button" data-role="button" value="Skirt AB Layout" onclick="if(isMaster()): global models; models['Skirt AB Layout'].setVisible(not models['Skirt AB Layout'].isVisible())" data-shadow="false" data-corner="false" data-continuous="false" class="ui-btn"/>
+      <input type="button" data-role="button" value="Pile Rebar" onclick="if(isMaster()): global models; models['Pile Rebar'].setVisible(not models['Pile Rebar'].isVisible())" data-shadow="false" data-corner="false" data-continuous="false" class="ui-btn"/>
+      <input type="button" data-role="button" value="WWF" onclick="if(isMaster()): global models; models['WWF'].setVisible(not models['WWF'].isVisible())" data-shadow="false" data-corner="false" data-continuous="false" class="ui-btn"/>
+    </element>
+    
+  </elements>
+  
+  <interfaces>
+
+    <interface minWidth="0" minHeight="0" id="small">
+      <portrait layout="vertical">
+        <element width="100%" height="100%" id="baybridge_buttons"/>
+      </portrait>
+      <landscape layout="horizontal">
+        <element width="100%" height="100%" id="camera"/>
+      </landscape>
+    </interface>
+
+    <interface minWidth="320" minHeight="470" id="medium">
+      <portrait layout="vertical">
+        <element width="100%" height="100%" id="baybridge_buttons"/>
+      </portrait>
+      <landscape layout="horizontal">
+        <element width="70%" height="100%" id="camera"/>
+        <element width="30%" height="100%" id="baybridge_buttons"/>
+      </landscape>
+    </interface>
+
+    <interface minWidth="480" minHeight="640" id="large">
+      <portrait layout="vertical">
+        <element width="100%" height="100%" id="baybridge_buttons"/>
+      </portrait>
+      <landscape layout="horizontal">
+        <element width="70%" height="100%" id="camera"/>
+        <element width="30%" height="100%" id="baybridge_buttons"/>
+      </landscape>   
+    </interface>
+
+    <interface minWidth="720" minHeight="960" id="xlarge">
+      <portrait layout="vertical">
+        <element width="100%" height="100%" id="baybridge_buttons"/>
+      </portrait>
+      <landscape layout="horizontal">
+        <element width="70%" height="100%" id="camera"/>
+        <element width="30%" height="100%" id="baybridge_buttons"/>
+      </landscape>
+    </interface>
+    
+  </interfaces>
+  
+</gui>

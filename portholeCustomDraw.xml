@@ -1,0 +1,72 @@
+<gui>
+  
+  <gui_elements>
+    
+    <gui_element id="element1" type="HTML">
+      <div class="div-aligned">
+        <fieldset  data-type="horizontal" class="">
+          <input type="button" value="UP" data-role="button" onmousedown="camera=getCameraById(%id%); position=camera.getPosition(); position[1] += 0.025; camera.setPosition(position);" data-inline="true" data-corner="false" data-continuous="true" class=""/>
+          <input type="button" value="DOWN" data-role="button" onmousedown="camera=getCameraById(%id%); position=camera.getPosition(); position[1] -= 0.025; camera.setPosition(position);" data-inline="true" data-corner="false" data-continuous="true" class=""/>
+          <input type="button" value="LEFT" data-role="button" onmousedown="camera=getCameraById(%id%); position=camera.getPosition(); position[0] -= 0.025; camera.setPosition(position);" data-inline="true" data-corner="false" data-continuous="true" class=""/>
+          <input type="button" value="RIGHT" data-role="button" onmousedown="camera=getCameraById(%id%); position=camera.getPosition(); position[0] += 0.025; camera.setPosition(position);" data-inline="true" data-corner="false" data-continuous="true" class=""/>
+        </fieldset>
+      </div>
+    </gui_element>
+    
+    <gui_element id="element3" type="camera_stream" camera="custom, 0"/>
+
+    <gui_element id="element4" type="HTML">
+      <div>
+          <input type="range" name="slider" id="slider" value="0" min="-800" max="800" data-highlight="true" onchange="camera=getCameraById(%id%); position=camera.getPosition(); position[2] = float(%value%)/100; camera.setPosition(position);"/>
+      </div>
+    </gui_element>
+    
+  </gui_elements>
+  
+  <gui_disposition>
+
+    <small minWidth="0" minHeight="0">
+      <portrait layout="vertical">
+        <element1 width="100%" height="10%" />
+        <element3 width="100%" height="90%" />
+      </portrait>
+      <landscape layout="vertical">
+        <element3 width="100%" height="100%" />
+      </landscape>
+    </small>
+    
+    <medium minWidth="320" minHeight="470">
+      <portrait layout="vertical">
+        <element1 width="100%" height="10%" />
+        <element3 width="100%" height="90%" />
+      </portrait>
+      <landscape layout="vertical">
+        <element3 width="100%" height="100%" />
+      </landscape>
+    </medium>
+    
+    <large minWidth="480" minHeight="640">
+      <portrait layout="vertical">
+        <element1 width="100%" height="10%" />
+        <element4 width="100%" height="10%" />
+        <element3 width="100%" height="80%" />
+      </portrait>
+      <landscape layout="vertical">
+        <element3 width="100%" height="100%" />
+      </landscape>   
+    </large>
+    
+    <xlarge minWidth="720" minHeight="960">
+      <portrait layout="vertical">
+        <element1 width="100%" height="10%" />
+        <element4 width="100%" height="10%" />
+        <element3 width="100%" height="80%" />
+      </portrait>
+      <landscape layout="vertical">
+        <element3 width="100%" height="100%" />
+      </landscape>
+    </xlarge>
+    
+  </gui_disposition>
+  
+</gui>
