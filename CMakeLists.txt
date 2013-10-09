@@ -8,7 +8,7 @@ endif(OMEGA_OS_WIN)
 add_subdirectory(websockets)
 
 # Set module name and source files here
-add_library(${MODULE_NAME} SHARED 
+add_library(${MODULE_NAME} MODULE 
 	PortholeService.h
 	PortholeGUI.h
 	porthole.cpp
