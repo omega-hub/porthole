@@ -202,20 +202,36 @@ int ServerThread::callback_http(struct libwebsocket_context *context,
 			std::map<std::string, string>::const_iterator py_it;
 			for(py_it = functionsBinder->pythonFunMap.begin(); py_it != functionsBinder->pythonFunMap.end(); py_it++){
 				content.append(" function ");
+
+                Vector<String> toks = StringUtils::split(py_it->second, "%");
+                
 				content.append(py_it->first);
 				content.append("{ "
 									"JSONToSend = {"
 									"\"event_type\": \"input\","
 									"\"button\": event.button,"
-									"\"char\": getChar(event),"
-									"\"value\": event.target.value,"
-									"\"function\": \"");
+									"\"char\": getChar(event),");
+
+                // Odd tokens are argument names "like(%in%, %this%)"
+                for(int i = 1; i < toks.size(); i += 2)
+                {
+                    // Ignore special token %value% to keep compatibility with old interfaces.
+                    if(toks[i] != "value")
+                    {
+                        content.append(ostr("\"%1%\": String(%1%),", %toks[i]));
+                    }
+                }
+                // Add special token %value% to keep compatibility with old interfaces.
+                content.append("\"value\": event.target.value,"
+			    "\"function\": \"");
+
 				content.append(py_it->first);
 				content.append("\""
 									"};"
 									"sendContinuous = event.target.getAttribute(\"data-continuous\");"
 									"socket.send(JSON.stringify(JSONToSend));"
 								"};");
+
 			}
 
 			// Cpp functions
@@ -401,6 +417,8 @@ struct recv_message{
 	int button;
 	char key;
 	string value;
+
+    Dictionary<String, String> args;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -445,6 +463,10 @@ inline void parse_json_message(json_value *value, per_session_data* data, recv_m
 		// HTML tag value (ex: the value of a slider, a text input, ecc)
 		else if (strcmp(value->name, MSG_INPUT_VALUE) == 0)
 			message->value = value->string_value;
+
+        // All of the other tags are added as message arguments
+        else
+            message->args[value->name] = value->string_value;
 
         break;
     case JSON_INT:
@@ -525,7 +547,13 @@ inline void handle_message(per_session_data* data, recv_message* message,
 	// Javascript functions bind
 	else if(strcmp(message->event_type.c_str(),MSG_EVENT_INPUT)==0){
 		// Create event
-		PortholeEvent ev = {message->jsFunction, message->button, message->key, message->value, data->guiManager->getSessionCamera()};
+        PortholeEvent ev;
+        ev.sessionCamera = data->guiManager->getSessionCamera();
+        ev.mouseButton = message->button;
+        ev.value = message->value;
+        ev.key = message->key;
+        ev.htmlEvent = message->jsFunction;
+        ev.args = message->args;
 		// Call the function or python script
 		PortholeGUI::getPortholeFunctionsBinder()->callFunction(message->jsFunction, ev);
 	}
@@ -784,6 +812,8 @@ void ServerThread::threadProc()
 	// A dumb buffer to keep socket alive
 	buf[LWS_SEND_BUFFER_PRE_PADDING] = 'x';
 
+	service->notifyServerStarted();
+
 	//fprintf(stderr, " Using no-fork service loop\n");
 	oldus = 0;
 	n = 0;
@@ -944,6 +974,17 @@ inline std::string base64_decode(std::string const& encoded_string) {
 
   return ret;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+void PortholeService::notifyServerStarted()
+{
+	if(!myServerStartedCommand.empty())
+	{
+		PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
+		i->queueCommand(myServerStartedCommand);
+	}
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 void PortholeService::notifyConnected(const String& id)
 {

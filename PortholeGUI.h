@@ -156,6 +156,7 @@ struct PortholeEvent
 	char key;
 	std::string value;
 	PortholeCamera* sessionCamera;
+    Dictionary<String, String> args;
 };
 
 // Porthole functions binder
@@ -185,8 +186,18 @@ struct PortholeFunctionsBinder: ReferenceType
 		{
 			PythonInterpreter* pi = SystemManager::instance()->getScriptInterpreter();
 
+            // Substitute special %value% token
 			String pythonScript = omicron::StringUtils::replaceAll(py_it->second, PORTHOLE_EVENT_TOKEN_VALUE, ev.value);
-			pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_KEY, boost::lexical_cast<std::string>(ev.key));
+
+            // Substitute other argument tokens.
+            typedef KeyValue<String, String> ArgItem;
+            foreach(ArgItem i, ev.args)
+            {
+                String key = ostr("%%%1%%%", %i.getKey());
+                pythonScript = omicron::StringUtils::replaceAll(pythonScript, key, i.getValue());
+            }
+            
+            pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_KEY, boost::lexical_cast<std::string>(ev.key));
 			pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_MOUSE_BTN, boost::lexical_cast<std::string>(ev.mouseButton));
 			pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_EVENT, boost::lexical_cast<std::string>(ev.htmlEvent));
 

@@ -138,18 +138,24 @@ public:
 	{ myCameraCreatedCommand = cmd; }
 	void setCameraDestroyedCommand(const String cmd)
 	{ myCameraDestroyedCommand = cmd; }
+	void setServerStartedCommand(const String cmd)
+	{ myServerStartedCommand = cmd; }
 
 	// Notification functions called from the websockets thread
 	void notifyConnected(const String& id);
 	void notifyDisconnected(const String& id);
 	void notifyCameraCreated(Camera* cam);
 	void notifyCameraDestroyed(Camera* cam);
+    //! Called when the web server has started and is ready to receive
+    //! connections.
+    void notifyServerStarted();
 
 private:
 	String myConnectedCommand;
 	String myDisconnectedCommand;
 	String myCameraCreatedCommand;
 	String myCameraDestroyedCommand;
+	String myServerStartedCommand;
 	PortholeFunctionsBinder* myBinder;
 };
 
