@@ -10,11 +10,11 @@ Basically, the Porthole Service creates a Server in a separate thread, that hand
 
 ## Porthole API
 All the porthole API is contained in the `porthole` python module. To start using porthole simply do
-```
+```python
 import porthole
 
-# The two optional args are the paths to the xml description file and a CSS style sheet for the interface.
-# Leave unspecified to use a default demonstration interface.
+# The two optional args are the paths to the xml description file and a CSS 
+# style sheet for the interface. Leave unspecified to use a default demonstration interface.
 porthole.initialize("interface.xml", "interface.css") 
 
 # Get the porthole service
