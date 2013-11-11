@@ -4,7 +4,7 @@ Moreover, the interfaces are tailored on application needs and on devices specif
 
 An overview of the system implementation is given in the following figure.
 
-<p align="middle"><img src="http://uic-evl.github.io/omegalib/Porthole/porthole_overview.jpg" width="500"/></p>
+<p align="middle"><img src="http://uic-evl.github.io/omegalib/Porthole/porthole_overview.jpg" width="400"/></p>
 
 Basically, the Porthole Service creates a Server in a separate thread, that handles all the incoming connections. But all the steps between the XML description and the actual management of the different devices, including camera streaming and manipulations, are transparent to the application developer.
 
