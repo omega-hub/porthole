@@ -50,11 +50,11 @@ inline string base64_decode(string const& s);
 
 ///////////////////////////////////////////////////////////////////////////////
 enum demo_protocols {
-	/* always first */
-	PROTOCOL_HTTP = 0,
-	PROTOCOL_WEBSOCKET,
-	/* always last */
-	DEMO_PROTOCOL_COUNT
+    /* always first */
+    PROTOCOL_HTTP = 0,
+    PROTOCOL_WEBSOCKET,
+    /* always last */
+    DEMO_PROTOCOL_COUNT
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -64,153 +64,153 @@ enum demo_protocols {
  */
 void ServerThread::dump_handshake_info(struct lws_tokens *lwst)
 {
-	//int n;
-	static const char *token_names[WSI_TOKEN_COUNT] = {
-		/*[WSI_TOKEN_GET_URI]		=*/ "GET URI",
-		/*[WSI_TOKEN_HOST]		=*/ "Host",
-		/*[WSI_TOKEN_CONNECTION]	=*/ "Connection",
-		/*[WSI_TOKEN_KEY1]		=*/ "key 1",
-		/*[WSI_TOKEN_KEY2]		=*/ "key 2",
-		/*[WSI_TOKEN_PROTOCOL]		=*/ "Protocol",
-		/*[WSI_TOKEN_UPGRADE]		=*/ "Upgrade",
-		/*[WSI_TOKEN_ORIGIN]		=*/ "Origin",
-		/*[WSI_TOKEN_DRAFT]		=*/ "Draft",
-		/*[WSI_TOKEN_CHALLENGE]		=*/ "Challenge",
+    //int n;
+    static const char *token_names[WSI_TOKEN_COUNT] = {
+        /*[WSI_TOKEN_GET_URI]		=*/ "GET URI",
+        /*[WSI_TOKEN_HOST]		=*/ "Host",
+        /*[WSI_TOKEN_CONNECTION]	=*/ "Connection",
+        /*[WSI_TOKEN_KEY1]		=*/ "key 1",
+        /*[WSI_TOKEN_KEY2]		=*/ "key 2",
+        /*[WSI_TOKEN_PROTOCOL]		=*/ "Protocol",
+        /*[WSI_TOKEN_UPGRADE]		=*/ "Upgrade",
+        /*[WSI_TOKEN_ORIGIN]		=*/ "Origin",
+        /*[WSI_TOKEN_DRAFT]		=*/ "Draft",
+        /*[WSI_TOKEN_CHALLENGE]		=*/ "Challenge",
 
-		/* new for 04 */
-		/*[WSI_TOKEN_KEY]		=*/ "Key",
-		/*[WSI_TOKEN_VERSION]		=*/ "Version",
-		/*[WSI_TOKEN_SWORIGIN]		=*/ "Sworigin",
+        /* new for 04 */
+        /*[WSI_TOKEN_KEY]		=*/ "Key",
+        /*[WSI_TOKEN_VERSION]		=*/ "Version",
+        /*[WSI_TOKEN_SWORIGIN]		=*/ "Sworigin",
 
-		/* new for 05 */
-		/*[WSI_TOKEN_EXTENSIONS]	=*/ "Extensions",
+        /* new for 05 */
+        /*[WSI_TOKEN_EXTENSIONS]	=*/ "Extensions",
 
-		/* client receives these */
-		/*[WSI_TOKEN_ACCEPT]		=*/ "Accept",
-		/*[WSI_TOKEN_NONCE]		=*/ "Nonce",
-		/*[WSI_TOKEN_HTTP]		=*/ "Http",
-		/*[WSI_TOKEN_MUXURL]	=*/ "MuxURL",
-	};
+        /* client receives these */
+        /*[WSI_TOKEN_ACCEPT]		=*/ "Accept",
+        /*[WSI_TOKEN_NONCE]		=*/ "Nonce",
+        /*[WSI_TOKEN_HTTP]		=*/ "Http",
+        /*[WSI_TOKEN_MUXURL]	=*/ "MuxURL",
+    };
 
-	//TESTING FUNCTION
-	/*
-	for (n = 0; n < WSI_TOKEN_COUNT; n++) {
-		if (lwst[n].token == NULL)
-			continue;
-		fprintf(stderr, "    %s = %s\n", token_names[n], lwst[n].token);
-	}
-	*/
+    //TESTING FUNCTION
+    /*
+    for (n = 0; n < WSI_TOKEN_COUNT; n++) {
+        if (lwst[n].token == NULL)
+            continue;
+        fprintf(stderr, "    %s = %s\n", token_names[n], lwst[n].token);
+    }
+    */
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 /* this protocol server (always the first one) just knows how to do HTTP */
 int ServerThread::callback_http(struct libwebsocket_context *context,
-		struct libwebsocket *wsi,
-		enum libwebsocket_callback_reasons reason, void *user,
-							   void *in, size_t len){
-	char client_name[128];
-	char client_ip[128];
+        struct libwebsocket *wsi,
+        enum libwebsocket_callback_reasons reason, void *user,
+                               void *in, size_t len){
+    char client_name[128];
+    char client_ip[128];
 
-	switch (reason) {
-	case LWS_CALLBACK_HTTP:
-		fprintf(stderr, "serving HTTP URI %s\n", (char *)in);
+    switch (reason) {
+    case LWS_CALLBACK_HTTP:
+        fprintf(stderr, "serving HTTP URI %s\n", (char *)in);
 
-		/* Html page icon */
-		if (in && strcmp((char*)in, "/favicon.ico") == 0) {
-			if (libwebsockets_serve_http_file(wsi,
-			     (DATA_PATH+"/favicon.ico").c_str(), "image/x-icon"))
-				fprintf(stderr, "Failed to send favicon\n");
-			break;
-		}
+        /* Html page icon */
+        if (in && strcmp((char*)in, "/favicon.ico") == 0) {
+            if (libwebsockets_serve_http_file(wsi,
+                 (DATA_PATH+"/favicon.ico").c_str(), "image/x-icon"))
+                fprintf(stderr, "Failed to send favicon\n");
+            break;
+        }
 
-		else if (in && strcmp((char*)in, "/ui.geo_autocomplete.js") == 0) {
-			if (libwebsockets_serve_http_file(wsi,
-			     (DATA_PATH+"/ui.geo_autocomplete.js").c_str(), "application/javascript"))
-				fprintf(stderr, "Failed to send ui.geo_autocomplete.js\n");
-			break;
-		}
+        else if (in && strcmp((char*)in, "/ui.geo_autocomplete.js") == 0) {
+            if (libwebsockets_serve_http_file(wsi,
+                 (DATA_PATH+"/ui.geo_autocomplete.js").c_str(), "application/javascript"))
+                fprintf(stderr, "Failed to send ui.geo_autocomplete.js\n");
+            break;
+        }
 
-		else if (in && strcmp((char*)in, "/farbtastic.js") == 0) {
-			if (libwebsockets_serve_http_file(wsi,
-			     (DATA_PATH+"/farbtastic.js").c_str(), "application/javascript"))
-				fprintf(stderr, "Failed to send farbtastic.js\n");
-			break;
-		}
+        else if (in && strcmp((char*)in, "/farbtastic.js") == 0) {
+            if (libwebsockets_serve_http_file(wsi,
+                 (DATA_PATH+"/farbtastic.js").c_str(), "application/javascript"))
+                fprintf(stderr, "Failed to send farbtastic.js\n");
+            break;
+        }
 
-		else if (in && strcmp((char*)in, "/hammer.js") == 0) {
-			if (libwebsockets_serve_http_file(wsi,
-			     (DATA_PATH+"/hammer.js").c_str(), "application/javascript"))
-				fprintf(stderr, "Failed to send hammer.js\n");
-			break;
-		}
+        else if (in && strcmp((char*)in, "/hammer.js") == 0) {
+            if (libwebsockets_serve_http_file(wsi,
+                 (DATA_PATH+"/hammer.js").c_str(), "application/javascript"))
+                fprintf(stderr, "Failed to send hammer.js\n");
+            break;
+        }
 
-		else if (in && strcmp((char*)in, "/wheel.png") == 0) {
-			if (libwebsockets_serve_http_file(wsi,
-			     (DATA_PATH+"/wheel.png").c_str(), "image/png"))
-				fprintf(stderr, "Failed to send wheel.png\n");
-			break;
-		}
+        else if (in && strcmp((char*)in, "/wheel.png") == 0) {
+            if (libwebsockets_serve_http_file(wsi,
+                 (DATA_PATH+"/wheel.png").c_str(), "image/png"))
+                fprintf(stderr, "Failed to send wheel.png\n");
+            break;
+        }
 
-		else if (in && strcmp((char*)in, "/marker.png") == 0) {
-			if (libwebsockets_serve_http_file(wsi,
-			     (DATA_PATH+"/marker.png").c_str(), "image/png"))
-				fprintf(stderr, "Failed to send marker.png\n");
-			break;
-		}
+        else if (in && strcmp((char*)in, "/marker.png") == 0) {
+            if (libwebsockets_serve_http_file(wsi,
+                 (DATA_PATH+"/marker.png").c_str(), "image/png"))
+                fprintf(stderr, "Failed to send marker.png\n");
+            break;
+        }
 
-		else if (in && strcmp((char*)in, "/mask.png") == 0) {
-			if (libwebsockets_serve_http_file(wsi,
-			     (DATA_PATH+"/mask.png").c_str(), "image/png"))
-				fprintf(stderr, "Failed to send mask.png\n");
-			break;
-		}
+        else if (in && strcmp((char*)in, "/mask.png") == 0) {
+            if (libwebsockets_serve_http_file(wsi,
+                 (DATA_PATH+"/mask.png").c_str(), "image/png"))
+                fprintf(stderr, "Failed to send mask.png\n");
+            break;
+        }
 
-		else if (in && strcmp((char*)in, "/farbtastic.css") == 0) {
-			if (libwebsockets_serve_http_file(wsi,
-				 (DATA_PATH+"/farbtastic.css").c_str(), "text/css"))
-				fprintf(stderr, "Failed to send farbtastic.css\n");
-			break;
-		}
-		else if (in && strcmp((char*)in, "/recorder.js") == 0) {
-			if (libwebsockets_serve_http_file(wsi,
-				 (DATA_PATH+"/recorder.js").c_str(), "application/javascript"))
-				fprintf(stderr, "Failed to send recorder.js\n");
-			break;
-		}
-		else if (in && strcmp((char*)in, "/recorderWorker.js") == 0) {
-			if (libwebsockets_serve_http_file(wsi,
-				 (DATA_PATH+"/recorderWorker.js").c_str(), "application/javascript"))
-				fprintf(stderr, "Failed to send recorderWorker.js\n");
-			break;
-		}
-		/* Porthole CSS */
-		else if (in && strcmp((char*)in, "/porthole.css") == 0) {
-			if (libwebsockets_serve_http_file(wsi,
-				css_path.c_str(), "text/css"))
-				fprintf(stderr, "Failed to send porthole.css\n");
-			break;
-		}
+        else if (in && strcmp((char*)in, "/farbtastic.css") == 0) {
+            if (libwebsockets_serve_http_file(wsi,
+                 (DATA_PATH+"/farbtastic.css").c_str(), "text/css"))
+                fprintf(stderr, "Failed to send farbtastic.css\n");
+            break;
+        }
+        else if (in && strcmp((char*)in, "/recorder.js") == 0) {
+            if (libwebsockets_serve_http_file(wsi,
+                 (DATA_PATH+"/recorder.js").c_str(), "application/javascript"))
+                fprintf(stderr, "Failed to send recorder.js\n");
+            break;
+        }
+        else if (in && strcmp((char*)in, "/recorderWorker.js") == 0) {
+            if (libwebsockets_serve_http_file(wsi,
+                 (DATA_PATH+"/recorderWorker.js").c_str(), "application/javascript"))
+                fprintf(stderr, "Failed to send recorderWorker.js\n");
+            break;
+        }
+        /* Porthole CSS */
+        else if (in && strcmp((char*)in, "/porthole.css") == 0) {
+            if (libwebsockets_serve_http_file(wsi,
+                css_path.c_str(), "text/css"))
+                fprintf(stderr, "Failed to send porthole.css\n");
+            break;
+        }
 
-		/* Function Binder Javascript */
-		else if (in && strcmp((char*)in, "/porthole_functions_binder.js") == 0) {
-			
-			// Build Content. Socket var is used to hold the JS socket object
-			string content = "";
-			
-			// Python scripts
-			PortholeFunctionsBinder* functionsBinder = PortholeGUI::getPortholeFunctionsBinder();
-			std::map<std::string, string>::const_iterator py_it;
-			for(py_it = functionsBinder->pythonFunMap.begin(); py_it != functionsBinder->pythonFunMap.end(); py_it++){
-				content.append(" function ");
+        /* Function Binder Javascript */
+        else if (in && strcmp((char*)in, "/porthole_functions_binder.js") == 0) {
+            
+            // Build Content. Socket var is used to hold the JS socket object
+            string content = "";
+            
+            // Python scripts
+            PortholeFunctionsBinder* functionsBinder = PortholeGUI::getPortholeFunctionsBinder();
+            std::map<std::string, string>::const_iterator py_it;
+            for(py_it = functionsBinder->pythonFunMap.begin(); py_it != functionsBinder->pythonFunMap.end(); py_it++){
+                content.append(" function ");
 
                 Vector<String> toks = StringUtils::split(py_it->second, "%");
                 
-				content.append(py_it->first);
-				content.append("{ "
-									"JSONToSend = {"
-									"\"event_type\": \"input\","
-									"\"button\": event.button,"
-									"\"char\": getChar(event),");
+                content.append(py_it->first);
+                content.append("{ "
+                                    "JSONToSend = {"
+                                    "\"event_type\": \"input\","
+                                    "\"button\": event.button,"
+                                    "\"char\": getChar(event),");
 
                 // Odd tokens are argument names "like(%in%, %this%)"
                 for(int i = 1; i < toks.size(); i += 2)
@@ -223,81 +223,81 @@ int ServerThread::callback_http(struct libwebsocket_context *context,
                 }
                 // Add special token %value% to keep compatibility with old interfaces.
                 content.append("\"value\": event.target.value,"
-			    "\"function\": \"");
+                "\"function\": \"");
 
-				content.append(py_it->first);
-				content.append("\""
-									"};"
-									"sendContinuous = event.target.getAttribute(\"data-continuous\");"
-									"socket.send(JSON.stringify(JSONToSend));"
-								"};");
+                content.append(py_it->first);
+                content.append("\""
+                                    "};"
+                                    "sendContinuous = event.target.getAttribute(\"data-continuous\");"
+                                    "socket.send(JSON.stringify(JSONToSend));"
+                                "};");
 
-			}
+            }
 
-			// Cpp functions
-			typedef void(*memberFunction)(PortholeEvent&);
-			std::map<std::string, memberFunction>::const_iterator cpp_it;
-			for(cpp_it = functionsBinder->cppFuncMap.begin(); cpp_it != functionsBinder->cppFuncMap.end(); cpp_it++ ){
+            // Cpp functions
+            typedef void(*memberFunction)(PortholeEvent&);
+            std::map<std::string, memberFunction>::const_iterator cpp_it;
+            for(cpp_it = functionsBinder->cppFuncMap.begin(); cpp_it != functionsBinder->cppFuncMap.end(); cpp_it++ ){
 
-				content.append(" function ");
-				content.append(cpp_it->first);
-				content.append("{ "
-									"JSONToSend = {"
-									"\"event_type\": \"input\","
-									"\"button\": event.button,"
-									"\"char\": getChar(event),"
-									"\"value\": event.target.value,"
-									"\"function\": \"");
-				content.append(cpp_it->first);
-				content.append("\""
-									"};"
-									"sendContinuous = event.target.getAttribute(\"data-continuous\");"
-									"socket.send(JSON.stringify(JSONToSend));"
-								"};");
-			}
+                content.append(" function ");
+                content.append(cpp_it->first);
+                content.append("{ "
+                                    "JSONToSend = {"
+                                    "\"event_type\": \"input\","
+                                    "\"button\": event.button,"
+                                    "\"char\": getChar(event),"
+                                    "\"value\": event.target.value,"
+                                    "\"function\": \"");
+                content.append(cpp_it->first);
+                content.append("\""
+                                    "};"
+                                    "sendContinuous = event.target.getAttribute(\"data-continuous\");"
+                                    "socket.send(JSON.stringify(JSONToSend));"
+                                "};");
+            }
 
-			// Build Message = Header + Content
-			char content_length[16];
-			sprintf (content_length, "%d", content.length());
-			string msg = "HTTP/1.0 200 OK\x0d\x0a"
-							"Server: libwebsockets\x0d\x0a"
-							"Content-Type: application/javascript\x0d\x0a"
-							"Content-Length: ";
-			msg.append(content_length);
-			msg.append("\x0d\x0a\x0d\x0a");
-			msg.append(content);
+            // Build Message = Header + Content
+            char content_length[16];
+            sprintf (content_length, "%d", content.length());
+            string msg = "HTTP/1.0 200 OK\x0d\x0a"
+                            "Server: libwebsockets\x0d\x0a"
+                            "Content-Type: application/javascript\x0d\x0a"
+                            "Content-Length: ";
+            msg.append(content_length);
+            msg.append("\x0d\x0a\x0d\x0a");
+            msg.append(content);
 
-			// Send the Javascript file
-			libwebsocket_write(wsi, (unsigned char*)msg.c_str(), msg.length(), LWS_WRITE_HTTP);
-			
-			break;
-		}
+            // Send the Javascript file
+            libwebsocket_write(wsi, (unsigned char*)msg.c_str(), msg.length(), LWS_WRITE_HTTP);
+            
+            break;
+        }
 
-		/* HTML page... when it runs it'll start websockets */
-		if (libwebsockets_serve_http_file(wsi,
-				  (DATA_PATH+"/index.html").c_str(), "text/html"))
-			fprintf(stderr, "Failed to send HTTP file\n");
-		break;
+        /* HTML page... when it runs it'll start websockets */
+        if (libwebsockets_serve_http_file(wsi,
+                  (DATA_PATH+"/index.html").c_str(), "text/html"))
+            fprintf(stderr, "Failed to send HTTP file\n");
+        break;
 
-	/* On connection, we could add any filtering function
-	*  Now it's: accept any
-	*/
-	case LWS_CALLBACK_FILTER_NETWORK_CONNECTION:
+    /* On connection, we could add any filtering function
+    *  Now it's: accept any
+    */
+    case LWS_CALLBACK_FILTER_NETWORK_CONNECTION:
 
-		libwebsockets_get_peer_addresses((int)(long)user, client_name,
-			     sizeof(client_name), client_ip, sizeof(client_ip));
+        libwebsockets_get_peer_addresses((int)(long)user, client_name,
+                 sizeof(client_name), client_ip, sizeof(client_ip));
 
-		fprintf(stderr, "Received network connect from %s (%s)\n",
-							client_name, client_ip);
+        fprintf(stderr, "Received network connect from %s (%s)\n",
+                            client_name, client_ip);
 
-		/* if we returned non-zero from here, we kill the connection */
-		break;
+        /* if we returned non-zero from here, we kill the connection */
+        break;
 
-	default:
-		break;
-	}
+    default:
+        break;
+    }
 
-	return 0;
+    return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -306,33 +306,33 @@ int ServerThread::callback_http(struct libwebsocket_context *context,
 ///////////////////////////////////////////////////////////////////////////////
 // Struct of data to be passed across the entire session
 struct per_session_data {
-	PortholeGUI* guiManager;
-	unsigned long long oldus;
-	std::string test_flag;
+    PortholeGUI* guiManager;
+    unsigned long long oldus;
+    std::string test_flag;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 void sendHtmlElements(bool firstTime, struct per_session_data* data, struct libwebsocket_context *context,
-		struct libwebsocket *wsi){
+        struct libwebsocket *wsi){
 
-		string deviceBasedHtml = data->guiManager->create(firstTime);
+        string deviceBasedHtml = data->guiManager->create(firstTime);
 
-		string toSend = "{\"event_type\" : \"html_elements\", \"innerHTML\" : \"";
-		toSend.append(omicron::StringUtils::replaceAll(deviceBasedHtml.c_str(),"\"","\\\""));
-		toSend.append("\"}");
+        string toSend = "{\"event_type\" : \"html_elements\", \"innerHTML\" : \"";
+        toSend.append(omicron::StringUtils::replaceAll(deviceBasedHtml.c_str(),"\"","\\\""));
+        toSend.append("\"}");
 
-		// Send the html elements
-		int n;
-		unsigned char* buf;
-		buf = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + toSend.length() + LWS_SEND_BUFFER_POST_PADDING];
-		unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
-		n = sprintf((char *)p, "%s",toSend.c_str());
-		n = libwebsocket_write(wsi, p, n, LWS_WRITE_TEXT);
+        // Send the html elements
+        int n;
+        unsigned char* buf;
+        buf = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + toSend.length() + LWS_SEND_BUFFER_POST_PADDING];
+        unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
+        n = sprintf((char *)p, "%s",toSend.c_str());
+        n = libwebsocket_write(wsi, p, n, LWS_WRITE_TEXT);
 
-		// Free buffer
-		delete[] buf;
+        // Free buffer
+        delete[] buf;
 
-		return;
+        return;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -340,36 +340,36 @@ void sendHtmlElements(bool firstTime, struct per_session_data* data, struct libw
 #define IDENT(n) for (int i = 0; i < n; ++i) printf("    ")
 inline void print(json_value *value, int ident = 0)
 {
-	IDENT(ident);
-	if (value->name) printf("\"%s\" = ", value->name);
-	switch(value->type)
-	{
-	case JSON_NULL:
-		printf("null\n");
-		break;
-	case JSON_OBJECT:
-	case JSON_ARRAY:
-		printf(value->type == JSON_OBJECT ? "{\n" : "[\n");
-		for (json_value *it = value->first_child; it; it = it->next_sibling)
-		{
-			print(it, ident + 1);
-		}
-		IDENT(ident);
-		printf(value->type == JSON_OBJECT ? "}\n" : "]\n");
-		break;
-	case JSON_STRING:
-		printf("\"%s\"\n", value->string_value);
-		break;
-	case JSON_INT:
-		printf("%d\n", value->int_value);
-		break;
-	case JSON_FLOAT:
-		printf("%f\n", value->float_value);
-		break;
-	case JSON_BOOL:
-		printf(value->int_value ? "true\n" : "false\n");
-		break;
-	}
+    IDENT(ident);
+    if (value->name) printf("\"%s\" = ", value->name);
+    switch(value->type)
+    {
+    case JSON_NULL:
+        printf("null\n");
+        break;
+    case JSON_OBJECT:
+    case JSON_ARRAY:
+        printf(value->type == JSON_OBJECT ? "{\n" : "[\n");
+        for (json_value *it = value->first_child; it; it = it->next_sibling)
+        {
+            print(it, ident + 1);
+        }
+        IDENT(ident);
+        printf(value->type == JSON_OBJECT ? "}\n" : "]\n");
+        break;
+    case JSON_STRING:
+        printf("\"%s\"\n", value->string_value);
+        break;
+    case JSON_INT:
+        printf("%d\n", value->int_value);
+        break;
+    case JSON_FLOAT:
+        printf("%f\n", value->float_value);
+        break;
+    case JSON_BOOL:
+        printf(value->int_value ? "true\n" : "false\n");
+        break;
+    }
 }
 
 
@@ -406,17 +406,17 @@ inline void print(json_value *value, int ident = 0)
 struct recv_message{
     string event_type;
     float x,y;
-	float scale; // This value ranges about {0,2;6}: >1 is zoom in, <1 is zoom out
-	float deltaRotation;
-	int width,height;
-	string orientation;
-	string jsFunction;
-	int cameraId;
-	bool firstTime;
-	float cameraSize; // New size: {0,1}
-	int button;
-	char key;
-	string value;
+    float scale; // This value ranges about {0,2;6}: >1 is zoom in, <1 is zoom out
+    float deltaRotation;
+    int width,height;
+    string orientation;
+    string jsFunction;
+    int cameraId;
+    bool firstTime;
+    float cameraSize; // New size: {0,1}
+    int button;
+    char key;
+    string value;
 
     Dictionary<String, String> args;
 };
@@ -444,25 +444,25 @@ inline void parse_json_message(json_value *value, per_session_data* data, recv_m
         if (strcmp(value->name, MSG_EVENT_TYPE) == 0)
            message->event_type = value->string_value;
 
-		// Orientation
-		else if (strcmp(value->name, MSG_ORIENTATION) == 0)
+        // Orientation
+        else if (strcmp(value->name, MSG_ORIENTATION) == 0)
             message->orientation = value->string_value;
 
-		// Input Javascript function name
-		else if (strcmp(value->name, MSG_INPUT_FUNCTION) == 0)
+        // Input Javascript function name
+        else if (strcmp(value->name, MSG_INPUT_FUNCTION) == 0)
             message->jsFunction = value->string_value;
 
-		// Input mouse button value (0|1|2)
-		else if (strcmp(value->name, MSG_INPUT_BUTTON) == 0)
-			message->button = atoi(value->string_value);
+        // Input mouse button value (0|1|2)
+        else if (strcmp(value->name, MSG_INPUT_BUTTON) == 0)
+            message->button = atoi(value->string_value);
 
-		// Input key value
-		else if (strcmp(value->name, MSG_INPUT_BUTTON) == 0)
-			message->key = value->string_value[0];
+        // Input key value
+        else if (strcmp(value->name, MSG_INPUT_BUTTON) == 0)
+            message->key = value->string_value[0];
 
-		// HTML tag value (ex: the value of a slider, a text input, ecc)
-		else if (strcmp(value->name, MSG_INPUT_VALUE) == 0)
-			message->value = value->string_value;
+        // HTML tag value (ex: the value of a slider, a text input, ecc)
+        else if (strcmp(value->name, MSG_INPUT_VALUE) == 0)
+            message->value = value->string_value;
 
         // All of the other tags are added as message arguments
         else
@@ -470,35 +470,35 @@ inline void parse_json_message(json_value *value, per_session_data* data, recv_m
 
         break;
     case JSON_INT:
-		// Width and Height
-		if (strcmp(value->name, MSG_WIDTH) == 0)
+        // Width and Height
+        if (strcmp(value->name, MSG_WIDTH) == 0)
             message->width = value->int_value;
-		else if (strcmp(value->name, MSG_HEIGHT) == 0)
+        else if (strcmp(value->name, MSG_HEIGHT) == 0)
             message->height = value->int_value;
 
-		// Camera id
-		else if (strcmp(value->name, MSG_CAMERA_ID) == 0)
-			message->cameraId = value->int_value;
+        // Camera id
+        else if (strcmp(value->name, MSG_CAMERA_ID) == 0)
+            message->cameraId = value->int_value;
 
-		// Is the first time we receive the device specification?
-		else if (strcmp(value->name, MSG_FIRST_TIME) == 0)
+        // Is the first time we receive the device specification?
+        else if (strcmp(value->name, MSG_FIRST_TIME) == 0)
             message->firstTime = (value->int_value == 1 )? true : false;
 
-		else if (strcmp(value->name, MSG_X) == 0)
+        else if (strcmp(value->name, MSG_X) == 0)
             message->x = value->int_value;
-		else if (strcmp(value->name, MSG_Y) == 0)
+        else if (strcmp(value->name, MSG_Y) == 0)
             message->y = value->int_value;
         break;
     case JSON_FLOAT:
-		// Scale and Rotation
-		if (strcmp(value->name, MSG_DELTA_SCALE) == 0)
-			message->scale = value->float_value;
-		else if (strcmp(value->name, MSG_DELTA_ROTATION) == 0)
-			message->deltaRotation = value->float_value;
+        // Scale and Rotation
+        if (strcmp(value->name, MSG_DELTA_SCALE) == 0)
+            message->scale = value->float_value;
+        else if (strcmp(value->name, MSG_DELTA_ROTATION) == 0)
+            message->deltaRotation = value->float_value;
 
-		// Camera mod
-		else if (strcmp(value->name, MSG_CAMERA_SIZE) == 0)
-			message->cameraSize = value->float_value;
+        // Camera mod
+        else if (strcmp(value->name, MSG_CAMERA_SIZE) == 0)
+            message->cameraSize = value->float_value;
 
         break;
     case JSON_BOOL:
@@ -508,45 +508,45 @@ inline void parse_json_message(json_value *value, per_session_data* data, recv_m
 
 ///////////////////////////////////////////////////////////////////////////////
 inline void handle_message(per_session_data* data, recv_message* message, 
-		struct libwebsocket_context *context, struct libwebsocket *wsi)
+        struct libwebsocket_context *context, struct libwebsocket *wsi)
 {
-	if (strcmp(message->event_type.c_str(), MSG_EVENT_DRAG)==0 &&
-		  data->guiManager->isCameraReadyToStream())
-	{
-		PortholeService* svc = data->guiManager->getService();
-		int id = data->guiManager->getSessionCamera()->id;
-		svc->postEvent(Event::Move, id, message->x, message->y);
+    if (strcmp(message->event_type.c_str(), MSG_EVENT_DRAG)==0 &&
+          data->guiManager->isCameraReadyToStream())
+    {
+        PortholeService* svc = data->guiManager->getService();
+        int id = data->guiManager->getSessionCamera()->id;
+        svc->postEvent(Event::Move, id, message->x, message->y);
     }
 
-	if (strcmp(message->event_type.c_str(),MSG_EVENT_TAP)==0 &&
-		  data->guiManager->isCameraReadyToStream())
-	{
-		PortholeService* svc = data->guiManager->getService();
-		int id = data->guiManager->getSessionCamera()->id;
-		svc->postEvent(Event::Click, id, message->x, message->y);
+    if (strcmp(message->event_type.c_str(),MSG_EVENT_TAP)==0 &&
+          data->guiManager->isCameraReadyToStream())
+    {
+        PortholeService* svc = data->guiManager->getService();
+        int id = data->guiManager->getSessionCamera()->id;
+        svc->postEvent(Event::Click, id, message->x, message->y);
     }
 
-	// First message received is a device spec message
-	else if (strcmp(message->event_type.c_str(),MSG_EVENT_SPEC)==0)
-	{
-		// Save device specification
-		data->guiManager->setDeviceSpecifications(message->width,message->height,message->orientation);
+    // First message received is a device spec message
+    else if (strcmp(message->event_type.c_str(),MSG_EVENT_SPEC)==0)
+    {
+        // Save device specification
+        data->guiManager->setDeviceSpecifications(message->width,message->height,message->orientation);
 
-		// Send the Html elements to the browser based on device specification
-		sendHtmlElements(message->firstTime,data,context,wsi);
+        // Send the Html elements to the browser based on device specification
+        sendHtmlElements(message->firstTime,data,context,wsi);
 
-		// Ask for the first available slot on this channel
-		libwebsocket_callback_on_writable(context, wsi);
-	}
+        // Ask for the first available slot on this channel
+        libwebsocket_callback_on_writable(context, wsi);
+    }
 
-	// Modify the camera size if FPS in client is too low
-	//else if (strcmp(message->event_type.c_str(),MSG_EVENT_CAMERA_MOD)==0){
-	//	data->guiManager->modCustomCamera(message->cameraSize);
-	//}
+    // Modify the camera size if FPS in client is too low
+    //else if (strcmp(message->event_type.c_str(),MSG_EVENT_CAMERA_MOD)==0){
+    //	data->guiManager->modCustomCamera(message->cameraSize);
+    //}
 
-	// Javascript functions bind
-	else if(strcmp(message->event_type.c_str(),MSG_EVENT_INPUT)==0){
-		// Create event
+    // Javascript functions bind
+    else if(strcmp(message->event_type.c_str(),MSG_EVENT_INPUT)==0){
+        // Create event
         PortholeEvent ev;
         ev.sessionCamera = data->guiManager->getSessionCamera();
         ev.mouseButton = message->button;
@@ -554,180 +554,180 @@ inline void handle_message(per_session_data* data, recv_message* message,
         ev.key = message->key;
         ev.htmlEvent = message->jsFunction;
         ev.args = message->args;
-		// Call the function or python script
-		PortholeGUI::getPortholeFunctionsBinder()->callFunction(message->jsFunction, ev);
-	}
+        // Call the function or python script
+        PortholeGUI::getPortholeFunctionsBinder()->callFunction(message->jsFunction, ev);
+    }
 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 int ServerThread::callback_websocket(struct libwebsocket_context *context,
-			struct libwebsocket *wsi,
-			enum libwebsocket_callback_reasons reason,
-					       void *user, void *in, size_t len)
+            struct libwebsocket *wsi,
+            enum libwebsocket_callback_reasons reason,
+                           void *user, void *in, size_t len)
 {
-	int n;
-	struct per_session_data *data = (per_session_data*) user;
+    int n;
+    struct per_session_data *data = (per_session_data*) user;
 
-	switch (reason) {
+    switch (reason) {
 
-	/* On connection estabilished */
-	case LWS_CALLBACK_ESTABLISHED:
-	{
-		char cliname[1024];
-		char cliip[1024];
-		int fd = libwebsocket_get_socket_fd(wsi);
-		libwebsockets_get_peer_addresses(fd, cliname, 1024, cliip, 1024);
-		String cliName = ostr("%1%:%2%:%3%", %fd %cliip %cliname);
-		service->notifyConnected(cliName);
-		// Allocate gui manager
-		data->guiManager = new PortholeGUI(service, cliName);
-		data->oldus = 0;
+    /* On connection estabilished */
+    case LWS_CALLBACK_ESTABLISHED:
+    {
+        char cliname[1024];
+        char cliip[1024];
+        int fd = libwebsocket_get_socket_fd(wsi);
+        libwebsockets_get_peer_addresses(fd, cliname, 1024, cliip, 1024);
+        String cliName = ostr("%1%:%2%:%3%", %fd %cliip %cliname);
+        service->notifyConnected(cliName);
+        // Allocate gui manager
+        data->guiManager = new PortholeGUI(service, cliName);
+        data->oldus = 0;
 
-		break;
-	}
+        break;
+    }
 
-	/* On socket writable from server to client */
-	case LWS_CALLBACK_SERVER_WRITEABLE:
-	{
+    /* On socket writable from server to client */
+    case LWS_CALLBACK_SERVER_WRITEABLE:
+    {
 
-		// Check if we have stream to send: if not, pass the token
-		if ( !data->guiManager->isCameraReadyToStream() ){
-			libwebsocket_callback_on_writable(context, wsi);
-			return 0;
-		}
+        // Check if we have stream to send: if not, pass the token
+        if ( !data->guiManager->isCameraReadyToStream() ){
+            libwebsocket_callback_on_writable(context, wsi);
+            return 0;
+        }
 
-		// Write at 50Hz, so continue if it's too early for us
-		struct timeval tv;
-		gettimeofday(&tv, NULL);
-		unsigned long long millisecondsSinceEpoch =
-			(unsigned long long)(tv.tv_sec) * 1000 +
-			(unsigned long long)(tv.tv_usec) / 1000;
-		if ((millisecondsSinceEpoch - data->oldus) < 20) {
-			libwebsocket_callback_on_writable(context, wsi);
-			return 0;
-		}
+        // Write at 50Hz, so continue if it's too early for us
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        unsigned long long millisecondsSinceEpoch =
+            (unsigned long long)(tv.tv_sec) * 1000 +
+            (unsigned long long)(tv.tv_usec) / 1000;
+        if ((millisecondsSinceEpoch - data->oldus) < 20) {
+            libwebsocket_callback_on_writable(context, wsi);
+            return 0;
+        }
 
-		// Get the corresponding camera to be modified
-		PortholeCamera* sessionCamera = data->guiManager->getSessionCamera();
-		Camera* camera = sessionCamera->camera;
-		PixelData* canvas = sessionCamera->canvas;
+        // Get the corresponding camera to be modified
+        PortholeCamera* sessionCamera = data->guiManager->getSessionCamera();
+        Camera* camera = sessionCamera->camera;
+        PixelData* canvas = sessionCamera->canvas;
 
-		// IMAGE ENCODING
-		// Get camera image as JPEG/PNG and base64 encode it, because only simple strings could be sent via websockets  
-		// Multithreading stuff: Lock the camera output, to make sure the pixel data we are getting 
-		// is not coming from an unfinished frame.
-		//camera->getOutput(0)->lock();
-		ByteArray* png = ImageUtils::encode(canvas, ImageUtils::FormatJpeg);
-		//FILE* pf = fopen("./test.jpg", "wb");
-		//fwrite((void*)png->getData(), 1, png->getSize(), pf);
-		//fclose(pf);
-		//camera->getOutput(0)->unlock();
-		// END IMAGE ENCODING
+        // IMAGE ENCODING
+        // Get camera image as JPEG/PNG and base64 encode it, because only simple strings could be sent via websockets  
+        // Multithreading stuff: Lock the camera output, to make sure the pixel data we are getting 
+        // is not coming from an unfinished frame.
+        //camera->getOutput(0)->lock();
+        ByteArray* png = ImageUtils::encode(canvas, ImageUtils::FormatJpeg);
+        //FILE* pf = fopen("./test.jpg", "wb");
+        //fwrite((void*)png->getData(), 1, png->getSize(), pf);
+        //fclose(pf);
+        //camera->getOutput(0)->unlock();
+        // END IMAGE ENCODING
 
-		// BASE64 ENCODING
-		std::string base64image = base64_encode(png->getData(),png->getSize());
-		// END BASE64 ENCODING
+        // BASE64 ENCODING
+        std::string base64image = base64_encode(png->getData(),png->getSize());
+        // END BASE64 ENCODING
 
-		// String to be send: base64 image and camera id
-		string toSend = "{\"event_type\":\"stream\",\"base64image\":\"";
-		toSend.append(base64image.c_str());
-		toSend.append("\",\"camera_id\":" + boost::lexical_cast<string>(sessionCamera->id) +
-			"}");
+        // String to be send: base64 image and camera id
+        string toSend = "{\"event_type\":\"stream\",\"base64image\":\"";
+        toSend.append(base64image.c_str());
+        toSend.append("\",\"camera_id\":" + boost::lexical_cast<string>(sessionCamera->id) +
+            "}");
 
-		// Send the base64 image
-		unsigned char* buf;
-		buf = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + toSend.length() + LWS_SEND_BUFFER_POST_PADDING];
-		unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
-		n = sprintf((char *)p, "%s",toSend.c_str());
+        // Send the base64 image
+        unsigned char* buf;
+        buf = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + toSend.length() + LWS_SEND_BUFFER_POST_PADDING];
+        unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
+        n = sprintf((char *)p, "%s",toSend.c_str());
 
-		// WEBSOCKET WRITE
-		n = libwebsocket_write(wsi, p, n, LWS_WRITE_TEXT);
-		if (n < 0) {
-			fprintf(stderr, "ERROR writing to socket");
-			return 1;
-		}
+        // WEBSOCKET WRITE
+        n = libwebsocket_write(wsi, p, n, LWS_WRITE_TEXT);
+        if (n < 0) {
+            fprintf(stderr, "ERROR writing to socket");
+            return 1;
+        }
 
-		// Free the buffer
-		delete[] buf;
+        // Free the buffer
+        delete[] buf;
 
-		// Save new timestamp
-		data->oldus = millisecondsSinceEpoch;
+        // Save new timestamp
+        data->oldus = millisecondsSinceEpoch;
 
-		// Pass the token
-		libwebsocket_callback_on_writable(context, wsi);
+        // Pass the token
+        libwebsocket_callback_on_writable(context, wsi);
 
-		break;
-	}
+        break;
+    }
 
-	case LWS_CALLBACK_RECEIVE:
-	{
-		//cout << (char *)in <<endl;
-		recv_message message = {"",0,0,1,0};
-		char *errorPos = 0;
-		char *errorDesc = 0;
-		int errorLine = 0;
-		block_allocator allocator(1 << 10); // 1 KB per block
+    case LWS_CALLBACK_RECEIVE:
+    {
+        //cout << (char *)in <<endl;
+        recv_message message = {"",0,0,1,0};
+        char *errorPos = 0;
+        char *errorDesc = 0;
+        int errorLine = 0;
+        block_allocator allocator(1 << 10); // 1 KB per block
         
-		// Parse json message received
-		json_value *root = json_parse((char*)in, &errorPos, &errorDesc, &errorLine, &allocator);
-		if (root)
-		{
-			// Fill message object
+        // Parse json message received
+        json_value *root = json_parse((char*)in, &errorPos, &errorDesc, &errorLine, &allocator);
+        if (root)
+        {
+            // Fill message object
             parse_json_message(root, data, &message);
 
-			// Handle message received
+            // Handle message received
             handle_message(data, &message, context, wsi);
-		}
+        }
 
-		break;
-	}
-	case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
-		//dump_handshake_info((struct lws_tokens *)(long)user);
-		/* you could return non-zero here and kill the connection */
-		break;
+        break;
+    }
+    case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
+        //dump_handshake_info((struct lws_tokens *)(long)user);
+        /* you could return non-zero here and kill the connection */
+        break;
 
-	case LWS_CALLBACK_CLOSED:
-	{
-		char cliname[1024];
-		char cliip[1024];
-		int fd = libwebsocket_get_socket_fd(wsi);
-		libwebsockets_get_peer_addresses(fd, cliname, 1024, cliip, 1024);
-		String cliName = ostr("%1%:%2%:%3%", %fd %cliip %cliname);
-		service->notifyDisconnected(cliName);
-		// Call gui destructor
-		delete data->guiManager;
-		break;
-	}
+    case LWS_CALLBACK_CLOSED:
+    {
+        char cliname[1024];
+        char cliip[1024];
+        int fd = libwebsocket_get_socket_fd(wsi);
+        libwebsockets_get_peer_addresses(fd, cliname, 1024, cliip, 1024);
+        String cliName = ostr("%1%:%2%:%3%", %fd %cliip %cliname);
+        service->notifyDisconnected(cliName);
+        // Call gui destructor
+        delete data->guiManager;
+        break;
+    }
 
-	default:
-		break;
-	}
-	return 0;
+    default:
+        break;
+    }
+    return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /* list of supported protocols and callbacks */
 struct libwebsocket_protocols protocols[] = 
 {
-	/* first protocol must always be HTTP handler */
-	{
-		"http-only",		/* name */
-		ServerThread::callback_http,		/* callback */
-		0			/* per_session_data_size */
-	},
+    /* first protocol must always be HTTP handler */
+    {
+        "http-only",		/* name */
+        ServerThread::callback_http,		/* callback */
+        0			/* per_session_data_size */
+    },
 
-	/* websocket enabled protocol */
-	{
-		"porthole_websocket",
-		ServerThread::callback_websocket,
-		sizeof(struct per_session_data),
-	},
+    /* websocket enabled protocol */
+    {
+        "porthole_websocket",
+        ServerThread::callback_websocket,
+        sizeof(struct per_session_data),
+    },
 
-	/* End of list */
-	{
-		NULL, NULL, 0	
-	}
+    /* End of list */
+    {
+        NULL, NULL, 0	
+    }
 };
 
 PortholeService* ServerThread::service = NULL;
@@ -736,27 +736,27 @@ PortholeService* ServerThread::service = NULL;
 ServerThread::ServerThread(PortholeService* owner):
 use_ssl(0), opts(0), n(0)
 {
-	service = owner;
-	// Set DATA FOLDER PATH
-	string fullPath;
-	DataManager::findFile("porthole/index.html", fullPath);
+    service = owner;
+    // Set DATA FOLDER PATH
+    string fullPath;
+    DataManager::findFile("porthole/index.html", fullPath);
 
-	DATA_PATH = fullPath.substr(0,fullPath.find_last_of("/\\"));
+    DATA_PATH = fullPath.substr(0,fullPath.find_last_of("/\\"));
 
-	minterface="";
+    minterface="";
 
-	//setPollPriority(Service::PollLast);
+    //setPollPriority(Service::PollLast);
 
-	if (!use_ssl)
-	{
-		cert_path = "";
-		key_path = "";
-	}
-	else
-	{
-		cert_path = (DATA_PATH+"/server.pem").c_str();
-		key_path = (DATA_PATH+"/server.key.pem").c_str();
-	}
+    if (!use_ssl)
+    {
+        cert_path = "";
+        key_path = "";
+    }
+    else
+    {
+        cert_path = (DATA_PATH+"/server.pem").c_str();
+        key_path = (DATA_PATH+"/server.key.pem").c_str();
+    }
 
 }
 
@@ -768,77 +768,77 @@ ServerThread::~ServerThread()
 ///////////////////////////////////////////////////////////////////////////////
 void ServerThread::setPort(int portNumber)
 {
-	this->port = portNumber;
+    this->port = portNumber;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void ServerThread::setFunctionsBinder(PortholeFunctionsBinder* binder)
 {
-	PortholeGUI::setPortholeFunctionsBinder(binder);
+    PortholeGUI::setPortholeFunctionsBinder(binder);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void ServerThread::setXMLfile(char* xmlPath)
 {
-	PortholeGUI::parseXmlFile(xmlPath);
+    PortholeGUI::parseXmlFile(xmlPath);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void ServerThread::setCSSPath(char* cssPath)
 {
-	css_path = std::string(cssPath);
+    css_path = std::string(cssPath);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void ServerThread::threadProc()
 {
-	// Buffer used to send/receive data using websockets
-	unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 1024 +
-						  LWS_SEND_BUFFER_POST_PADDING];
+    // Buffer used to send/receive data using websockets
+    unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 1024 +
+                          LWS_SEND_BUFFER_POST_PADDING];
 
-	cout << ">> Porthole initialization" << endl;
-	
-	// Initialize the websockets context
-	context = libwebsocket_create_context(port, minterface, protocols,
-				libwebsocket_internal_extensions,
-				cert_path, key_path, -1, -1, opts);
+    cout << ">> Porthole initialization" << endl;
+    
+    // Initialize the websockets context
+    context = libwebsocket_create_context(port, minterface, protocols,
+                libwebsocket_internal_extensions,
+                cert_path, key_path, -1, -1, opts);
 
-	if (context == NULL) {
-		fprintf(stderr, ">> !! libwebsocket init failed\n");
-		// TODO Delete service from global service manager
-		return;
-	}
+    if (context == NULL) {
+        fprintf(stderr, ">> !! libwebsocket init failed\n");
+        // TODO Delete service from global service manager
+        return;
+    }
 
-	// A dumb buffer to keep socket alive
-	buf[LWS_SEND_BUFFER_PRE_PADDING] = 'x';
+    // A dumb buffer to keep socket alive
+    buf[LWS_SEND_BUFFER_PRE_PADDING] = 'x';
 
-	service->notifyServerStarted();
+    service->notifyServerStarted();
 
-	//fprintf(stderr, " Using no-fork service loop\n");
-	oldus = 0;
-	n = 0;
-	while (n >= 0 && !SystemManager::instance()->isExitRequested()) 
-	{
-		struct timeval tv;
+    //fprintf(stderr, " Using no-fork service loop\n");
+    oldus = 0;
+    n = 0;
+    while (n >= 0 && !SystemManager::instance()->isExitRequested()) 
+    {
+        struct timeval tv;
 
-		gettimeofday(&tv, NULL);
+        gettimeofday(&tv, NULL);
 
-		/*
-		 * This server does not fork or create a thread for
-		 * websocket service, it all runs in this single loop.  So,
-		 * we have to give the websockets an opportunity to service
-		 * "manually".
-		 *
-		 * If no socket is needing service, the call below returns
-		 * immediately and quickly.  Negative return means we are
-		 * in process of closing
-		 */
+        /*
+         * This server does not fork or create a thread for
+         * websocket service, it all runs in this single loop.  So,
+         * we have to give the websockets an opportunity to service
+         * "manually".
+         *
+         * If no socket is needing service, the call below returns
+         * immediately and quickly.  Negative return means we are
+         * in process of closing
+         */
 
-		n = libwebsocket_service(context, 50);
-	}
+        n = libwebsocket_service(context, 50);
+    }
 
-	// Destroy context when main loop ends
-	libwebsocket_context_destroy(context);
+    // Destroy context when main loop ends
+    libwebsocket_context_destroy(context);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -849,26 +849,26 @@ PortholeService::PortholeService()
 ///////////////////////////////////////////////////////////////////////////////
 PortholeService::~PortholeService()
 {
-	portholeServer->stop();
-	delete portholeServer;
+    portholeServer->stop();
+    delete portholeServer;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void PortholeService::start(int port, char* xmlPath, char* cssPath)
 {
-	myBinder = new PortholeFunctionsBinder();
-	portholeServer = new ServerThread(this);
-	portholeServer->setPort(port);
-	portholeServer->setFunctionsBinder(myBinder);
-	portholeServer->setXMLfile(xmlPath);
-	portholeServer->setCSSPath(cssPath);
-	portholeServer->start();
+    myBinder = new PortholeFunctionsBinder();
+    portholeServer = new ServerThread(this);
+    portholeServer->setPort(port);
+    portholeServer->setFunctionsBinder(myBinder);
+    portholeServer->setXMLfile(xmlPath);
+    portholeServer->setCSSPath(cssPath);
+    portholeServer->start();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void PortholeService::setup(Setting& settings)
 {
-	cout << ">> !! Setup called" << endl;
+    cout << ">> !! Setup called" << endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -978,65 +978,65 @@ inline std::string base64_decode(std::string const& encoded_string) {
 ///////////////////////////////////////////////////////////////////////////////
 void PortholeService::notifyServerStarted()
 {
-	if(!myServerStartedCommand.empty())
-	{
-		PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
-		i->queueCommand(myServerStartedCommand);
-	}
+    if(!myServerStartedCommand.empty())
+    {
+        PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
+        i->queueCommand(myServerStartedCommand);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void PortholeService::notifyConnected(const String& id)
 {
-	if(!myConnectedCommand.empty())
-	{
-		PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
-		String cmd = StringUtils::replaceAll(myConnectedCommand, "%id%", id);
-		i->queueCommand(cmd);
-	}
+    if(!myConnectedCommand.empty())
+    {
+        PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
+        String cmd = StringUtils::replaceAll(myConnectedCommand, "%id%", id);
+        i->queueCommand(cmd);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void PortholeService::notifyDisconnected(const String& id)
 {
-	if(!myDisconnectedCommand.empty())
-	{
-		PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
-		String cmd = StringUtils::replaceAll(myConnectedCommand, "%id%", id);
-		i->queueCommand(cmd);
-	}
+    if(!myDisconnectedCommand.empty())
+    {
+        PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
+        String cmd = StringUtils::replaceAll(myConnectedCommand, "%id%", id);
+        i->queueCommand(cmd);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void PortholeService::notifyCameraCreated(Camera* cam)
 {
-	if(!myCameraCreatedCommand.empty())
-	{
-		PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
-		String idstr = ostr("%1%", %cam->getCameraId());
-		String cmd = StringUtils::replaceAll(myCameraCreatedCommand, "%id%", idstr);
-		i->queueCommand(cmd);
-	}
+    if(!myCameraCreatedCommand.empty())
+    {
+        PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
+        String idstr = ostr("%1%", %cam->getCameraId());
+        String cmd = StringUtils::replaceAll(myCameraCreatedCommand, "%id%", idstr);
+        i->queueCommand(cmd);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void PortholeService::notifyCameraDestroyed(Camera* cam)
 {
-	if(!myCameraDestroyedCommand.empty())
-	{
-		PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
-		String idstr = ostr("%1%", %cam->getCameraId());
-		String cmd = StringUtils::replaceAll(myCameraDestroyedCommand, "%id%", idstr);
-		i->queueCommand(cmd);
-	}
+    if(!myCameraDestroyedCommand.empty())
+    {
+        PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
+        String idstr = ostr("%1%", %cam->getCameraId());
+        String cmd = StringUtils::replaceAll(myCameraDestroyedCommand, "%id%", idstr);
+        i->queueCommand(cmd);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 void PortholeService::postEvent(Event::Type type, int sourceId, int x, int y)
 {
-	lockEvents();
-	Event* evt = writeHead();
-	evt->reset(type, Service::Pointer, sourceId, getServiceId());
-	evt->setPosition(x, y);
-	unlockEvents();
+    lockEvents();
+    Event* evt = writeHead();
+    evt->reset(type, Service::Pointer, sourceId, getServiceId());
+    evt->setPosition(x, y);
+    unlockEvents();
 }
