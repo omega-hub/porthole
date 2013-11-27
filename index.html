@@ -33,9 +33,9 @@
  <title>Porthole</title>
 
  <!--JQuery + JQueryMobile-->
- <script src="http://code.jquery.com/jquery-1.7.1.min.js" type="application/javascript"></script>
- <link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" type="text/css"/>
- <script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js" type="application/javascript"></script>
+ <script src="http://code.jquery.com/jquery-2.0.3.min.js" type="application/javascript"></script>
+ <link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css" type="text/css"/>
+ <script src="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js" type="application/javascript"></script>
 
    <!-- Color picker -->
  <script src="./farbtastic.js" type="application/javascript"></script>
@@ -84,7 +84,7 @@
  
  <!-- <script src="./recorder.js" type="application/javascript"></script> -->
 
- <div id="porthole_content"  style=" width : 100%; height : 99%; " data-theme="b">
+ <div id="porthole_content" data-role="page" data-theme="a">
    <div data-role="header">
 	<h1>Porthole Initialization</h1>
    </div>
@@ -197,10 +197,31 @@
         return pcol + u[0];
     }
 
+    // Read URL query argument
+    function getURLArg() 
+    { 
+        var query = location.search.substr(1);
+        var data = query.split("&");
+        var result = {};
+        for(var i=0; i<data.length; i++) 
+        {
+            var item = data[i].split("=");
+            result[item[0]] = item[1];
+        }
+        return result;
+  } 
+
     ///////////////////// SEND SPEC TO SERVER //////////////////////////
 
     var SEND_SPEC_INTERVAL = 1000; // in Millis 
     var send_spec_waiting = false;
+    var interface_id = undefined;
+    
+    function setInterface(interfaceId)
+    {
+        interface_id = interfaceId;
+        sendSpec();
+    }
 
     function sendSpec() {
 
@@ -209,6 +230,10 @@
             viewportheight=w.innerHeight||e.clientHeight||g.clientHeight;
 
         var orientation;
+        
+        var iid = getURLArg()["id"];
+        if(iid == undefined) iid = "default";
+        if(interface_id != undefined) iid = interface_id;
 
         if (viewportwidth > viewportheight) {
                 // landscape mode
@@ -223,7 +248,8 @@
             "width": viewportwidth,
             "height": viewportheight,
             "orientation": orientation,
-            "first_time": firstTime
+            "first_time": firstTime,
+            "value": iid
         }
         socket.send(JSON.stringify(SpecMessage));
 
@@ -287,10 +313,10 @@
                 document.getElementById("porthole_content").innerHTML = message.innerHTML;
 
                 // Height fix
-                var w = window, d = document, e = d.documentElement, g = d.getElementsByTagName('body')[0],
+                /*var w = window, d = document, e = d.documentElement, g = d.getElementsByTagName('body')[0],
                         viewportwidth = w.innerWidth || e.clientWidth || g.clientWidth,
                         viewportheight = w.innerHeight || e.clientHeight || g.clientHeight;
-                $("#porthole_content").height(viewportheight);
+                $("#porthole_content").height(viewportheight);*/
 
                 // Set jquery mobile interface
                 $("#porthole_content").trigger('create');

@@ -39,7 +39,7 @@ using namespace omega;
 using namespace std;
 
 PortholeFunctionsBinder* PortholeGUI::functionsBinder;
-vector<PortholeInterfaceType*> PortholeGUI::interfaces;
+vector< Ref<PortholeInterfaceType> > PortholeGUI::interfaces;
 std::map<string, omega::xml::TiXmlElement* > PortholeGUI::interfacesMap;
 std::map<string, PortholeElement*> PortholeGUI::elementsMap;
 std::map<int, PortholeCamera*> PortholeGUI::CamerasMap;
@@ -57,15 +57,18 @@ PortholeGUI::PortholeGUI(PortholeService* owner, const String& cliid):
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-PortholeGUI::~PortholeGUI(){
-	delete device;
-	service->notifyCameraCreated(sessionCamera->camera);
-	Engine::instance()->destroyCamera(this->sessionCamera->camera);
+PortholeGUI::~PortholeGUI()
+{
+    if(sessionCamera != NULL)
+    {
+	    //service->notifyCameraCreated(sessionCamera->camera);
+        Engine::instance()->destroyCamera(this->sessionCamera->camera);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::setDeviceSpecifications(int width, int height, string orientation){
-
+void PortholeGUI::setDeviceSpecifications(int width, int height, const String& orientation, const String& interfaceId)
+{
 	// Set the device
 	this->device = new PortholeDevice();
 	device->deviceWidth = width;
@@ -75,21 +78,26 @@ void PortholeGUI::setDeviceSpecifications(int width, int height, string orientat
 	for(int i=0; i<interfaces.size(); i++){
 		if (width > interfaces.at(i)->minWidth && 
 			height > interfaces.at(i)->minHeight &&
-			orientation.compare(interfaces.at(i)->orientation)==0)
+			orientation.compare(interfaces.at(i)->orientation)==0 &&
+            interfaceId == interfaces.at(i)->id)
 			device->interfaceType = interfaces.at(i);
 	}
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-string PortholeGUI::create(bool firstTime){
+string PortholeGUI::create(bool firstTime)
+{
+    if(device->interfaceType == NULL)
+    {
+        return "Interface not available for this device";
+    }
 
 	string interfaceKey = device->interfaceType->id + device->interfaceType->orientation;
 	omega::xml::TiXmlElement* root = interfacesMap[interfaceKey];
 
 	if (root == NULL) return "Interface not available for this device";
 
-	string result = "<table data-role=\"none\" border=\"0\" style=\" width : 100%; height : 100%; \">";
+	string result = "<table data-role=\"none\" border=\"0\" style=\" width : 100%; height : 100%; \" cellspacing=\"0\" cellpadding=\"0\">";
 	
 	if ( device->interfaceType->layout.compare("horizontal")==0 ||
 			device->interfaceType->layout.compare("hor") == 0 ){
@@ -334,11 +342,23 @@ void PortholeGUI::modCustomCamera(float size, float widthPercent, float heightPe
 		StringUtils::toLowerCase(attribute);
 
 		// Save id attribute if not defined by user as cpp function
-		if (HTML::isEvent(attribute) && !functionsBinder->isCppDefined(pAttrib->Value())){
-			//cout << "Adding script " << pAttrib->Value() << endl; 
-			string key = "python_script"+boost::lexical_cast<string>(functionsBinder->scriptNumber)+"(event)";
-			functionsBinder->addPythonScript(pAttrib->Value(), key); // Insert the new script
-			pAttrib->SetValue(key.c_str());
+		if (HTML::isEvent(attribute) && !functionsBinder->isCppDefined(pAttrib->Value()))
+        {
+            // NOTE: If the value starts with %js, we consider the call a javascript
+            // call, and we do not generate a python call site.
+            String val = pAttrib->Value();
+            if(StringUtils::startsWith(val, "%js"))
+            {
+                val = StringUtils::replaceAll(val, "%js", "");
+			    pAttrib->SetValue(val.c_str());
+            }
+            else
+            {
+			    //cout << "Adding script " << pAttrib->Value() << endl; 
+			    string key = "python_script"+boost::lexical_cast<string>(functionsBinder->scriptNumber)+"(event)";
+			    functionsBinder->addPythonScript(pAttrib->Value(), key); // Insert the new script
+			    pAttrib->SetValue(key.c_str());
+            }
 		}
 
 		// Next attribute

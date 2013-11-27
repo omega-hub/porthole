@@ -110,23 +110,23 @@ namespace HTML {
 };
 
 // This will old a possible interface
-typedef struct PortholeInterfaceType: ReferenceType
+struct PortholeInterfaceType: public ReferenceType
 {
 	int minWidth;
 	int minHeight;
 	string id;
 	string orientation;
 	string layout;
-} PortholeInterfaceType;
+};
 
 // A device specifications object
-typedef struct PortholeDevice: ReferenceType
+struct PortholeDevice: public ReferenceType
 {
 	int deviceWidth;
 	int deviceHeight;
 	string deviceOrientation; // Portrait or Landscape
-	PortholeInterfaceType* interfaceType;
-} PortholeDevice;
+	Ref<PortholeInterfaceType> interfaceType;
+};
 
 // An element object
 struct PortholeElement: ReferenceType
@@ -243,7 +243,7 @@ public:
 	string create(bool firstTime);
 
 	// Set device specifications
-	void setDeviceSpecifications(int width, int height, string orientation);
+	void setDeviceSpecifications(int width, int height, const String& orientation, const String& interfaceId);
 
 	// Return an object that contains the device specifications
 	PortholeDevice* getDevice() { return device; }
@@ -277,7 +277,7 @@ private:
 	PortholeService* service;
 
 	// The device for which an interface will be created
-	PortholeDevice* device;
+	Ref<PortholeDevice> device;
 
 	// The camera of this session
 	PortholeCamera* sessionCamera;
@@ -293,7 +293,7 @@ private:
 	static PortholeFunctionsBinder* functionsBinder;
 
 	// All the possible interfaces
-	static vector<PortholeInterfaceType*> interfaces; 
+	static vector< Ref<PortholeInterfaceType> > interfaces; 
 
 	// A map between a device type and its GUI elements
 	static std::map<string, omega::xml::TiXmlElement* > interfacesMap;

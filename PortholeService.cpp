@@ -530,7 +530,8 @@ inline void handle_message(per_session_data* data, recv_message* message,
     else if (strcmp(message->event_type.c_str(),MSG_EVENT_SPEC)==0)
     {
         // Save device specification
-        data->guiManager->setDeviceSpecifications(message->width,message->height,message->orientation);
+        // NOTE: message->value contains the interface ID
+        data->guiManager->setDeviceSpecifications(message->width,message->height,message->orientation, message->value);
 
         // Send the Html elements to the browser based on device specification
         sendHtmlElements(message->firstTime,data,context,wsi);
