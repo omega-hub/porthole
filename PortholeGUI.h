@@ -239,6 +239,8 @@ public:
 	// Destructor
 	~PortholeGUI();
 
+    const String& getId() { return clientId; }
+
 	// Create the device specifc html interface
 	string create(bool firstTime);
 
@@ -255,6 +257,24 @@ public:
 	PortholeCamera* getSessionCamera() { return sessionCamera; } 
 	PortholeService* getService()
 	{ return service; }
+
+    //! @internal Return true if javascript commands are queued to be sent
+    //! to the client.
+    bool isJavascriptQueued()
+    { 
+        javascriptQueueLock.lock();
+        bool queued = !javascriptQueue.empty();
+        javascriptQueueLock.unlock();
+        return queued;
+    }
+
+    //! Queues a javascript command to be invoked on the client.
+    void calljs(const String& command)
+    { 
+        javascriptQueueLock.lock();
+        javascriptQueue.push_back(command);
+        javascriptQueueLock.unlock();
+    }
 
 	// Mod the camera with id cameraId 
 	// size: the ratio of camera: 1.0 is full size
@@ -284,6 +304,10 @@ private:
 
 	String clientId;
 
+    // Queue of javascript calls from the server to the client
+    List<String> javascriptQueue;
+    Lock javascriptQueueLock;
+
 	// Create a Porthole custom camera and a PixelData associated
 	void createCustomCamera(float widthPercent, float heightPercent, uint cameraMask = 0); 
 
@@ -300,6 +324,7 @@ private:
 
 	// A map between an element id and the element data
 	static std::map<string, PortholeElement*> elementsMap;
+    
 };
 
 #endif

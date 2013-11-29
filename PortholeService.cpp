@@ -582,7 +582,7 @@ int ServerThread::callback_websocket(struct libwebsocket_context *context,
         String cliName = ostr("%1%:%2%:%3%", %fd %cliip %cliname);
         service->notifyConnected(cliName);
         // Allocate gui manager
-        data->guiManager = new PortholeGUI(service, cliName);
+        data->guiManager = service->createClient(cliName);
         data->oldus = 0;
 
         break;
@@ -697,7 +697,7 @@ int ServerThread::callback_websocket(struct libwebsocket_context *context,
         String cliName = ostr("%1%:%2%:%3%", %fd %cliip %cliname);
         service->notifyDisconnected(cliName);
         // Call gui destructor
-        delete data->guiManager;
+        service->destroyClient(data->guiManager);
         break;
     }
 
@@ -1041,3 +1041,38 @@ void PortholeService::postEvent(Event::Type type, int sourceId, int x, int y)
     evt->setPosition(x, y);
     unlockEvents();
 }
+
+///////////////////////////////////////////////////////////////////////////////
+PortholeGUI* PortholeService::createClient(const String& name)
+{
+    PortholeGUI* cli = new PortholeGUI(this, name);
+    myClients.push_back(cli);
+    return cli;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void PortholeService::destroyClient(PortholeGUI* gui)
+{
+    oassert(gui != NULL);
+    myClients.remove(gui);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+PortholeGUI* PortholeService::findClient(const String& name)
+{
+    foreach(PortholeGUI* cli, myClients)
+    {
+        if(cli->getId() == name) return cli;
+    }
+    return NULL;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void PortholeService::calljs(const String& js, PortholeGUI* origin)
+{
+    foreach(PortholeGUI* cli, myClients)
+    {
+        if(cli != origin) cli->calljs(js);
+    }
+}
+

@@ -150,6 +150,11 @@ public:
     //! connections.
     void notifyServerStarted();
 
+    PortholeGUI* createClient(const String& name);
+    void destroyClient(PortholeGUI* gui);
+    PortholeGUI* findClient(const String& name);
+    void calljs(const String& js, PortholeGUI* origin = NULL);
+
 private:
 	String myConnectedCommand;
 	String myDisconnectedCommand;
@@ -157,6 +162,8 @@ private:
 	String myCameraDestroyedCommand;
 	String myServerStartedCommand;
 	PortholeFunctionsBinder* myBinder;
+
+    List< Ref<PortholeGUI> > myClients;
 };
 
 #endif
