@@ -201,6 +201,8 @@ int ServerThread::callback_http(struct libwebsocket_context *context,
             PortholeFunctionsBinder* functionsBinder = PortholeGUI::getPortholeFunctionsBinder();
             std::map<std::string, string>::const_iterator py_it;
             for(py_it = functionsBinder->pythonFunMap.begin(); py_it != functionsBinder->pythonFunMap.end(); py_it++){
+                content.append("var " + functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event = false;");
+
                 content.append(" function ");
 
                 Vector<String> toks = StringUtils::split(py_it->second, "%");
@@ -216,7 +218,9 @@ int ServerThread::callback_http(struct libwebsocket_context *context,
                 for(int i = 1; i < toks.size(); i += 2)
                 {
                     // Ignore special token %value% to keep compatibility with old interfaces.
-                    if(toks[i] != "value")
+                    // Ignore special token %client_id%: this will be substituted server-side
+                    // with the name of the client sending the call
+                    if(toks[i] != "value" && toks[i] != "client_id")
                     {
                         content.append(ostr("\"%1%\": String(%1%),", %toks[i]));
                     }
@@ -227,10 +231,13 @@ int ServerThread::callback_http(struct libwebsocket_context *context,
 
                 content.append(py_it->first);
                 content.append("\""
-                                    "};"
-                                    "sendContinuous = event.target.getAttribute(\"data-continuous\");"
-                                    "socket.send(JSON.stringify(JSONToSend));"
-                                "};");
+                    "};"
+                    "if(!" + functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event) {"
+                    "sendContinuous = event.target.getAttribute(\"data-continuous\");"
+                    "socket.send(JSON.stringify(JSONToSend));"
+                    "}" +
+                    functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event = false;"
+                "};");
 
             }
 
@@ -548,7 +555,7 @@ inline void handle_message(per_session_data* data, recv_message* message,
     // Javascript functions bind
     else if(strcmp(message->event_type.c_str(),MSG_EVENT_INPUT)==0){
         // Create event
-        PortholeEvent ev;
+        PortholeEvent ev(data->guiManager->getId());
         ev.sessionCamera = data->guiManager->getSessionCamera();
         ev.mouseButton = message->button;
         ev.value = message->value;
@@ -593,68 +600,86 @@ int ServerThread::callback_websocket(struct libwebsocket_context *context,
     {
 
         // Check if we have stream to send: if not, pass the token
-        if ( !data->guiManager->isCameraReadyToStream() ){
-            libwebsocket_callback_on_writable(context, wsi);
-            return 0;
+        if (data->guiManager->isCameraReadyToStream() )
+        {
+            // Write at 50Hz, so continue if it's too early for us
+            struct timeval tv;
+            gettimeofday(&tv, NULL);
+            unsigned long long millisecondsSinceEpoch =
+                (unsigned long long)(tv.tv_sec) * 1000 +
+                (unsigned long long)(tv.tv_usec) / 1000;
+            if ((millisecondsSinceEpoch - data->oldus) < 20) {
+                libwebsocket_callback_on_writable(context, wsi);
+                return 0;
+            }
+
+            // Get the corresponding camera to be modified
+            PortholeCamera* sessionCamera = data->guiManager->getSessionCamera();
+            Camera* camera = sessionCamera->camera;
+            PixelData* canvas = sessionCamera->canvas;
+
+            // IMAGE ENCODING
+            // Get camera image as JPEG/PNG and base64 encode it, because only simple strings could be sent via websockets  
+            // Multithreading stuff: Lock the camera output, to make sure the pixel data we are getting 
+            // is not coming from an unfinished frame.
+            //camera->getOutput(0)->lock();
+            ByteArray* png = ImageUtils::encode(canvas, ImageUtils::FormatJpeg);
+            //FILE* pf = fopen("./test.jpg", "wb");
+            //fwrite((void*)png->getData(), 1, png->getSize(), pf);
+            //fclose(pf);
+            //camera->getOutput(0)->unlock();
+            // END IMAGE ENCODING
+
+            // BASE64 ENCODING
+            std::string base64image = base64_encode(png->getData(),png->getSize());
+            // END BASE64 ENCODING
+
+            // String to be send: base64 image and camera id
+            string toSend = "{\"event_type\":\"stream\",\"base64image\":\"";
+            toSend.append(base64image.c_str());
+            toSend.append("\",\"camera_id\":" + boost::lexical_cast<string>(sessionCamera->id) +
+                "}");
+
+            // Send the base64 image
+            unsigned char* buf;
+            buf = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + toSend.length() + LWS_SEND_BUFFER_POST_PADDING];
+            unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
+            n = sprintf((char *)p, "%s",toSend.c_str());
+
+            // WEBSOCKET WRITE
+            n = libwebsocket_write(wsi, p, n, LWS_WRITE_TEXT);
+            if (n < 0) {
+                fprintf(stderr, "ERROR writing to socket");
+                return 1;
+            }
+
+            // Free the buffer
+            delete[] buf;
+
+            // Save new timestamp
+            data->oldus = millisecondsSinceEpoch;
         }
 
-        // Write at 50Hz, so continue if it's too early for us
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-        unsigned long long millisecondsSinceEpoch =
-            (unsigned long long)(tv.tv_sec) * 1000 +
-            (unsigned long long)(tv.tv_usec) / 1000;
-        if ((millisecondsSinceEpoch - data->oldus) < 20) {
-            libwebsocket_callback_on_writable(context, wsi);
-            return 0;
+        // See if we have javascript callbacks that we need to send to the
+        // client
+        else if(data->guiManager->isJavascriptQueued())
+        {
+            String toSend = data->guiManager->flushJavascriptQueueToJson();
+            // Send the base64 image
+            unsigned char* buf;
+            buf = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + toSend.length() + LWS_SEND_BUFFER_POST_PADDING];
+            unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
+            n = sprintf((char *)p, "%s",toSend.c_str());
+
+            // WEBSOCKET WRITE
+            n = libwebsocket_write(wsi, p, n, LWS_WRITE_TEXT);
+            if (n < 0) {
+                fprintf(stderr, "ERROR writing to socket");
+                return 1;
+            }
+            // Free the buffer
+            delete[] buf;
         }
-
-        // Get the corresponding camera to be modified
-        PortholeCamera* sessionCamera = data->guiManager->getSessionCamera();
-        Camera* camera = sessionCamera->camera;
-        PixelData* canvas = sessionCamera->canvas;
-
-        // IMAGE ENCODING
-        // Get camera image as JPEG/PNG and base64 encode it, because only simple strings could be sent via websockets  
-        // Multithreading stuff: Lock the camera output, to make sure the pixel data we are getting 
-        // is not coming from an unfinished frame.
-        //camera->getOutput(0)->lock();
-        ByteArray* png = ImageUtils::encode(canvas, ImageUtils::FormatJpeg);
-        //FILE* pf = fopen("./test.jpg", "wb");
-        //fwrite((void*)png->getData(), 1, png->getSize(), pf);
-        //fclose(pf);
-        //camera->getOutput(0)->unlock();
-        // END IMAGE ENCODING
-
-        // BASE64 ENCODING
-        std::string base64image = base64_encode(png->getData(),png->getSize());
-        // END BASE64 ENCODING
-
-        // String to be send: base64 image and camera id
-        string toSend = "{\"event_type\":\"stream\",\"base64image\":\"";
-        toSend.append(base64image.c_str());
-        toSend.append("\",\"camera_id\":" + boost::lexical_cast<string>(sessionCamera->id) +
-            "}");
-
-        // Send the base64 image
-        unsigned char* buf;
-        buf = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + toSend.length() + LWS_SEND_BUFFER_POST_PADDING];
-        unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
-        n = sprintf((char *)p, "%s",toSend.c_str());
-
-        // WEBSOCKET WRITE
-        n = libwebsocket_write(wsi, p, n, LWS_WRITE_TEXT);
-        if (n < 0) {
-            fprintf(stderr, "ERROR writing to socket");
-            return 1;
-        }
-
-        // Free the buffer
-        delete[] buf;
-
-        // Save new timestamp
-        data->oldus = millisecondsSinceEpoch;
-
         // Pass the token
         libwebsocket_callback_on_writable(context, wsi);
 
@@ -1068,11 +1093,33 @@ PortholeGUI* PortholeService::findClient(const String& name)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeService::calljs(const String& js, PortholeGUI* origin)
+void PortholeService::sendjs(const String& js, const String& destination)
 {
     foreach(PortholeGUI* cli, myClients)
     {
-        if(cli != origin) cli->calljs(js);
+        if(cli->getId() == destination)
+        {
+            cli->calljs(js);
+
+        }
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+void PortholeService::broadcastjs(const String& js, const String& origin)
+{
+    if(origin.empty())
+    {
+        foreach(PortholeGUI* cli, myClients)
+        {
+            cli->calljs(js);
+        }
+    }
+    else
+    {
+        foreach(PortholeGUI* cli, myClients)
+        {
+            if(cli->getId() != origin) cli->calljs(js);
+        }
+    }
+}

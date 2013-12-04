@@ -35,40 +35,42 @@
 #include "PortholeService.h"
 #include "PortholeGUI.h"
 
+#define PORTHOLE_VERSION "1.0"
+
 using namespace omega;
 
 PortholeService* sServiceInstance = NULL;
-	
+    
 ///////////////////////////////////////////////////////////////////////////////
 PortholeService* getService()
 {
-	return sServiceInstance;
+    return sServiceInstance;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 bool initialize(
-	const String& xml = "porthole/default.xml", 
-	const String& css = "porthole/default.css", 
-	int port = 4080)
+    const String& xml = "porthole/default.xml", 
+    const String& css = "porthole/default.css", 
+    int port = 4080)
 {
-	// The service gets created only on the master node.
-	if(SystemManager::instance()->isMaster() && !sServiceInstance)
-	{
-		sServiceInstance = new PortholeService();
-		ServiceManager* svcManager = SystemManager::instance()->getServiceManager();
-		svcManager->addService(sServiceInstance);
+    // The service gets created only on the master node.
+    if(SystemManager::instance()->isMaster() && !sServiceInstance)
+    {
+        sServiceInstance = new PortholeService();
+        ServiceManager* svcManager = SystemManager::instance()->getServiceManager();
+        svcManager->addService(sServiceInstance);
 
-		string fullPath_xml;
-		DataManager::findFile(xml, fullPath_xml);
+        string fullPath_xml;
+        DataManager::findFile(xml, fullPath_xml);
 
-		string fullPath_css;
-		DataManager::findFile(css, fullPath_css);
+        string fullPath_css;
+        DataManager::findFile(css, fullPath_css);
 
-		sServiceInstance->start(port, (char*)fullPath_xml.c_str(), (char*)fullPath_css.c_str());
+        sServiceInstance->start(port, (char*)fullPath_xml.c_str(), (char*)fullPath_css.c_str());
 
-		return true;
-	}
-	return false;
+        return true;
+    }
+    return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -78,15 +80,19 @@ bool initialize(
 BOOST_PYTHON_FUNCTION_OVERLOADS(initializeOverloads, initialize, 0, 3)
 BOOST_PYTHON_MODULE(porthole)
 {
-	PYAPI_REF_BASE_CLASS(PortholeService)
-		PYAPI_METHOD(PortholeService, setConnectedCommand)
-		PYAPI_METHOD(PortholeService, setDisconnectedCommand)
-		PYAPI_METHOD(PortholeService, setCameraCreatedCommand)
-		PYAPI_METHOD(PortholeService, setCameraDestroyedCommand)
-		PYAPI_METHOD(PortholeService, setServerStartedCommand)
-		;
+    PYAPI_REF_BASE_CLASS(PortholeService)
+        PYAPI_METHOD(PortholeService, setConnectedCommand)
+        PYAPI_METHOD(PortholeService, setDisconnectedCommand)
+        PYAPI_METHOD(PortholeService, setCameraCreatedCommand)
+        PYAPI_METHOD(PortholeService, setCameraDestroyedCommand)
+        PYAPI_METHOD(PortholeService, setServerStartedCommand)
+        PYAPI_METHOD(PortholeService, sendjs)
+        PYAPI_METHOD(PortholeService, broadcastjs)
+        ;
 
-	def("initialize", initialize, initializeOverloads());
-	def("getService", getService, PYAPI_RETURN_REF);
+    def("initialize", initialize, initializeOverloads());
+    def("getService", getService, PYAPI_RETURN_REF);
+
+    ofmsg(">>>>> Porthole version %1% ready", %PORTHOLE_VERSION);
 }
 #endif

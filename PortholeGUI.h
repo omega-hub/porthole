@@ -52,142 +52,148 @@ using namespace std;
 // so that parser could know which attribute is a Javascript event
 namespace HTML {
 
-	static const int eventsNumber = 19;
+    static const int eventsNumber = 19;
 
-	enum Event{
-		OnLoad,
-		OnUnload,
-		OnBlur,
-		OnChange,
-		OnFocus,
-		OnReset,
-		OnSelect,
-		OnSubmit,
-		OnAbort,
-		OnKeyDown,
-		OnKeyPress,
-		OnKeyUp,
-		OnClick,
-		OnDblClick,
-		OnMouseDown,
-		OnMouseMove,
-		OnMouseOut,
-		OnMouseOver,
-		OnMouseUp
-	};
+    enum Event{
+        OnLoad,
+        OnUnload,
+        OnBlur,
+        OnChange,
+        OnFocus,
+        OnReset,
+        OnSelect,
+        OnSubmit,
+        OnAbort,
+        OnKeyDown,
+        OnKeyPress,
+        OnKeyUp,
+        OnClick,
+        OnDblClick,
+        OnMouseDown,
+        OnMouseMove,
+        OnMouseOut,
+        OnMouseOver,
+        OnMouseUp
+    };
 
-	// All HTML compatible events that could be found parsing the application xml
-	static const string events[eventsNumber] = {
-		"onload",  /* Script to be run when a document load */
-		"onunload",  /*  Script to be run when a document unload */
-		"onblur",  /* Script to be run when an element loses focus */
-		"onchange",  /* Script to be run when an element changes */
-		"onfocus",  /* Script to be run when an element gets focus */
-		"onreset",  /*  Script to be run when a form is reset */
-		"onselect",  /* Script to be run when a document load */
-		"onsubmit",  /* Script to be run when a form is submitted */
-		"onabort",  /* Script to be run when loading of an image is interrupted */
-		"onkeydown",  /* Script to be run when a key is pressed */
-		"onkeypress",  /* Script to be run when a key is pressed and released */
-		"onkeyup",  /* Script to be run when a key is released */
-		"onclick",  /* Script to be run on a mouse click */
-		"ondblclick",  /* Script to be run on a mouse double-click */
-		"onmousedown",  /* Script to be run when mouse button is pressed */
-		"onmousemove",  /* Script to be run when mouse pointer moves */
-		"onmouseout",  /* Script to be run when mouse pointer moves out of an element */
-		"onmouseover",  /* Script to be run when mouse pointer moves over an element */
-		"onmouseup",  /* Script to be run when mouse button is released */
-	};
+    // All HTML compatible events that could be found parsing the application xml
+    static const string events[eventsNumber] = {
+        "onload",  /* Script to be run when a document load */
+        "onunload",  /*  Script to be run when a document unload */
+        "onblur",  /* Script to be run when an element loses focus */
+        "onchange",  /* Script to be run when an element changes */
+        "onfocus",  /* Script to be run when an element gets focus */
+        "onreset",  /*  Script to be run when a form is reset */
+        "onselect",  /* Script to be run when a document load */
+        "onsubmit",  /* Script to be run when a form is submitted */
+        "onabort",  /* Script to be run when loading of an image is interrupted */
+        "onkeydown",  /* Script to be run when a key is pressed */
+        "onkeypress",  /* Script to be run when a key is pressed and released */
+        "onkeyup",  /* Script to be run when a key is released */
+        "onclick",  /* Script to be run on a mouse click */
+        "ondblclick",  /* Script to be run on a mouse double-click */
+        "onmousedown",  /* Script to be run when mouse button is pressed */
+        "onmousemove",  /* Script to be run when mouse pointer moves */
+        "onmouseout",  /* Script to be run when mouse pointer moves out of an element */
+        "onmouseover",  /* Script to be run when mouse pointer moves over an element */
+        "onmouseup",  /* Script to be run when mouse button is released */
+    };
 
-	static bool isEvent(string stringToSearch)
-	{
-		for(int i=0; i < eventsNumber; i++)
-			if (stringToSearch.compare(events[i]) == 0)
-				return true; // found
-		return false; // not found
-	}
+    static bool isEvent(string stringToSearch)
+    {
+        for(int i=0; i < eventsNumber; i++)
+            if (stringToSearch.compare(events[i]) == 0)
+                return true; // found
+        return false; // not found
+    }
 
 };
 
 // This will old a possible interface
 struct PortholeInterfaceType: public ReferenceType
 {
-	int minWidth;
-	int minHeight;
-	string id;
-	string orientation;
-	string layout;
+    int minWidth;
+    int minHeight;
+    string id;
+    string orientation;
+    string layout;
 };
 
 // A device specifications object
 struct PortholeDevice: public ReferenceType
 {
-	int deviceWidth;
-	int deviceHeight;
-	string deviceOrientation; // Portrait or Landscape
-	Ref<PortholeInterfaceType> interfaceType;
+    int deviceWidth;
+    int deviceHeight;
+    string deviceOrientation; // Portrait or Landscape
+    Ref<PortholeInterfaceType> interfaceType;
 };
 
 // An element object
 struct PortholeElement: ReferenceType
 {
-	string id;
-	string type;
-	string cameraType; // Defined if type is camera stream
-	string htmlValue;
+    string id;
+    string type;
+    string cameraType; // Defined if type is camera stream
+    string htmlValue;
 };
 
 // A omega Camera wrapper for Porthole
 struct PortholeCamera: ReferenceType
 {
-	int id;
-	Camera* camera;
-	PixelData* canvas;
-	int canvasWidth, canvasHeight;
-	float size; // 1.0 is default value = device size
-	//unsigned int oldusStreamSent; // Timestamp of last stream sent via socket
+    int id;
+    Camera* camera;
+    PixelData* canvas;
+    int canvasWidth, canvasHeight;
+    float size; // 1.0 is default value = device size
+    //unsigned int oldusStreamSent; // Timestamp of last stream sent via socket
 };
 
 // An obj binded with a Javascript event
 struct PortholeEvent
 {
-	std::string htmlEvent;
-	int mouseButton;
-	char key;
-	std::string value;
-	PortholeCamera* sessionCamera;
+    PortholeEvent(const String& clid):
+        clientId(clid)
+        {}
+
+    std::string htmlEvent;
+    int mouseButton;
+    char key;
+    const String& clientId;
+    std::string value;
+    PortholeCamera* sessionCamera;
     Dictionary<String, String> args;
 };
 
 // Porthole functions binder
 struct PortholeFunctionsBinder: ReferenceType
 {
-	typedef void(*memberFunction)(PortholeEvent&);
+    typedef void(*memberFunction)(PortholeEvent&);
 
-	void addFunction(std::string funcName, memberFunction func)
-	{
-		cppFuncMap[funcName] = func;
-	}
+    void addFunction(std::string funcName, memberFunction func)
+    {
+        cppFuncMap[funcName] = func;
+    }
 
-	void addPythonScript(std::string script, string key){
-		pythonFunMap[key] = script;
-		scriptNumber++;
-	}
+    void addPythonScript(std::string script, string key, string elemid){
+        pythonFunMap[key] = script;
+        pythonFunIdMap[key] = elemid;
+        scriptNumber++;
+    }
 
-	void callFunction(std::string funcName, PortholeEvent &ev)
-	{
-		std::map<std::string, memberFunction>::const_iterator cpp_it;
-		cpp_it = cppFuncMap.find(funcName);
-		if (cpp_it != cppFuncMap.end())	return (*cpp_it->second)(ev);
+    void callFunction(std::string funcName, PortholeEvent &ev)
+    {
+        std::map<std::string, memberFunction>::const_iterator cpp_it;
+        cpp_it = cppFuncMap.find(funcName);
+        if (cpp_it != cppFuncMap.end())	return (*cpp_it->second)(ev);
 
-		std::map<std::string, string>::const_iterator py_it;
-		py_it = pythonFunMap.find(funcName);
-		if (py_it != pythonFunMap.end())
-		{
-			PythonInterpreter* pi = SystemManager::instance()->getScriptInterpreter();
+        std::map<std::string, string>::const_iterator py_it;
+        py_it = pythonFunMap.find(funcName);
+        if (py_it != pythonFunMap.end())
+        {
+            PythonInterpreter* pi = SystemManager::instance()->getScriptInterpreter();
 
             // Substitute special %value% token
-			String pythonScript = omicron::StringUtils::replaceAll(py_it->second, PORTHOLE_EVENT_TOKEN_VALUE, ev.value);
+            String pythonScript = omicron::StringUtils::replaceAll(py_it->second, PORTHOLE_EVENT_TOKEN_VALUE, ev.value);
 
             // Substitute other argument tokens.
             typedef KeyValue<String, String> ArgItem;
@@ -198,28 +204,30 @@ struct PortholeFunctionsBinder: ReferenceType
             }
             
             pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_KEY, boost::lexical_cast<std::string>(ev.key));
-			pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_MOUSE_BTN, boost::lexical_cast<std::string>(ev.mouseButton));
-			pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_EVENT, boost::lexical_cast<std::string>(ev.htmlEvent));
+            pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_MOUSE_BTN, boost::lexical_cast<std::string>(ev.mouseButton));
+            pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_EVENT, boost::lexical_cast<std::string>(ev.htmlEvent));
+            pythonScript = omicron::StringUtils::replaceAll(pythonScript, "%client_id%", "\"" + ev.clientId + "\"");
 
-			if (ev.sessionCamera != NULL)
-				pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_CAMERA_ID, boost::lexical_cast<std::string>(ev.sessionCamera->id));
+            if (ev.sessionCamera != NULL)
+                pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_CAMERA_ID, boost::lexical_cast<std::string>(ev.sessionCamera->id));
 
-			pi->queueCommand(pythonScript); 
-		}
-		return;
-	}
+            pi->queueCommand(pythonScript); 
+        }
+        return;
+    }
 
-	bool isCppDefined(string funcName)
-	{
-		std::map<std::string, memberFunction>::const_iterator it;
-		it = cppFuncMap.find(funcName);
-		if (it != cppFuncMap.end()) return true;
-		return false;
-	}
+    bool isCppDefined(string funcName)
+    {
+        std::map<std::string, memberFunction>::const_iterator it;
+        it = cppFuncMap.find(funcName);
+        if (it != cppFuncMap.end()) return true;
+        return false;
+    }
 
-	std::map<std::string, memberFunction> cppFuncMap;
-	std::map<std::string, string> pythonFunMap;
-	int scriptNumber;
+    std::map<std::string, memberFunction> cppFuncMap;
+    std::map<std::string, string> pythonFunMap;
+    std::map<std::string, string> pythonFunIdMap;
+    int scriptNumber;
 };
 
 // Xml Document
@@ -233,30 +241,30 @@ class PortholeGUI: public ReferenceType
 {
 public:
 
-	// Constructor
-	PortholeGUI(PortholeService* owner, const String& clientId);
+    // Constructor
+    PortholeGUI(PortholeService* owner, const String& clientId);
 
-	// Destructor
-	~PortholeGUI();
+    // Destructor
+    ~PortholeGUI();
 
     const String& getId() { return clientId; }
 
-	// Create the device specifc html interface
-	string create(bool firstTime);
+    // Create the device specifc html interface
+    string create(bool firstTime);
 
-	// Set device specifications
-	void setDeviceSpecifications(int width, int height, const String& orientation, const String& interfaceId);
+    // Set device specifications
+    void setDeviceSpecifications(int width, int height, const String& orientation, const String& interfaceId);
 
-	// Return an object that contains the device specifications
-	PortholeDevice* getDevice() { return device; }
+    // Return an object that contains the device specifications
+    PortholeDevice* getDevice() { return device; }
 
-	bool isCameraReadyToStream() 
-	{ return (sessionCamera != NULL && sessionCamera->camera->isEnabled()); } 
+    bool isCameraReadyToStream() 
+    { return (sessionCamera != NULL && sessionCamera->camera->isEnabled()); } 
 
-	// Get Porthole camera object for this client connected
-	PortholeCamera* getSessionCamera() { return sessionCamera; } 
-	PortholeService* getService()
-	{ return service; }
+    // Get Porthole camera object for this client connected
+    PortholeCamera* getSessionCamera() { return sessionCamera; } 
+    PortholeService* getService()
+    { return service; }
 
     //! @internal Return true if javascript commands are queued to be sent
     //! to the client.
@@ -276,54 +284,58 @@ public:
         javascriptQueueLock.unlock();
     }
 
-	// Mod the camera with id cameraId 
-	// size: the ratio of camera: 1.0 is full size
-	void modCustomCamera(float size, float widthPercent, float heightPercent);
+    //! Creates a JSON message containing all the queued javascript callbacks
+    //! then flushes the queue.
+    String flushJavascriptQueueToJson();
 
-	// Parse HTML gui_element and look for Javascript events 
-	static vector<string> findHtmlScripts();
+    // Mod the camera with id cameraId 
+    // size: the ratio of camera: 1.0 is full size
+    void modCustomCamera(float size, float widthPercent, float heightPercent);
 
-	// Start application XML parsing
-	static void parseXmlFile(char* xmlPath);
+    // Parse HTML gui_element and look for Javascript events 
+    static vector<string> findHtmlScripts();
 
-	// Functions binder getter and setter
-	static PortholeFunctionsBinder* getPortholeFunctionsBinder() { return functionsBinder; }
-	static void setPortholeFunctionsBinder(PortholeFunctionsBinder* binder) { functionsBinder = binder;  functionsBinder->scriptNumber=0;}
+    // Start application XML parsing
+    static void parseXmlFile(char* xmlPath);
 
-	//! Global map of cameras by id
-	static std::map<int, PortholeCamera*> CamerasMap;
+    // Functions binder getter and setter
+    static PortholeFunctionsBinder* getPortholeFunctionsBinder() { return functionsBinder; }
+    static void setPortholeFunctionsBinder(PortholeFunctionsBinder* binder) { functionsBinder = binder;  functionsBinder->scriptNumber=0;}
+
+    //! Global map of cameras by id
+    static std::map<int, PortholeCamera*> CamerasMap;
 
 private:
-	PortholeService* service;
+    PortholeService* service;
 
-	// The device for which an interface will be created
-	Ref<PortholeDevice> device;
+    // The device for which an interface will be created
+    Ref<PortholeDevice> device;
 
-	// The camera of this session
-	PortholeCamera* sessionCamera;
+    // The camera of this session
+    PortholeCamera* sessionCamera;
 
-	String clientId;
+    String clientId;
 
     // Queue of javascript calls from the server to the client
     List<String> javascriptQueue;
     Lock javascriptQueueLock;
 
-	// Create a Porthole custom camera and a PixelData associated
-	void createCustomCamera(float widthPercent, float heightPercent, uint cameraMask = 0); 
+    // Create a Porthole custom camera and a PixelData associated
+    void createCustomCamera(float widthPercent, float heightPercent, uint cameraMask = 0); 
 
-	static void searchNode(omega::xml::TiXmlElement* node);
+    static void searchNode(omega::xml::TiXmlElement* node);
 
-	// Functions binder object
-	static PortholeFunctionsBinder* functionsBinder;
+    // Functions binder object
+    static PortholeFunctionsBinder* functionsBinder;
 
-	// All the possible interfaces
-	static vector< Ref<PortholeInterfaceType> > interfaces; 
+    // All the possible interfaces
+    static vector< Ref<PortholeInterfaceType> > interfaces; 
 
-	// A map between a device type and its GUI elements
-	static std::map<string, omega::xml::TiXmlElement* > interfacesMap;
+    // A map between a device type and its GUI elements
+    static std::map<string, omega::xml::TiXmlElement* > interfacesMap;
 
-	// A map between an element id and the element data
-	static std::map<string, PortholeElement*> elementsMap;
+    // A map between an element id and the element data
+    static std::map<string, PortholeElement*> elementsMap;
     
 };
 

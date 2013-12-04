@@ -211,19 +211,28 @@
         return result;
   } 
 
+    ///////////////////// PORTHOLE JAVASCRIPT API //////////////////////////
+    function phSetInterface(interfaceId)
+    {
+        interface_id = interfaceId;
+        sendSpec();
+    }
+    
+    function phSetSliderValue(sliderId, value)
+    {
+        eval(sliderId + "_skip_next_event = true;")
+        $('#' + sliderId).val(value);
+        $('#' + sliderId).slider('refresh');
+    }
+    
     ///////////////////// SEND SPEC TO SERVER //////////////////////////
 
     var SEND_SPEC_INTERVAL = 1000; // in Millis 
     var send_spec_waiting = false;
     var interface_id = undefined;
     
-    function setInterface(interfaceId)
+    function sendSpec() 
     {
-        interface_id = interfaceId;
-        sendSpec();
-    }
-
-    function sendSpec() {
 
         var w=window,d=document,e=d.documentElement,g=d.getElementsByTagName('body')[0],
             viewportwidth=w.innerWidth||e.clientWidth||g.clientWidth,
@@ -338,6 +347,13 @@
                     addEvent(window, "resize", sendSpecTimeout);
                 }
                 $(window).bind('orientationchange', sendSpecTimeout);
+            }
+            else if(message.event_type == "javascript")
+            {
+                for(var i = 0; i < message.commands.length; i++)
+                {
+                    window.eval(message.commands[i].js);
+                }
             }
 
         }

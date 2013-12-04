@@ -56,56 +56,56 @@ class ServerThread: public Thread{
 
 public:
 
-	// Constructor
-	ServerThread(PortholeService* owner);
+    // Constructor
+    ServerThread(PortholeService* owner);
 
-	// Destructor
-	~ServerThread();
+    // Destructor
+    ~ServerThread();
 
-	// Set port
-	void setPort(int portNumber); 
+    // Set port
+    void setPort(int portNumber); 
 
-	// Set funtions binder
-	void setFunctionsBinder(PortholeFunctionsBinder* binder); 
+    // Set funtions binder
+    void setFunctionsBinder(PortholeFunctionsBinder* binder); 
 
-	void setXMLfile(char* xmlPath);
+    void setXMLfile(char* xmlPath);
 
-	// Set funtions binder
-	void setCSSPath(char* cssPath); 
+    // Set funtions binder
+    void setCSSPath(char* cssPath); 
 
-	// Thread process
-	virtual void threadProc();
+    // Thread process
+    virtual void threadProc();
 
-	// Handshake manager
-	static void dump_handshake_info(struct lws_tokens *lwst);
+    // Handshake manager
+    static void dump_handshake_info(struct lws_tokens *lwst);
 
-	// HTTP callback
-	static int callback_http(struct libwebsocket_context *context,
-		struct libwebsocket *wsi,
-		enum libwebsocket_callback_reasons reason, void *user,
-							void *in, size_t len);
+    // HTTP callback
+    static int callback_http(struct libwebsocket_context *context,
+        struct libwebsocket *wsi,
+        enum libwebsocket_callback_reasons reason, void *user,
+                            void *in, size_t len);
 
-	// websocket callback
-	static int callback_websocket(struct libwebsocket_context *context,
-		struct libwebsocket *wsi,
-		enum libwebsocket_callback_reasons reason,
-					    void *user, void *in, size_t len);
+    // websocket callback
+    static int callback_websocket(struct libwebsocket_context *context,
+        struct libwebsocket *wsi,
+        enum libwebsocket_callback_reasons reason,
+                        void *user, void *in, size_t len);
 
 private:
-	static PortholeService* service;
+    static PortholeService* service;
 
-	// Server params
-	int port;
-	struct libwebsocket_context *context; 
-	int opts;
-	int n;
-	unsigned int oldus;
-	char* minterface;
+    // Server params
+    int port;
+    struct libwebsocket_context *context; 
+    int opts;
+    int n;
+    unsigned int oldus;
+    char* minterface;
 
-	// SSL vars - NOT TESTED
-	int use_ssl;
-	const char* cert_path;
-	const char* key_path;
+    // SSL vars - NOT TESTED
+    int use_ssl;
+    const char* cert_path;
+    const char* key_path;
 
 };
 
@@ -114,38 +114,38 @@ private:
 class PortholeService: public Service
 {
 public:
-	// Default constructor and destructor
-	PortholeService();
-	~PortholeService();
+    // Default constructor and destructor
+    PortholeService();
+    ~PortholeService();
 
-	// Setup and poll
-	virtual void setup(omicron::Setting& settings);
-	void start(int port, char* xmlPath, char* cssPath); // Start the server and listen to port
-	virtual void poll();
-	PortholeFunctionsBinder* getFunctionsBinder() { return myBinder; }
+    // Setup and poll
+    virtual void setup(omicron::Setting& settings);
+    void start(int port, char* xmlPath, char* cssPath); // Start the server and listen to port
+    virtual void poll();
+    PortholeFunctionsBinder* getFunctionsBinder() { return myBinder; }
 
-	void postEvent(Event::Type type, int sourceId, int x, int y);
+    void postEvent(Event::Type type, int sourceId, int x, int y);
 
-	// Server instance. It will manage the incoming connections
-	//thread server_thread;
-	ServerThread* portholeServer;
+    // Server instance. It will manage the incoming connections
+    //thread server_thread;
+    ServerThread* portholeServer;
 
-	void setConnectedCommand(const String cmd)
-	{ myConnectedCommand = cmd; }
-	void setDisconnectedCommand(const String cmd)
-	{ myDisconnectedCommand = cmd; }
-	void setCameraCreatedCommand(const String cmd)
-	{ myCameraCreatedCommand = cmd; }
-	void setCameraDestroyedCommand(const String cmd)
-	{ myCameraDestroyedCommand = cmd; }
-	void setServerStartedCommand(const String cmd)
-	{ myServerStartedCommand = cmd; }
+    void setConnectedCommand(const String cmd)
+    { myConnectedCommand = cmd; }
+    void setDisconnectedCommand(const String cmd)
+    { myDisconnectedCommand = cmd; }
+    void setCameraCreatedCommand(const String cmd)
+    { myCameraCreatedCommand = cmd; }
+    void setCameraDestroyedCommand(const String cmd)
+    { myCameraDestroyedCommand = cmd; }
+    void setServerStartedCommand(const String cmd)
+    { myServerStartedCommand = cmd; }
 
-	// Notification functions called from the websockets thread
-	void notifyConnected(const String& id);
-	void notifyDisconnected(const String& id);
-	void notifyCameraCreated(Camera* cam);
-	void notifyCameraDestroyed(Camera* cam);
+    // Notification functions called from the websockets thread
+    void notifyConnected(const String& id);
+    void notifyDisconnected(const String& id);
+    void notifyCameraCreated(Camera* cam);
+    void notifyCameraDestroyed(Camera* cam);
     //! Called when the web server has started and is ready to receive
     //! connections.
     void notifyServerStarted();
@@ -153,15 +153,20 @@ public:
     PortholeGUI* createClient(const String& name);
     void destroyClient(PortholeGUI* gui);
     PortholeGUI* findClient(const String& name);
-    void calljs(const String& js, PortholeGUI* origin = NULL);
+
+    //! Sends a javascript call to the specified client
+    void sendjs(const String& js, const String& destination);
+    //! Broadcasts a javascript call to all connected clients, excluding the
+    //! one indicated in the optional origin parameter
+    void broadcastjs(const String& js, const String& origin = "");
 
 private:
-	String myConnectedCommand;
-	String myDisconnectedCommand;
-	String myCameraCreatedCommand;
-	String myCameraDestroyedCommand;
-	String myServerStartedCommand;
-	PortholeFunctionsBinder* myBinder;
+    String myConnectedCommand;
+    String myDisconnectedCommand;
+    String myCameraCreatedCommand;
+    String myCameraDestroyedCommand;
+    String myServerStartedCommand;
+    PortholeFunctionsBinder* myBinder;
 
     List< Ref<PortholeGUI> > myClients;
 };

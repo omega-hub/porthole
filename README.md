@@ -4,7 +4,7 @@ omegalib offers support for HTML5-capable browsers interactions. Specifically, t
 
 Basically, the Porthole Service creates a Server in a separate thread, that handles all the incoming connections. But all the steps between the XML description and the actual management of the different devices, including camera streaming and manipulations, are transparent to the application developer.
 
-## Porthole API
+## Porthole Python API
 All the porthole API is contained in the `porthole` python module. To start using porthole simply do
 ```python
 import porthole
@@ -27,3 +27,9 @@ The `PortholeService` class exposes all the basic methods offered by the porthol
 `setDisconnectedCommand(string cmd)` |
 `setCameraCreatedCommand(string cmd)` |
 `setCameraDestroyedCommand(string cmd)` |
+
+
+## Porthole Javascript API
+| **Function** | **Description** |
+---|---
+`setInterface(string interfaceId)`
