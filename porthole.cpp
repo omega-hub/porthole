@@ -35,7 +35,7 @@
 #include "PortholeService.h"
 #include "PortholeGUI.h"
 
-#define PORTHOLE_VERSION "1.0"
+#define PORTHOLE_VERSION "1.1"
 
 using namespace omega;
 
