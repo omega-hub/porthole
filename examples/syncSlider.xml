@@ -1,0 +1,36 @@
+<gui>
+  <elements>
+    <element id="slider_ctrl" type="HTML">
+        <div class="ui-body" data-mini="true">
+            Cube Pitch:
+            <input type="range" id="yawSlider" value="0" min="-90" max="90" onchange="onOrientationChanged(%pitchSlider.value%, %yawSlider.value%, %rollSlider.value%, %client_id%)"/>
+            Cube Yaw:
+            <input type="range" id="pitchSlider" value="0" min="-90" max="90" onchange="onOrientationChanged(%pitchSlider.value%, %yawSlider.value%, %rollSlider.value%, %client_id%)"/>
+            Cube Roll:
+            <input type="range" id="rollSlider" value="0" min="-90" max="90" onchange="onOrientationChanged(%pitchSlider.value%, %yawSlider.value%, %rollSlider.value%, %client_id%)"/>
+        </div>
+    </element>
+    
+    <element id="slider_script" type="script">
+        function updateSliders(pitch, yaw, roll) 
+        {
+            phSetSliderValue('pitchSlider', pitch);
+            phSetSliderValue('yawSlider', yaw);
+            phSetSliderValue('rollSlider', roll);
+        }            
+    </element>
+  </elements>
+  
+  <interfaces>
+	<interface minWidth="0" minHeight="0" id="default">
+	  <portrait layout="vertical">
+		<element width="100%" height="100%" id="slider_ctrl"/>
+		<element id="slider_script"/>
+	  </portrait>
+	  <landscape layout="horizontal">
+		<element width="100%" height="100%" id="slider_ctrl"/>
+		<element id="slider_script"/>
+	  </landscape>
+	</interface>
+  </interfaces>
+</gui>
