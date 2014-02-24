@@ -31,6 +31,18 @@ if (OMEGA_OS_WIN)
 	include_directories(zlib)
 endif()
 
+###############################################################################
+# Install commands
+install(DIRECTORY examples/ DESTINATION omegalib/examples/porthole)
+install(DIRECTORY . DESTINATION omegalib/modules/porthole 
+    PATTERN ".git" EXCLUDE
+    PATTERN "vjson" EXCLUDE
+    PATTERN "websockets" EXCLUDE
+    PATTERN "portholeCustomDraw" EXCLUDE
+    PATTERN "zlib" EXCLUDE
+    PATTERN "*.cpp" EXCLUDE
+    PATTERN "*.h" EXCLUDE)
+
 #------------------------------------------------------------------------------
 # DO NOT MODIFY ANYTHING BELOW AFTER THIS LINE
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
