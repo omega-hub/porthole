@@ -66,7 +66,7 @@
 <body>
 
  <script type="application/javascript">
-     var socket; var JSONToSend = ''; var sendContinuous = false;
+     var socket; var JSONToSend = ''; 
  </script>
 
  <link rel="stylesheet" type="text/css" href="./porthole.css" />
@@ -142,7 +142,6 @@
         });
         $('body').bind('touchend', function () {
             mouseDown = 0;
-            sendContinuous = false;
         });
 
     }
@@ -152,7 +151,6 @@
         });
         $('body').bind('mouseup', function () {
             mouseDown = 0;
-            sendContinuous = false;
         });
         //                    $('*[data-continuous=true]').each(function () {
         //                        var $this = $(this);
@@ -428,11 +426,6 @@
         if (looping && ctx != null)
 		{
             ctx.drawImage(img, 0, 0, camera.width, camera.height);
-
-            // Button streaming value
-            if (mouseDown == 1 && (sendContinuous == "true" || sendContinuous == true) && JSONToSend != "null" && JSONToSend != undefined) {
-                socket.send(JSON.stringify(JSONToSend));
-            }
 
             // Keep framerate of the camera
 //            now = new date().gettime();

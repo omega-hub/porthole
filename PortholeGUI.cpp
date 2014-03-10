@@ -97,12 +97,17 @@ string PortholeGUI::create(bool firstTime)
 
     if (root == NULL) return "Interface not available for this device";
 
-    string result = "<table data-role=\"none\" border=\"0\" style=\" width : 100%; height : 100%; \" cellspacing=\"0\" cellpadding=\"0\">";
-    
-    if ( device->interfaceType->layout.compare("horizontal")==0 ||
-            device->interfaceType->layout.compare("hor") == 0 )
+    string result = "";
+
+    if(device->interfaceType->layout == "vertical" ||
+        device->interfaceType->layout == "horizontal")
     {
-        result.append("<tr style=\" width : 100%; height : 100%; \">");
+        result = "<table data-role=\"none\" border=\"0\" style=\" width : 100%; height : 100%; \" cellspacing=\"0\" cellpadding=\"0\">";
+    
+        if (device->interfaceType->layout == "horizontal")
+        {
+            result.append("<tr style=\" width : 100%; height : 100%; \">");
+        }
     }
 
     // Parse the GUI elemets disposition
@@ -111,7 +116,7 @@ string PortholeGUI::create(bool firstTime)
         // Get element name: should correspond to id
         String id;
 
-        string width="", height="";
+        string width="default", height="default", x="0px", y="0px";
 
         // Parse attributes
         omega::xml::TiXmlAttribute* pAttrib = pChild->ToElement()->FirstAttribute();
@@ -121,23 +126,12 @@ string PortholeGUI::create(bool firstTime)
             string attribute = pAttrib->Name();
             StringUtils::toLowerCase(attribute);
 
-            // Save id attribute
-            if (attribute.compare("id")==0)
-            {
-                id = pAttrib->Value();
-            }
-
-            // Save width attribute
-            if (attribute.compare("width")==0)
-            {
-                width = pAttrib->Value();
-            }
-
-            // Save height attribute
-            else if (attribute.compare("height")==0)
-            {
-                height = pAttrib->Value();
-            }
+            // Save attributes to local variables
+            if (attribute == "id") id = pAttrib->Value();
+            else if (attribute == "width") width = pAttrib->Value();
+            else if (attribute == "height") height = pAttrib->Value();
+            else if (attribute == "x")  x = pAttrib->Value();
+            else if (attribute == "y") y = pAttrib->Value();
 
             // Next attribute
             pAttrib = pAttrib->Next();
@@ -235,10 +229,12 @@ string PortholeGUI::create(bool firstTime)
             {
                     result.append("<tr style=\" width : "+ width +"; height : "+ height +"; \"><td style=\" width : "+ width +"; height : "+ height +"; \">"+ element->htmlValue +"</td></tr>");
             }
-            // Else ERROR
+            // Else free
             else 
             {
-                std::cout << "!!>> ERROR: layout type not defined. Check application xml." << std::endl;
+                result.append(
+                    ostr("<div style=\" width: %1%; height: %2%; left: %3%; top:%4%; position:absolute; \">%5%</div>",
+                    %width %height %x %y %element->htmlValue));
             }
         }
     }
@@ -444,7 +440,8 @@ void PortholeGUI::parseXmlFile(char* xmlPath){
     ::xmlDoc = new omega::xml::TiXmlDocument(xmlPath);
     bool loadOkay = xmlDoc->LoadFile();
     if (!loadOkay){
-        printf("!!! Porthole: Failed to load XML file");
+        ofwarn("Porthole: Failed to load XML file: %1%:%2% - %3%", 
+            %xmlDoc->ErrorRow() %xmlDoc->ErrorCol() %xmlDoc->ErrorDesc());
         abort();
     }
 

@@ -232,10 +232,9 @@ int ServerThread::callback_http(struct libwebsocket_context *context,
                 content.append(py_it->first);
                 content.append("\""
                     "};"
-                    "if(!" + functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event) {"
-                    "sendContinuous = event.target.getAttribute(\"data-continuous\");"
-                    "socket.send(JSON.stringify(JSONToSend));"
-                    "}" +
+                    //"if(!" + functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event) {"
+                    "socket.send(JSON.stringify(JSONToSend));" +
+                    //"}" +
                     functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event = false;"
                 "};");
 
@@ -258,7 +257,6 @@ int ServerThread::callback_http(struct libwebsocket_context *context,
                 content.append(cpp_it->first);
                 content.append("\""
                                     "};"
-                                    "sendContinuous = event.target.getAttribute(\"data-continuous\");"
                                     "socket.send(JSON.stringify(JSONToSend));"
                                 "};");
             }
