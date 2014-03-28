@@ -462,7 +462,7 @@ inline void parse_json_message(json_value *value, per_session_data* data, recv_m
             message->button = atoi(value->string_value);
 
         // Input key value
-        else if (strcmp(value->name, MSG_INPUT_BUTTON) == 0)
+        else if (strcmp(value->name, MSG_INPUT_CHAR) == 0)
             message->key = value->string_value[0];
 
         // HTML tag value (ex: the value of a slider, a text input, ecc)
@@ -909,12 +909,14 @@ static const std::string base64_chars =
              "abcdefghijklmnopqrstuvwxyz"
              "0123456789+/";
 
-inline bool is_base64(unsigned char c) 
+///////////////////////////////////////////////////////////////////////////////
+inline bool is_base64(unsigned char c)
 {
   return (isalnum(c) || (c == '+') || (c == '/'));
 }
 
-inline std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) 
+///////////////////////////////////////////////////////////////////////////////
+inline std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len)
 {
   std::string ret;
   int i = 0;
@@ -958,6 +960,7 @@ inline std::string base64_encode(unsigned char const* bytes_to_encode, unsigned 
 
 }
 
+///////////////////////////////////////////////////////////////////////////////
 inline std::string base64_decode(std::string const& encoded_string) {
   int in_len = encoded_string.size();
   int i = 0;
