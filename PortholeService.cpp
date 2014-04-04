@@ -388,6 +388,10 @@ inline void print(json_value *value, int ident = 0)
 #define MSG_FIRST_TIME "first_time"
 
 #define MSG_EVENT_TAP "tap"
+#define MSG_EVENT_MOUSEUP "mouseup"
+#define MSG_EVENT_MOUSEDOWN "mousedown"
+#define MSG_EVENT_KEYUP "keyup"
+#define MSG_EVENT_KEYDOWN "keydown"
 #define MSG_EVENT_DRAG "drag"
 #define MSG_X "x"
 #define MSG_Y "y"
@@ -401,11 +405,11 @@ inline void print(json_value *value, int ident = 0)
 #define MSG_EVENT_INPUT "input"
 #define MSG_INPUT_FUNCTION "function"
 #define MSG_INPUT_BUTTON "button"
-#define MSG_INPUT_CHAR "char"
+#define MSG_INPUT_KEY "key"
 #define MSG_INPUT_VALUE "value"
 
-#define MSG_EVENT_CAMERA_MOD "camera_mod"
-#define MSG_CAMERA_SIZE "size"
+#define MSG_EVENT_FPS_ADJUST "fps_adjust"
+#define MSG_FPS "fps"
 
 ///////////////////////////////////////////////////////////////////////////////
 struct recv_message{
@@ -418,7 +422,7 @@ struct recv_message{
     string jsFunction;
     int cameraId;
     bool firstTime;
-    float cameraSize; // New size: {0,1}
+    float fps; // Target fps
     int button;
     char key;
     string value;
@@ -457,14 +461,6 @@ inline void parse_json_message(json_value *value, per_session_data* data, recv_m
         else if (strcmp(value->name, MSG_INPUT_FUNCTION) == 0)
             message->jsFunction = value->string_value;
 
-        // Input mouse button value (0|1|2)
-        else if (strcmp(value->name, MSG_INPUT_BUTTON) == 0)
-            message->button = atoi(value->string_value);
-
-        // Input key value
-        else if (strcmp(value->name, MSG_INPUT_CHAR) == 0)
-            message->key = value->string_value[0];
-
         // HTML tag value (ex: the value of a slider, a text input, ecc)
         else if (strcmp(value->name, MSG_INPUT_VALUE) == 0)
             message->value = value->string_value;
@@ -485,6 +481,14 @@ inline void parse_json_message(json_value *value, per_session_data* data, recv_m
         else if (strcmp(value->name, MSG_CAMERA_ID) == 0)
             message->cameraId = value->int_value;
 
+        // Input mouse button value (0|1|2)
+        else if(strcmp(value->name, MSG_INPUT_BUTTON) == 0)
+            message->button = value->int_value;
+
+        // Input key value
+        else if(strcmp(value->name, MSG_INPUT_KEY) == 0)
+            message->key = (char)value->int_value;
+
         // Is the first time we receive the device specification?
         else if (strcmp(value->name, MSG_FIRST_TIME) == 0)
             message->firstTime = (value->int_value == 1 )? true : false;
@@ -502,8 +506,8 @@ inline void parse_json_message(json_value *value, per_session_data* data, recv_m
             message->deltaRotation = value->float_value;
 
         // Camera mod
-        else if (strcmp(value->name, MSG_CAMERA_SIZE) == 0)
-            message->cameraSize = value->float_value;
+        else if (strcmp(value->name, MSG_FPS) == 0)
+            message->fps = value->float_value;
 
         break;
     case JSON_BOOL:
@@ -515,20 +519,100 @@ inline void parse_json_message(json_value *value, per_session_data* data, recv_m
 inline void handle_message(per_session_data* data, recv_message* message, 
         struct libwebsocket_context *context, struct libwebsocket *wsi)
 {
-    if (strcmp(message->event_type.c_str(), MSG_EVENT_DRAG)==0 &&
-          data->guiManager->isCameraReadyToStream())
+    if(strcmp(message->event_type.c_str(), MSG_EVENT_DRAG) == 0)
     {
         PortholeService* svc = data->guiManager->getService();
-        int id = data->guiManager->getSessionCamera()->id;
-        svc->postEvent(Event::Move, id, message->x, message->y);
+        int id = message->cameraId;
+        // When scale is 1, the position is differential
+        if(message->scale == 1)
+        {
+            data->guiManager->updatePointerPosition(message->x, message->y);
+            const Vector2i& pt = data->guiManager->getPointerPosition();
+            svc->postPointerEvent(Event::Move, id, pt[0], pt[1], 0);
+        }
+        else
+        {
+            svc->postPointerEvent(Event::Move, id, message->x, message->y, 0);
+        }
     }
 
-    if (strcmp(message->event_type.c_str(),MSG_EVENT_TAP)==0 &&
-          data->guiManager->isCameraReadyToStream())
+    if (strcmp(message->event_type.c_str(),MSG_EVENT_TAP)==0)
     {
         PortholeService* svc = data->guiManager->getService();
-        int id = data->guiManager->getSessionCamera()->id;
-        svc->postEvent(Event::Click, id, message->x, message->y);
+        int id = message->cameraId; 
+        // When scale is 1, the position is differential
+        if(message->scale == 1)
+        {
+            data->guiManager->updatePointerPosition(message->x, message->y);
+            const Vector2i& pt = data->guiManager->getPointerPosition();
+            svc->postPointerEvent(Event::Move, id, pt[0], pt[1], Event::Left);
+        }
+        else 
+        {
+            svc->postPointerEvent(Event::Click, id, message->x, message->y, Event::Left);
+        }
+    }
+
+    else if(strcmp(message->event_type.c_str(), MSG_EVENT_MOUSEUP) == 0)
+    {
+        PortholeService* svc = data->guiManager->getService();
+        int id = message->cameraId;
+        // Process button flag 
+        // (see http://www.quirksmode.org/js/events_properties.html#button)
+        uint flags = Event::Left;
+        if(message->button == 1) flags = Event::Middle;
+        if(message->button == 2) flags = Event::Right;
+
+        // When scale is 1, the position is differential
+        if(message->scale == 1)
+        {
+            data->guiManager->updatePointerPosition(message->x, message->y);
+            const Vector2i& pt = data->guiManager->getPointerPosition();
+            svc->postPointerEvent(Event::Up, id, pt[0], pt[1], flags);
+        }
+        else
+        {
+            svc->postPointerEvent(Event::Up, id, message->x, message->y, flags);
+        }
+    }
+
+    else if(strcmp(message->event_type.c_str(), MSG_EVENT_MOUSEDOWN) == 0)
+    {
+        PortholeService* svc = data->guiManager->getService();
+        int id = message->cameraId;
+        // Process button flag 
+        // (see http://www.quirksmode.org/js/events_properties.html#button)
+        uint flags = Event::Left;
+        if(message->button == 1) flags = Event::Middle;
+        if(message->button == 2) flags = Event::Right;
+
+        // When scale is 1, the position is differential
+        if(message->scale == 1)
+        {
+            data->guiManager->updatePointerPosition(message->x, message->y);
+            const Vector2i& pt = data->guiManager->getPointerPosition();
+            svc->postPointerEvent(Event::Down, id, pt[0], pt[1], flags);
+        }
+        else
+        {
+            svc->postPointerEvent(Event::Down, id, message->x, message->y, flags);
+        }
+    }
+
+    else if(strcmp(message->event_type.c_str(), MSG_EVENT_KEYUP) == 0)
+    {
+        PortholeService* svc = data->guiManager->getService();
+        char key = message->key;
+        uint flags = 0;
+        svc->postKeyEvent(Event::Up, key, flags);
+    }
+
+    else if(strcmp(message->event_type.c_str(), MSG_EVENT_KEYDOWN) == 0)
+    {
+        PortholeService* svc = data->guiManager->getService();
+        char key = message->key;
+        uint flags = 0;
+        svc->postKeyEvent(Event::Down, key, flags);
     }
 
     // First message received is a device spec message
@@ -546,9 +630,14 @@ inline void handle_message(per_session_data* data, recv_message* message,
     }
 
     // Modify the camera size if FPS in client is too low
-    //else if (strcmp(message->event_type.c_str(),MSG_EVENT_CAMERA_MOD)==0){
+    else if (strcmp(message->event_type.c_str(),MSG_EVENT_FPS_ADJUST)==0)
+    {
+        PortholeCamera* pc = data->guiManager->getSessionCamera();
+        pc->targetFps = (int)(message->fps);
+        if(pc->targetFps < 1) pc->targetFps = 1;
+        ofmsg("Adjusting fps to %1%", % pc->targetFps);
     //	data->guiManager->modCustomCamera(message->cameraSize);
-    //}
+    }
 
     // Javascript functions bind
     else if(strcmp(message->event_type.c_str(),MSG_EVENT_INPUT)==0){
@@ -596,20 +685,25 @@ int ServerThread::callback_websocket(struct libwebsocket_context *context,
     /* On socket writable from server to client */
     case LWS_CALLBACK_SERVER_WRITEABLE:
     {
-
         // Check if we have stream to send: if not, pass the token
         if (data->guiManager->isCameraReadyToStream() )
         {
-            // Write at 50Hz, so continue if it's too early for us
+            PortholeCamera* pc = data->guiManager->getSessionCamera();
             struct timeval tv;
             gettimeofday(&tv, NULL);
             unsigned long long millisecondsSinceEpoch =
                 (unsigned long long)(tv.tv_sec) * 1000 +
                 (unsigned long long)(tv.tv_usec) / 1000;
-            if ((millisecondsSinceEpoch - data->oldus) < 20) {
+
+            if ((millisecondsSinceEpoch - data->oldus) < (1000 / pc->targetFps)) 
+            {
                 libwebsocket_callback_on_writable(context, wsi);
                 return 0;
             }
+
+            // Each time we send a frame, we also try to increase the frame rate, one
+            // frame at a time (cap at 50fps max)
+            if(pc->targetFps < 50) pc->targetFps++;
 
             // Get the corresponding camera to be modified
             PortholeCamera* sessionCamera = data->guiManager->getSessionCamera();
@@ -1059,12 +1153,23 @@ void PortholeService::notifyCameraDestroyed(Camera* cam)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeService::postEvent(Event::Type type, int sourceId, int x, int y)
+void PortholeService::postPointerEvent(Event::Type type, int sourceId, int x, int y, uint flags)
 {
     lockEvents();
     Event* evt = writeHead();
     evt->reset(type, Service::Pointer, sourceId, getServiceId());
     evt->setPosition(x, y);
+    evt->setFlags(flags);
+    unlockEvents();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void PortholeService::postKeyEvent(Event::Type type, char key, uint flags)
+{
+    lockEvents();
+    Event* evt = writeHead();
+    evt->reset(type, Service::Keyboard, key, getServiceId());
+    evt->setFlags(flags);
     unlockEvents();
 }
 

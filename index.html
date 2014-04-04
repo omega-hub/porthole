@@ -105,17 +105,6 @@
          }
      };
 
-     // event.type must be keypress
-     function getChar(event) {
-         if (event.which == null) {
-             return String.fromCharCode(event.keyCode) // IE
-         } else if (event.which != 0 && event.charCode != 0) {
-             return String.fromCharCode(event.which)   // the rest
-         } else {
-             return null // special key
-         }
-     }
-
      // Avoid JqueryMobile to resize our server-side content
      if ($("#porthole_content").height() < $(window).height()) {
          $("#porthole_content").height($(window).height());
@@ -309,12 +298,29 @@
             if (message.event_type == "stream") {
                 image = "data:image/jpeg;base64," + message.base64image;
                 img.src = image;
+                // Keep framerate of the camera
+                now = new Date().getTime();
+                dt = now - lastT;
+                lastT = now;
+                console.log("fps: " + parseInt(1000 / dt));
 
-                // TEST
-                //                if (TESTING == true && message.test_flag == true && RTT_start != undefined) {
-                //                    console.log((new Date()).getTime() - RTT_start);
-                //                    RTT_start = undefined;
-                //                }
+                if ( ( 1000 / dt ) > FPS_MIN) {
+                    overFPS = false;
+                }
+                else {
+                    // if first time we are over fps, save now
+                    if ( !overFPS ) overstart = now;
+                    overFPS = true;
+                    if ( ( now - overstart ) > FPS_DELTA ) {
+                        var JSONEvent = {
+                            "event_type": "fps_adjust",
+                            "camera_id": parseInt(camera.getAttribute("data-camera_id")),
+                            "fps": ( 1000 / dt )
+                        };
+                        console.log("asking for fps: " + parseInt(1000 / dt));
+                        socket.send(JSON.stringify(JSONEvent));
+                    }
+                }
             }
             else if (message.event_type == "html_elements") {
                 document.getElementById("porthole_content").innerHTML = message.innerHTML;
@@ -396,15 +402,6 @@
     var overSTART = 0;
     var loopId = 0;
 
-/*     function sendChangeResolution(change_type, size){
-         var JSONEvent = {
-            "event_type": "camera_mod",o
-            "camera_id": parseInt(camera.getAttribute("data-camera_id")),
-            "size": size
-        };
-        socket.send(JSON.stringify(JSONEvent));
-    }
- */
     window.requestAnimFrame = (function () {
         return window.requestAnimationFrame ||
               window.webkitRequestAnimationFrame ||
@@ -427,13 +424,7 @@
 		{
             ctx.drawImage(img, 0, 0, camera.width, camera.height);
 
-            // Keep framerate of the camera
-//            now = new date().gettime();
-//            dt = now - lastt;
-//            lastt = now;
-//            console.log("fps: " + parseint(1000 / dt));
-
-//            if ( ( 1000 / dt ) > fps_min){
+//            if ( ( 1000 / dt ) > FPS_MIN){
 //                overfps = false;
 //            }
 //            else{

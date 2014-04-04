@@ -141,11 +141,16 @@ struct PortholeElement: ReferenceType
 struct PortholeCamera: ReferenceType
 {
     int id;
+    int targetFps; // The desired output fps for this camera.
     Camera* camera;
     PixelData* canvas;
     int canvasWidth, canvasHeight;
     float size; // 1.0 is default value = device size
     //unsigned int oldusStreamSent; // Timestamp of last stream sent via socket
+
+    PortholeCamera() :
+        targetFps(60)
+    {}
 };
 
 // An obj binded with a Javascript event
@@ -305,6 +310,9 @@ public:
     //! Global map of cameras by id
     static std::map<int, PortholeCamera*> CamerasMap;
 
+    const Vector2i& getPointerPosition() { return pointerPosition; }
+    void updatePointerPosition(int dx, int dy);
+
 private:
     PortholeService* service;
 
@@ -336,7 +344,11 @@ private:
 
     // A map between an element id and the element data
     static std::map<string, PortholeElement*> elementsMap;
-    
+
+    // Global canvas width and height and current pointer position. 
+    // Used to convert differential mouse positions into absolute ones.
+    Vector2i pointerPosition;
+    Vector2i canvasSize;
 };
 
 #endif

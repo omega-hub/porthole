@@ -44,19 +44,33 @@ std::map<string, omega::xml::TiXmlElement* > PortholeGUI::interfacesMap;
 std::map<string, PortholeElement*> PortholeGUI::elementsMap;
 std::map<int, PortholeCamera*> PortholeGUI::CamerasMap;
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 inline float percentToFloat(String percent){
     return (float)(atoi(StringUtils::replaceAll(percent, "%", "").c_str()))/100;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 PortholeGUI::PortholeGUI(PortholeService* owner, const String& cliid):
     service(owner), clientId(cliid)
 {
     this->sessionCamera = NULL;
+
+    // Get the canvas size, used to convert differential mouse coords into 
+    // absolute ones. If no display system is available (i.e. for headless
+    // configs), set a default canvas size.
+    DisplaySystem* ds = SystemManager::instance()->getDisplaySystem();
+    if(ds != NULL)
+    {
+        canvasSize = ds->getCanvasSize();
+    }
+    else
+    {
+        canvasSize = Vector2i(1920, 1080);
+    }
+    pointerPosition = Vector2i::Zero();
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 PortholeGUI::~PortholeGUI()
 {
     if(sessionCamera != NULL)
@@ -66,7 +80,18 @@ PortholeGUI::~PortholeGUI()
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+void PortholeGUI::updatePointerPosition(int dx, int dy)
+{
+    pointerPosition[0] += dx;
+    pointerPosition[1] += dy;
+    if(pointerPosition[0] < 0) pointerPosition[0] = 0;
+    if(pointerPosition[1] < 0) pointerPosition[1] = 0;
+    if(pointerPosition[0] >= canvasSize[0]) pointerPosition[0] = canvasSize[0] - 1;
+    if(pointerPosition[1] >= canvasSize[1]) pointerPosition[1] = canvasSize[1] - 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 void PortholeGUI::setDeviceSpecifications(int width, int height, const String& orientation, const String& interfaceId)
 {
     // Set the device
@@ -75,7 +100,8 @@ void PortholeGUI::setDeviceSpecifications(int width, int height, const String& o
     device->deviceHeight = height;
     device->deviceOrientation = orientation;
     
-    for(int i=0; i<interfaces.size(); i++){
+    for(int i=0; i<interfaces.size(); i++)
+    {
         if (width > interfaces.at(i)->minWidth && 
             height > interfaces.at(i)->minHeight &&
             orientation.compare(interfaces.at(i)->orientation)==0 &&
@@ -84,7 +110,7 @@ void PortholeGUI::setDeviceSpecifications(int width, int height, const String& o
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 string PortholeGUI::create(bool firstTime)
 {
     if(device->interfaceType == NULL)
@@ -210,7 +236,8 @@ string PortholeGUI::create(bool firstTime)
         }
         else if (element->type == "script")
         {
-            calljs(element->htmlValue);
+            String escapedjs = StringUtils::replaceAll(element->htmlValue, "\"", "\\\"");
+            calljs(escapedjs);
         }
 
         if(element->type != "script")
@@ -250,7 +277,7 @@ string PortholeGUI::create(bool firstTime)
 
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 /* 
 *	Camera creation function
 */
@@ -319,7 +346,7 @@ void PortholeGUI::createCustomCamera(float widthPercent, float heightPercent, ui
 
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 void PortholeGUI::modCustomCamera(float size, float widthPercent, float heightPercent){ 
 
     // Retrieve the camera to be modified
@@ -348,7 +375,7 @@ void PortholeGUI::modCustomCamera(float size, float widthPercent, float heightPe
     portholeCamera->canvasHeight = height;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 String PortholeGUI::flushJavascriptQueueToJson()
 {
     String json = "{\"event_type\":\"javascript\",\"commands\":[";
@@ -368,7 +395,7 @@ String PortholeGUI::flushJavascriptQueueToJson()
     return json;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 /*Recursive*/void PortholeGUI::searchNode(omega::xml::TiXmlElement* node){
 
     if ( !node ) return;
@@ -423,7 +450,7 @@ String PortholeGUI::flushJavascriptQueueToJson()
 
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 vector<string> PortholeGUI::findHtmlScripts(){
 
     vector<string> result;
@@ -435,8 +462,9 @@ vector<string> PortholeGUI::findHtmlScripts(){
     return result;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::parseXmlFile(char* xmlPath){
+///////////////////////////////////////////////////////////////////////////////
+void PortholeGUI::parseXmlFile(char* xmlPath)
+{
     ::xmlDoc = new omega::xml::TiXmlDocument(xmlPath);
     bool loadOkay = xmlDoc->LoadFile();
     if (!loadOkay){
