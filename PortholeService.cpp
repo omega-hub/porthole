@@ -209,10 +209,10 @@ int ServerThread::callback_http(struct libwebsocket_context *context,
                 
                 content.append(py_it->first);
                 content.append("{ "
-                                    "JSONToSend = {"
-                                    "\"event_type\": \"input\","
-                                    "\"button\": event.button,"
-                                    "\"char\": getChar(event),");
+                    "JSONToSend = {"
+                    "\"event_type\": \"input\","
+                    "\"button\": event.button,");
+                                    //"\"char\": getChar(event),");
 
                 // Odd tokens are argument names "like(%in%, %this%)"
                 for(int i = 1; i < toks.size(); i += 2)
