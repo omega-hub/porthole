@@ -31,6 +31,11 @@ if (OMEGA_OS_WIN)
 	include_directories(zlib)
 endif()
 
+# Add porthole pointer server executable
+add_executable(ppserver ppserver.cpp)
+target_link_libraries(ppserver omega)
+set_target_properties(ppserver PROPERTIES FOLDER apps)
+
 ###############################################################################
 # Install commands
 install(DIRECTORY examples/ DESTINATION omegalib/examples/porthole)
