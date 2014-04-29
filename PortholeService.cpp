@@ -527,7 +527,7 @@ inline void handle_message(per_session_data* data, recv_message* message,
         if(message->scale == 1)
         {
             data->guiManager->updatePointerPosition(message->x, message->y);
-            const Vector2i& pt = data->guiManager->getPointerPosition();
+            const Vector2f& pt = data->guiManager->getPointerPosition();
             svc->postPointerEvent(Event::Move, id, pt[0], pt[1], 0);
         }
         else
@@ -544,7 +544,7 @@ inline void handle_message(per_session_data* data, recv_message* message,
         if(message->scale == 1)
         {
             data->guiManager->updatePointerPosition(message->x, message->y);
-            const Vector2i& pt = data->guiManager->getPointerPosition();
+            const Vector2f& pt = data->guiManager->getPointerPosition();
             svc->postPointerEvent(Event::Move, id, pt[0], pt[1], Event::Left);
         }
         else 
@@ -567,7 +567,7 @@ inline void handle_message(per_session_data* data, recv_message* message,
         if(message->scale == 1)
         {
             data->guiManager->updatePointerPosition(message->x, message->y);
-            const Vector2i& pt = data->guiManager->getPointerPosition();
+            const Vector2f& pt = data->guiManager->getPointerPosition();
             svc->postPointerEvent(Event::Up, id, pt[0], pt[1], flags);
         }
         else
@@ -590,7 +590,7 @@ inline void handle_message(per_session_data* data, recv_message* message,
         if(message->scale == 1)
         {
             data->guiManager->updatePointerPosition(message->x, message->y);
-            const Vector2i& pt = data->guiManager->getPointerPosition();
+            const Vector2f& pt = data->guiManager->getPointerPosition();
             svc->postPointerEvent(Event::Down, id, pt[0], pt[1], flags);
         }
         else
@@ -1153,7 +1153,7 @@ void PortholeService::notifyCameraDestroyed(Camera* cam)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeService::postPointerEvent(Event::Type type, int sourceId, int x, int y, uint flags)
+void PortholeService::postPointerEvent(Event::Type type, int sourceId, float x, float y, uint flags)
 {
     lockEvents();
     Event* evt = writeHead();

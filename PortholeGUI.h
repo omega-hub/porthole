@@ -310,7 +310,7 @@ public:
     //! Global map of cameras by id
     static std::map<int, PortholeCamera*> CamerasMap;
 
-    const Vector2i& getPointerPosition() { return pointerPosition; }
+    const Vector2f& getPointerPosition() { return pointerPosition; }
     void updatePointerPosition(int dx, int dy);
 
 private:
@@ -347,8 +347,9 @@ private:
 
     // Global canvas width and height and current pointer position. 
     // Used to convert differential mouse positions into absolute ones.
-    Vector2i pointerPosition;
+    Vector2f pointerPosition;
     Vector2i canvasSize;
+    bool normalizedPointerPosition;
 };
 
 #endif

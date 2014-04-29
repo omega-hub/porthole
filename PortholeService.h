@@ -124,7 +124,7 @@ public:
     virtual void poll();
     PortholeFunctionsBinder* getFunctionsBinder() { return myBinder; }
 
-    void postPointerEvent(Event::Type type, int sourceId, int x, int y, uint flags);
+    void postPointerEvent(Event::Type type, int sourceId, float x, float y, uint flags);
     void postKeyEvent(Event::Type type, char key, uint flags);
 
     // Server instance. It will manage the incoming connections

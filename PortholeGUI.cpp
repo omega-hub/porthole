@@ -57,17 +57,19 @@ PortholeGUI::PortholeGUI(PortholeService* owner, const String& cliid):
 
     // Get the canvas size, used to convert differential mouse coords into 
     // absolute ones. If no display system is available (i.e. for headless
-    // configs), set a default canvas size.
+    // configs), set a 1x1 canvas size (will return normalized coordnates).
     DisplaySystem* ds = SystemManager::instance()->getDisplaySystem();
     if(ds != NULL)
     {
         canvasSize = ds->getCanvasSize();
+        normalizedPointerPosition = false;
     }
     else
     {
         canvasSize = Vector2i(1920, 1080);
+        normalizedPointerPosition = true;
     }
-    pointerPosition = Vector2i::Zero();
+    pointerPosition = Vector2f::Zero();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -83,12 +85,28 @@ PortholeGUI::~PortholeGUI()
 ///////////////////////////////////////////////////////////////////////////////
 void PortholeGUI::updatePointerPosition(int dx, int dy)
 {
-    pointerPosition[0] += dx;
-    pointerPosition[1] += dy;
-    if(pointerPosition[0] < 0) pointerPosition[0] = 0;
-    if(pointerPosition[1] < 0) pointerPosition[1] = 0;
-    if(pointerPosition[0] >= canvasSize[0]) pointerPosition[0] = canvasSize[0] - 1;
-    if(pointerPosition[1] >= canvasSize[1]) pointerPosition[1] = canvasSize[1] - 1;
+    if(normalizedPointerPosition)
+    {
+        float fdx = dx;
+        float fdy = dy;
+        fdx /= canvasSize[0];
+        fdy /= canvasSize[1];
+        pointerPosition[0] += dx;
+        pointerPosition[1] += dy;
+        if(pointerPosition[0] < 0) pointerPosition[0] = 0;
+        if(pointerPosition[1] < 0) pointerPosition[1] = 0;
+        if(pointerPosition[0] >= 1) pointerPosition[0] = 1;
+        if(pointerPosition[1] >= 1) pointerPosition[1] = 1;
+    }
+    else
+    {
+        pointerPosition[0] += dx;
+        pointerPosition[1] += dy;
+        if(pointerPosition[0] < 0) pointerPosition[0] = 0;
+        if(pointerPosition[1] < 0) pointerPosition[1] = 0;
+        if(pointerPosition[0] >= canvasSize[0]) pointerPosition[0] = canvasSize[0] - 1;
+        if(pointerPosition[1] >= canvasSize[1]) pointerPosition[1] = canvasSize[1] - 1;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
