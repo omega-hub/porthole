@@ -319,6 +319,7 @@
                         };
                         console.log("asking for fps: " + parseInt(1000 / dt));
                         socket.send(JSON.stringify(JSONEvent));
+                        overstart = now;
                     }
                 }
             }
@@ -477,7 +478,7 @@
 
         ////////////////// MULTITOUCH ////////////////////////////
 
-        hammer.on("dragstart", function (ev) 
+        /*hammer.on("dragstart", function (ev) 
 		{
             dragging = true;
         });
@@ -532,7 +533,7 @@
 		});
 		
         hammer.on("hold", function (ev) { 
-		});
+		});*/
 
     }
 

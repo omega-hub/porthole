@@ -63,6 +63,13 @@ PortholeGUI::PortholeGUI(PortholeService* owner, const String& cliid):
     {
         canvasSize = ds->getCanvasSize();
         normalizedPointerPosition = false;
+        // Sort of hack: if canvas size is (1,1), it means we are doing headless server rendering.
+        // So, enable pointer position normalization and set a reasonable canvas size here.
+        if(canvasSize[0] == 1 && canvasSize[1] == 1)
+        {
+            canvasSize = Vector2i(1920, 1080);
+            //normalizedPointerPosition = true;
+        }
     }
     else
     {

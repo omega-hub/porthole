@@ -754,7 +754,7 @@ int ServerThread::callback_websocket(struct libwebsocket_context *context,
 
         // See if we have javascript callbacks that we need to send to the
         // client
-        else if(data->guiManager->isJavascriptQueued())
+        if(data->guiManager->isJavascriptQueued())
         {
             String toSend = data->guiManager->flushJavascriptQueueToJson();
             // Send the base64 image
