@@ -95,10 +95,12 @@
   <interfaces>
   <interface minWidth="0" minHeight="0" id="default">
     <portrait layout="free">
+    <element  x="300px" width="30%" height="5%" id="pointer_ui"/>
     <element width="100%" height="100%" id="camera"/>
     <element id="pointer_script"/>
     </portrait>
     <landscape layout="free">
+    <element x="300px" width="30%" height="5%" id="pointer_ui"/>
     <element width="100%" height="100%" id="camera"/>
     <element id="pointer_script"/>
     </landscape>
