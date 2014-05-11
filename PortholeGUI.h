@@ -141,7 +141,9 @@ struct PortholeElement: ReferenceType
 struct PortholeCamera: ReferenceType
 {
     int id;
-    int targetFps; // The desired output fps for this camera.
+    float targetFps; // The desired output fps for this camera.
+    int highFps; // When the frame rate passes this fps, increase stream quality.
+    int lowFps; // When the frame rate is lower than this fps, decrease stream quality.
     Camera* camera;
     PixelData* canvas;
     int canvasWidth, canvasHeight;
@@ -149,7 +151,9 @@ struct PortholeCamera: ReferenceType
     //unsigned int oldusStreamSent; // Timestamp of last stream sent via socket
 
     PortholeCamera() :
-        targetFps(60)
+        targetFps(60),
+        highFps(15),
+        lowFps(5)
     {}
 };
 
@@ -295,7 +299,7 @@ public:
 
     // Mod the camera with id cameraId 
     // size: the ratio of camera: 1.0 is full size
-    void modCustomCamera(float size, float widthPercent, float heightPercent);
+    void modCustomCamera(float widthPercent, float heightPercent);
 
     // Parse HTML gui_element and look for Javascript events 
     static vector<string> findHtmlScripts();

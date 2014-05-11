@@ -315,9 +315,9 @@
                         var JSONEvent = {
                             "event_type": "fps_adjust",
                             "camera_id": parseInt(camera.getAttribute("data-camera_id")),
-                            "fps": ( 1000 / dt )
+                            "fps": (( 1000 / dt ) + 1)
                         };
-                        console.log("asking for fps: " + parseInt(1000 / dt));
+                        //console.log("asking for fps: " + parseInt(1000 / dt));
                         socket.send(JSON.stringify(JSONEvent));
                         overstart = now;
                     }
@@ -352,6 +352,7 @@
                     addEvent(window, "resize", sendSpecTimeout);
                 }
                 $(window).bind('orientationchange', sendSpecTimeout);
+                $(window).bind('resize', sendSpecTimeout);
             }
             else if(message.event_type == "javascript")
             {
@@ -399,7 +400,7 @@
     var overFPS = false;
     var FPS_MIN = 40;
     var FPS_TARGET = 50;
-    var FPS_DELTA = 5000; // In Millis
+    var FPS_DELTA = 1000; // In Millis - adjust frame rate every second.
     var overSTART = 0;
     var loopId = 0;
 
@@ -423,6 +424,7 @@
 	{
         if (looping && ctx != null)
 		{
+        //console.log("camsize " + camera.width + " " + camera.height);
             ctx.drawImage(img, 0, 0, camera.width, camera.height);
 
 //            if ( ( 1000 / dt ) > FPS_MIN){
@@ -447,7 +449,7 @@
 
         camera.width = camera.parentNode.clientWidth;
         camera.height = camera.parentNode.clientHeight;
-
+        
         ctx = camera.getContext("2d");
 
         // OK, we have the camera, so start camera loop

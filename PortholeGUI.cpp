@@ -227,7 +227,7 @@ string PortholeGUI::create(bool firstTime)
                 }
                 else
                 {
-                    modCustomCamera(1.0, percentToFloat(width), percentToFloat(height));
+                    modCustomCamera(percentToFloat(width), percentToFloat(height));
                 }
             }
             // Custom camera case
@@ -251,7 +251,7 @@ string PortholeGUI::create(bool firstTime)
                 }
                 else
                 {
-                    modCustomCamera(1.0, percentToFloat(width), percentToFloat(height));
+                    modCustomCamera(percentToFloat(width), percentToFloat(height));
                 }
             }
 
@@ -372,7 +372,7 @@ void PortholeGUI::createCustomCamera(float widthPercent, float heightPercent, ui
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::modCustomCamera(float size, float widthPercent, float heightPercent){ 
+void PortholeGUI::modCustomCamera(float widthPercent, float heightPercent){ 
 
     // Retrieve the camera to be modified
     PortholeCamera* portholeCamera = this->sessionCamera;
@@ -385,8 +385,8 @@ void PortholeGUI::modCustomCamera(float size, float widthPercent, float heightPe
     // Initialize camera size
     // Workaround. This avoid a canvas drawing bug
     // Round down width to a multiple of 4.
-    int width = (int)( widthPercent * size * device->deviceWidth / 4 ) * 4;
-    int height = (int)( heightPercent * size * device->deviceHeight / 4 ) * 4;
+    int width = (int)(widthPercent * portholeCamera->size * device->deviceWidth / 4) * 4;
+    int height = (int)(heightPercent * portholeCamera->size * device->deviceHeight / 4) * 4;
 
     // cout << "Width: " << width  << " - height: " << height << endl;
 
@@ -395,7 +395,23 @@ void PortholeGUI::modCustomCamera(float size, float widthPercent, float heightPe
     sessionCamera->getOutput(0)->setReadbackTarget(portholeCamera->canvas);
     sessionCamera->getOutput(0)->setEnabled(true);
 
-    portholeCamera->size = portholeCamera->size * size;
+    DisplayTileConfig* dtc = sessionCamera->getCustomTileConfig();
+    // Setup projection
+    dtc->enabled = true;
+    dtc->setPixelSize(width, height);
+    // Setup a default projection
+
+    float as = (float)width / height;
+    float base = 1.0f;
+
+    Camera* defaultCamera = myEngine->getDefaultCamera();
+    Vector3f ho = defaultCamera->getHeadOffset();
+
+    dtc->setCorners(
+        Vector3f(-base * as, base, -2) + ho,
+        Vector3f(-base * as, -base, -2) + ho,
+        Vector3f(base * as, -base, -2) + ho);
+
     portholeCamera->canvasWidth = width;
     portholeCamera->canvasHeight = height;
 }
@@ -657,3 +673,9 @@ void PortholeGUI::parseXmlFile(char* xmlPath)
     }
 
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//void PortholeGUI::setStreamQuality(float quality)
+//{
+//    this->sessionCamera->size = quality;
+//}

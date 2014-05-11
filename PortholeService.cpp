@@ -633,9 +633,25 @@ inline void handle_message(per_session_data* data, recv_message* message,
     else if (strcmp(message->event_type.c_str(),MSG_EVENT_FPS_ADJUST)==0)
     {
         PortholeCamera* pc = data->guiManager->getSessionCamera();
-        pc->targetFps = (int)(message->fps);
+        pc->targetFps = (pc->targetFps + (int)(message->fps)) / 2;
         if(pc->targetFps < 1) pc->targetFps = 1;
+        if(pc->targetFps < 40) pc->targetFps++;
         ofmsg("Adjusting fps to %1%", % pc->targetFps);
+
+        if(pc->targetFps < pc->lowFps && pc->size > 0.5f)
+        {
+            if(pc->targetFps <= pc->lowFps / 2) pc->size = 0.2f;
+            else pc->size = 0.5f;
+            // Everytime we decrease the quality, increase high fps requirement.
+            pc->highFps+= 5;
+            sendHtmlElements(false, data, context, wsi);
+        }
+        else if(pc->targetFps > pc->highFps && pc->size < 1.0f)
+        {
+            pc->size = 1.0f;
+            sendHtmlElements(false, data, context, wsi);
+        }
+
     //	data->guiManager->modCustomCamera(message->cameraSize);
     }
 
@@ -703,7 +719,7 @@ int ServerThread::callback_websocket(struct libwebsocket_context *context,
 
             // Each time we send a frame, we also try to increase the frame rate, one
             // frame at a time (cap at 50fps max)
-            if(pc->targetFps < 50) pc->targetFps++;
+            //if(pc->targetFps < 50) pc->targetFps++;
 
             // Get the corresponding camera to be modified
             PortholeCamera* sessionCamera = data->guiManager->getSessionCamera();
