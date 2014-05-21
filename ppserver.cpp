@@ -38,7 +38,7 @@ public:
     virtual void handleEvent(const Event& e)
     {
         // Dispatch events to connected clients.
-        myInputServer.handleEvent(e);
+        myInputServer.handleEvent(&e);
     }
 
 private:
