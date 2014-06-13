@@ -1,6 +1,6 @@
 # This example shows how to do basic camera streaming to 
 # a web interface using porthole.
-# opena browser to http://127.0.0.1:4080
+# open a browser to http://127.0.0.1:4080
 import porthole
 
 # create a spinning box
