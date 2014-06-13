@@ -315,7 +315,7 @@
                         var JSONEvent = {
                             "event_type": "fps_adjust",
                             "camera_id": parseInt(camera.getAttribute("data-camera_id")),
-                            "fps": (( 1000 / dt ) + 1)
+                            "fps": ( 1000 / dt ) 
                         };
                         //console.log("asking for fps: " + parseInt(1000 / dt));
                         socket.send(JSON.stringify(JSONEvent));
