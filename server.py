@@ -12,6 +12,10 @@ def onCameraCreated(camId):
     global clientCamera
     camera = getCameraById(camId);
     #camera.setOverlayEnabled(False)
-    camera.setHeadOffset(getDefaultCamera().getHeadOffset())
+    dc = getDefaultCamera()
+    camera.setHeadOffset(dc.getHeadOffset())
+    camera.setPosition(0,0,0)
+    #camera.setOrientation(dc.getOrientation())
+    dc.addChild(camera)
+    camera.setNearFarZ(dc.getNearZ(), dc.getFarZ())
     print("camera created " + camera.getName())
-    getDefaultCamera().addChild(camera)
