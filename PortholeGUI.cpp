@@ -61,7 +61,7 @@ PortholeGUI::PortholeGUI(PortholeService* owner, const String& cliid):
     DisplaySystem* ds = SystemManager::instance()->getDisplaySystem();
     if(ds != NULL)
     {
-        canvasSize = ds->getCanvasSize();
+        canvasSize = ds->getDisplayConfig().getCanvasRect().size();
         normalizedPointerPosition = false;
         // Sort of hack: if canvas size is (1,1), it means we are doing headless server rendering.
         // So, enable pointer position normalization and set a reasonable canvas size here.
