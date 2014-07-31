@@ -4,7 +4,7 @@ omegalib offers support for HTML5-capable browsers interactions. Specifically, t
 
 Basically, the Porthole Service creates a Server in a separate thread, that handles all the incoming connections. But all the steps between the XML description and the actual management of the different devices, including camera streaming and manipulations, are transparent to the application developer.
 
-## Porthole Python API
+## Porthole Python API ##
 All the porthole API is contained in the `porthole` python module. To start using porthole simply do
 ```python
 import porthole
@@ -17,16 +17,21 @@ porthole.initialize("interface.xml", "interface.css")
 svc = porthole.getService()
 ```
 
-### `PortholeService`
+### `PortholeService` ###
 The `PortholeService` class exposes all the basic methods offered by the porthole interface
 
 | **Method** | **Description** |
 ---|---
-`setServerStartedCommand(string cmd)` |
-`setConnectedCommand(string cmd)` |
-`setDisconnectedCommand(string cmd)` |
-`setCameraCreatedCommand(string cmd)` |
-`setCameraDestroyedCommand(string cmd)` |
+|`setServerStartedCommand(string cmd)` |
+|`setConnectedCommand(string cmd)` |
+|`setDisconnectedCommand(string cmd)` |
+|`setCameraCreatedCommand(string cmd)` |
+|`setCameraDestroyedCommand(string cmd)` |
+|`setPointerBounds(Vector2i bounds)`, `Vector2i getPointerBounds()` | Sets the 
+bounds for pointer events coming from web clients. If this is left to (0, 0), 
+bounds will be set to the display canvas size. Values set through this method 
+will only apply to newly connected clients.|
+|`setPointerSpeed(float speed)`, `float getPointerSpeed()`|
 
 
 ## Porthole Javascript API
