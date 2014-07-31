@@ -22,19 +22,16 @@ The `PortholeService` class exposes all the basic methods offered by the porthol
 
 | **Method** | **Description** |
 ---|---
-|`setServerStartedCommand(string cmd)` |
-|`setConnectedCommand(string cmd)` |
-|`setDisconnectedCommand(string cmd)` |
-|`setCameraCreatedCommand(string cmd)` |
-|`setCameraDestroyedCommand(string cmd)` |
-|`setPointerBounds(Vector2i bounds)`, `Vector2i getPointerBounds()` | Sets the 
-bounds for pointer events coming from web clients. If this is left to (0, 0), 
-bounds will be set to the display canvas size. Values set through this method 
-will only apply to newly connected clients.|
-|`setPointerSpeed(float speed)`, `float getPointerSpeed()`|
+`setServerStartedCommand(string cmd)` |
+`setConnectedCommand(string cmd)` |
+`setDisconnectedCommand(string cmd)` |
+`setCameraCreatedCommand(string cmd)` |
+`setCameraDestroyedCommand(string cmd)` |
+`setPointerBounds(Vector2i bounds)`, `Vector2i getPointerBounds()` | Sets the bounds for pointer events coming from web clients. If this is left to (0, 0), bounds will be set to the display canvas size. Values set through this method will only apply to newly connected clients.|
+`setPointerSpeed(float speed)`, `float getPointerSpeed()`| Sets the speed for pointer events coming from web clients. Values set through this method will only apply to newly connected clients.
 
 
-## Porthole Javascript API
+## Porthole Javascript API ##
 | **Function** | **Description** |
 ---|---
 `setInterface(string interfaceId)`
