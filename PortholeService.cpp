@@ -312,6 +312,7 @@ int ServerThread::callback_http(struct libwebsocket_context *context,
 // Struct of data to be passed across the entire session
 struct per_session_data {
     PortholeGUI* guiManager;
+    unsigned int userId;
     unsigned long long oldus;
     std::string test_flag;
 };
@@ -410,6 +411,15 @@ inline void print(json_value *value, int ident = 0)
 
 #define MSG_EVENT_FPS_ADJUST "fps_adjust"
 #define MSG_FPS "fps"
+
+// Global variables, yay!
+unsigned int sUserIdCounter = 0;
+
+// User Id start contains the first id used for porthole clients. We start with
+// a pretty high value to avoid possible conflicts with user ids from other 
+// services. When porthole service is initialized, it will set this value based
+// on its own id.
+unsigned int sUserIdStart = 1000;
 
 ///////////////////////////////////////////////////////////////////////////////
 struct recv_message{
@@ -528,11 +538,11 @@ inline void handle_message(per_session_data* data, recv_message* message,
         {
             data->guiManager->updatePointerPosition(message->x, message->y);
             const Vector2f& pt = data->guiManager->getPointerPosition();
-            svc->postPointerEvent(Event::Move, id, pt[0], pt[1], 0);
+            svc->postPointerEvent(Event::Move, id, pt[0], pt[1], 0, data->userId);
         }
         else
         {
-            svc->postPointerEvent(Event::Move, id, message->x, message->y, 0);
+            svc->postPointerEvent(Event::Move, id, message->x, message->y, 0, data->userId);
         }
     }
 
@@ -545,11 +555,11 @@ inline void handle_message(per_session_data* data, recv_message* message,
         {
             data->guiManager->updatePointerPosition(message->x, message->y);
             const Vector2f& pt = data->guiManager->getPointerPosition();
-            svc->postPointerEvent(Event::Move, id, pt[0], pt[1], Event::Left);
+            svc->postPointerEvent(Event::Move, id, pt[0], pt[1], Event::Left, data->userId);
         }
         else 
         {
-            svc->postPointerEvent(Event::Click, id, message->x, message->y, Event::Left);
+            svc->postPointerEvent(Event::Click, id, message->x, message->y, Event::Left, data->userId);
         }
     }
 
@@ -568,11 +578,11 @@ inline void handle_message(per_session_data* data, recv_message* message,
         {
             data->guiManager->updatePointerPosition(message->x, message->y);
             const Vector2f& pt = data->guiManager->getPointerPosition();
-            svc->postPointerEvent(Event::Up, id, pt[0], pt[1], flags);
+            svc->postPointerEvent(Event::Up, id, pt[0], pt[1], flags, data->userId);
         }
         else
         {
-            svc->postPointerEvent(Event::Up, id, message->x, message->y, flags);
+            svc->postPointerEvent(Event::Up, id, message->x, message->y, flags, data->userId);
         }
     }
 
@@ -591,11 +601,11 @@ inline void handle_message(per_session_data* data, recv_message* message,
         {
             data->guiManager->updatePointerPosition(message->x, message->y);
             const Vector2f& pt = data->guiManager->getPointerPosition();
-            svc->postPointerEvent(Event::Down, id, pt[0], pt[1], flags);
+            svc->postPointerEvent(Event::Down, id, pt[0], pt[1], flags, data->userId);
         }
         else
         {
-            svc->postPointerEvent(Event::Down, id, message->x, message->y, flags);
+            svc->postPointerEvent(Event::Down, id, message->x, message->y, flags, data->userId);
         }
     }
 
@@ -604,7 +614,7 @@ inline void handle_message(per_session_data* data, recv_message* message,
         PortholeService* svc = data->guiManager->getService();
         char key = message->key;
         uint flags = 0;
-        svc->postKeyEvent(Event::Up, key, flags);
+        svc->postKeyEvent(Event::Up, key, flags, data->userId);
     }
 
     else if(strcmp(message->event_type.c_str(), MSG_EVENT_KEYDOWN) == 0)
@@ -612,7 +622,7 @@ inline void handle_message(per_session_data* data, recv_message* message,
         PortholeService* svc = data->guiManager->getService();
         char key = message->key;
         uint flags = 0;
-        svc->postKeyEvent(Event::Down, key, flags);
+        svc->postKeyEvent(Event::Down, key, flags, data->userId);
     }
 
     // First message received is a device spec message
@@ -693,6 +703,7 @@ int ServerThread::callback_websocket(struct libwebsocket_context *context,
         service->notifyConnected(cliName);
         // Allocate gui manager
         data->guiManager = service->createClient(cliName);
+        data->userId = sUserIdStart + sUserIdCounter++;
         data->oldus = 0;
 
         break;
@@ -976,7 +987,8 @@ void ServerThread::threadProc()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-PortholeService::PortholeService()
+PortholeService::PortholeService():
+myPointerBounds(Vector2i::Zero()), myPointerSpeed(1)
 {
 }
 
@@ -1000,9 +1012,10 @@ void PortholeService::start(int port, char* xmlPath, char* cssPath)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeService::setup(Setting& settings)
+void PortholeService::initialize()
 {
-    cout << ">> !! Setup called" << endl;
+    sUserIdStart = this->getServiceId() * 100;
+    ofmsg("PortholeService: initial user id = %1%", %sUserIdStart);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1169,22 +1182,22 @@ void PortholeService::notifyCameraDestroyed(Camera* cam)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeService::postPointerEvent(Event::Type type, int sourceId, float x, float y, uint flags)
+void PortholeService::postPointerEvent(Event::Type type, int sourceId, float x, float y, uint flags, unsigned int userId)
 {
     lockEvents();
     Event* evt = writeHead();
-    evt->reset(type, Service::Pointer, sourceId, getServiceId());
+    evt->reset(type, Service::Pointer, sourceId, getServiceId(), userId);
     evt->setPosition(x, y);
     evt->setFlags(flags);
     unlockEvents();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeService::postKeyEvent(Event::Type type, char key, uint flags)
+void PortholeService::postKeyEvent(Event::Type type, char key, uint flags, unsigned int userId)
 {
     lockEvents();
     Event* evt = writeHead();
-    evt->reset(type, Service::Keyboard, key, getServiceId());
+    evt->reset(type, Service::Keyboard, key, getServiceId(), userId);
     evt->setFlags(flags);
     unlockEvents();
 }

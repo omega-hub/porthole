@@ -88,6 +88,10 @@ BOOST_PYTHON_MODULE(porthole)
         PYAPI_METHOD(PortholeService, setServerStartedCommand)
         PYAPI_METHOD(PortholeService, sendjs)
         PYAPI_METHOD(PortholeService, broadcastjs)
+        PYAPI_METHOD(PortholeService, setPointerBounds)
+        PYAPI_GETTER(PortholeService, getPointerBounds)
+        PYAPI_METHOD(PortholeService, setPointerSpeed)
+        PYAPI_METHOD(PortholeService, getPointerSpeed)
         ;
 
     def("initialize", initialize, initializeOverloads());

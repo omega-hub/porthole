@@ -119,13 +119,13 @@ public:
     ~PortholeService();
 
     // Setup and poll
-    virtual void setup(omicron::Setting& settings);
+    virtual void initialize();
     void start(int port, char* xmlPath, char* cssPath); // Start the server and listen to port
     virtual void poll();
     PortholeFunctionsBinder* getFunctionsBinder() { return myBinder; }
 
-    void postPointerEvent(Event::Type type, int sourceId, float x, float y, uint flags);
-    void postKeyEvent(Event::Type type, char key, uint flags);
+    void postPointerEvent(Event::Type type, int sourceId, float x, float y, uint flags, unsigned int userId);
+    void postKeyEvent(Event::Type type, char key, uint flags, unsigned int userId);
 
     // Server instance. It will manage the incoming connections
     //thread server_thread;
@@ -141,6 +141,22 @@ public:
     { myCameraDestroyedCommand = cmd; }
     void setServerStartedCommand(const String cmd)
     { myServerStartedCommand = cmd; }
+
+    //! Sets the bounds for pointer events coming from web clients. If this 
+    //! is left to (0, 0), bounds will be set to the display canvas size.
+    //! Values set through this method will only apply to newly connected clients.
+    void setPointerBounds(const Vector2i& ptr)
+    { myPointerBounds = ptr; }
+    Vector2i getPointerBounds()
+    { return myPointerBounds; }
+
+    //! Sets the speed for pointer events coming from web clients. 
+    //! Values set through this method will only apply to newly connected clients.
+    void setPointerSpeed(float speed)
+    { myPointerSpeed = speed; }
+    float getPointerSpeed()
+    { return myPointerSpeed; }
+
 
     // Notification functions called from the websockets thread
     void notifyConnected(const String& id);
@@ -170,6 +186,10 @@ private:
     PortholeFunctionsBinder* myBinder;
 
     List< Ref<PortholeGUI> > myClients;
+
+    // Bounds for pointer events coming in from web clients. 
+    Vector2i myPointerBounds;
+    float myPointerSpeed;
 };
 
 #endif

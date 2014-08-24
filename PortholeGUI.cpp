@@ -51,30 +51,40 @@ inline float percentToFloat(String percent){
 
 ///////////////////////////////////////////////////////////////////////////////
 PortholeGUI::PortholeGUI(PortholeService* owner, const String& cliid):
-    service(owner), clientId(cliid)
+service(owner), clientId(cliid), pointerSpeed(1)
 {
     this->sessionCamera = NULL;
 
-    // Get the canvas size, used to convert differential mouse coords into 
-    // absolute ones. If no display system is available (i.e. for headless
-    // configs), set a 1x1 canvas size (will return normalized coordnates).
-    DisplaySystem* ds = SystemManager::instance()->getDisplaySystem();
-    if(ds != NULL)
+    // Get canvas size from service first. If canvas size is (0,0), read it 
+    // from display config. Having a canvas size different from display config
+    // ne is useful for graphical servers that want to send web events to other 
+    // clients that may have a canvas size different than the server window.
+    canvasSize = service->getPointerBounds();
+    pointerSpeed = service->getPointerSpeed();
+    
+    if(canvasSize == Vector2i::Zero())
     {
-        canvasSize = ds->getDisplayConfig().getCanvasRect().size();
-        normalizedPointerPosition = false;
-        // Sort of hack: if canvas size is (1,1), it means we are doing headless server rendering.
-        // So, enable pointer position normalization and set a reasonable canvas size here.
-        if(canvasSize[0] == 1 && canvasSize[1] == 1)
+        // Get the canvas size, used to convert differential mouse coords into 
+        // absolute ones. If no display system is available (i.e. for headless
+        // configs), set a 1x1 canvas size (will return normalized coordnates).
+        DisplaySystem* ds = SystemManager::instance()->getDisplaySystem();
+        if(ds != NULL)
+        {
+            canvasSize = ds->getDisplayConfig().getCanvasRect().size();
+            normalizedPointerPosition = false;
+            // Sort of hack: if canvas size is (1,1), it means we are doing headless server rendering.
+            // So, enable pointer position normalization and set a reasonable canvas size here.
+            if((canvasSize[0] == 0 && canvasSize[1] == 0) || (canvasSize[0] == 1 && canvasSize[1] == 1))
+            {
+                canvasSize = Vector2i(1920, 1080);
+                //normalizedPointerPosition = true;
+            }
+        }
+        else
         {
             canvasSize = Vector2i(1920, 1080);
-            //normalizedPointerPosition = true;
+            normalizedPointerPosition = true;
         }
-    }
-    else
-    {
-        canvasSize = Vector2i(1920, 1080);
-        normalizedPointerPosition = true;
     }
     pointerPosition = Vector2f::Zero();
 }
@@ -92,6 +102,8 @@ PortholeGUI::~PortholeGUI()
 ///////////////////////////////////////////////////////////////////////////////
 void PortholeGUI::updatePointerPosition(int dx, int dy)
 {
+    dx *= pointerSpeed;
+    dy *= pointerSpeed;
     if(normalizedPointerPosition)
     {
         float fdx = dx;
