@@ -3,6 +3,7 @@
 # and synchronize multiple sliders using javascript and python
 # opena borwser to http://127.0.0.1:4080 and chang the slider
 # the slider in the omegalib window should move as well, and vice versa.
+from cyclops import *
 from webView import*
 from browser import *
 import porthole

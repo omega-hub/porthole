@@ -266,7 +266,7 @@ string PortholeGUI::create(bool firstTime)
                     modCustomCamera(percentToFloat(width), percentToFloat(height));
                 }
             }
-
+            // load camera script here?
             element->htmlValue = ostr("<canvas id=\"camera-canvas\" class=\"camera_container\" data-camera_id = \"%1%\" width=\"%2%\" height=\"%3%\"></canvas>", 
                 %sessionCamera->id %sessionCamera->canvas->getWidth() %sessionCamera->canvas->getHeight());
 

@@ -14,6 +14,7 @@ add_library(${MODULE_NAME} MODULE
 	porthole.cpp
 	PortholeService.cpp
 	PortholeGUI.cpp
+	ServerThread.cpp
 	# A tiny JSON library
 	vjson/block_allocator.cpp
 	vjson/json.cpp)

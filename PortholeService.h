@@ -34,80 +34,13 @@
 #define __PORTHOLE_SERVICE_H__
 
 #include <omega.h>
-#include "websockets/libwebsockets.h"
+//#include "websockets/libwebsockets.h"
 #include "PortholeGUI.h"
 
 using namespace std;
 using namespace omicron;
 
-#define ZOOM_STEP 0.025
-
-//! Path to resources, such as html files
-static String DATA_PATH; 
-
-//! CSS path
-static String css_path;
-
-class PortholeService;
-
-///////////////////////////////////////////////////////////////////////////////
-//! Implements, in a separate thread, the HTTP server for Porthole Service
-class ServerThread: public Thread{
-
-public:
-
-    // Constructor
-    ServerThread(PortholeService* owner);
-
-    // Destructor
-    ~ServerThread();
-
-    // Set port
-    void setPort(int portNumber); 
-
-    // Set funtions binder
-    void setFunctionsBinder(PortholeFunctionsBinder* binder); 
-
-    void setXMLfile(char* xmlPath);
-
-    // Set funtions binder
-    void setCSSPath(char* cssPath); 
-
-    // Thread process
-    virtual void threadProc();
-
-    // Handshake manager
-    static void dump_handshake_info(struct lws_tokens *lwst);
-
-    // HTTP callback
-    static int callback_http(struct libwebsocket_context *context,
-        struct libwebsocket *wsi,
-        enum libwebsocket_callback_reasons reason, void *user,
-                            void *in, size_t len);
-
-    // websocket callback
-    static int callback_websocket(struct libwebsocket_context *context,
-        struct libwebsocket *wsi,
-        enum libwebsocket_callback_reasons reason,
-                        void *user, void *in, size_t len);
-
-private:
-    static PortholeService* service;
-
-    // Server params
-    int port;
-    struct libwebsocket_context *context; 
-    int opts;
-    int n;
-    unsigned int oldus;
-    char* minterface;
-
-    // SSL vars - NOT TESTED
-    int use_ssl;
-    const char* cert_path;
-    const char* key_path;
-
-};
+class ServerThread;
 
 ///////////////////////////////////////////////////////////////////////////////
 //! Implements an interface to handled device applications
