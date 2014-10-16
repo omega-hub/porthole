@@ -52,9 +52,11 @@ public:
     ~PortholeService();
 
     // Setup and poll
-    virtual void initialize();
-    void start(int port, char* xmlPath, char* cssPath); // Start the server and listen to port
-    virtual void poll();
+    void start(int port); // Start the server and listen to port
+
+    //! Loads an xml interface file. Must be called after start. Can be called
+    //! multiple times to load a different interface or to re-load an existing one.
+    void load(const String& interfaceFile);
     PortholeFunctionsBinder* getFunctionsBinder() { return myBinder; }
 
     void postPointerEvent(Event::Type type, int sourceId, float x, float y, uint flags, unsigned int userId);

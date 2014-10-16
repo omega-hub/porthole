@@ -48,10 +48,7 @@ PortholeService* getService()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool initialize(
-    const String& xml = "porthole/default.xml", 
-    const String& css = "porthole/default.css", 
-    int port = 4080)
+bool initialize(int port = 4080)
 {
     // The service gets created only on the master node.
     if(SystemManager::instance()->isMaster() && !sServiceInstance)
@@ -59,14 +56,7 @@ bool initialize(
         sServiceInstance = new PortholeService();
         ServiceManager* svcManager = SystemManager::instance()->getServiceManager();
         svcManager->addService(sServiceInstance);
-
-        string fullPath_xml;
-        DataManager::findFile(xml, fullPath_xml);
-
-        string fullPath_css;
-        DataManager::findFile(css, fullPath_css);
-
-        sServiceInstance->start(port, (char*)fullPath_xml.c_str(), (char*)fullPath_css.c_str());
+        sServiceInstance->start(port);
 
         return true;
     }
@@ -77,7 +67,7 @@ bool initialize(
 // Python wrapper code.
 #ifdef OMEGA_USE_PYTHON
 #include "omega/PythonInterpreterWrapper.h"
-BOOST_PYTHON_FUNCTION_OVERLOADS(initializeOverloads, initialize, 0, 3)
+BOOST_PYTHON_FUNCTION_OVERLOADS(initializeOverloads, initialize, 0, 1)
 BOOST_PYTHON_MODULE(porthole)
 {
     PYAPI_REF_BASE_CLASS(PortholeService)
@@ -92,6 +82,7 @@ BOOST_PYTHON_MODULE(porthole)
         PYAPI_GETTER(PortholeService, getPointerBounds)
         PYAPI_METHOD(PortholeService, setPointerSpeed)
         PYAPI_METHOD(PortholeService, getPointerSpeed)
+        PYAPI_METHOD(PortholeService, load)
         ;
 
     def("initialize", initialize, initializeOverloads());

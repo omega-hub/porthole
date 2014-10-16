@@ -29,7 +29,8 @@ def createUi():
     bw.setDraggable(True)
         
 # Setup porthole
-porthole.initialize('syncSlider.xml')
+porthole.initialize()
+porthole.getService().load('syncSlider.xml')
 porthole.getService().setServerStartedCommand("createUi()")
 
 # Web interface callbacks

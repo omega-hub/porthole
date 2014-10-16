@@ -38,7 +38,7 @@ using namespace omicron;
 
 ///////////////////////////////////////////////////////////////////////////////
 PortholeService::PortholeService():
-myPointerBounds(Vector2i::Zero()), myPointerSpeed(1)
+myPointerBounds(Vector2i::Zero()), myPointerSpeed(1), myBinder(NULL)
 {
 }
 
@@ -50,25 +50,39 @@ PortholeService::~PortholeService()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeService::start(int port, char* xmlPath, char* cssPath)
+void PortholeService::start(int port)
 {
     myBinder = new PortholeFunctionsBinder();
+    myBinder->clear();
+
+    PortholeGUI::setPortholeFunctionsBinder(myBinder);
+
     portholeServer = new ServerThread(this);
     portholeServer->setPort(port);
-    portholeServer->setFunctionsBinder(myBinder);
-    portholeServer->setXMLfile(xmlPath);
-    portholeServer->setCSSPath(cssPath);
     portholeServer->start();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeService::initialize()
+void PortholeService::load(const String& interfaceFile)
 {
-}
+    if(myBinder == NULL)
+    {
+        owarn("PortholeService::load called before PortholeService::start");
+    }
+    else
+    {
+        myBinder->clear();
 
-///////////////////////////////////////////////////////////////////////////////
-void PortholeService::poll()
-{
+        String interfaceFilePath;
+        if(DataManager::findFile(interfaceFile, interfaceFilePath))
+        {
+            PortholeGUI::parseXmlFile(interfaceFilePath.c_str());
+        }
+        else
+        {
+            ofwarn("PortholeService::load: could not find interface file %1%", %interfaceFile);
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -34,210 +34,11 @@
 #define __PORTHOLE_GUI_H__
 
 #include <omega.h>
-
-#define PORTHOLE_EVENT_TOKEN_CAMERA_ID "%id%"
-#define PORTHOLE_EVENT_TOKEN_VALUE "%value%"
-#define PORTHOLE_EVENT_TOKEN_KEY "%key%"
-#define PORTHOLE_EVENT_TOKEN_MOUSE_BTN "%btn%"
-#define PORTHOLE_EVENT_TOKEN_EVENT "%event%"
-
-// define initial image quality: {0,1}
-#define IMAGE_QUALITY 1
+#include "PortholeFunctionsBinder.h"
 
 using namespace omega;
 using namespace omicron;
 using namespace std;
-
-// HTML namespace will contain all html events, 
-// so that parser could know which attribute is a Javascript event
-namespace HTML {
-
-    static const int eventsNumber = 19;
-
-    enum Event{
-        OnLoad,
-        OnUnload,
-        OnBlur,
-        OnChange,
-        OnFocus,
-        OnReset,
-        OnSelect,
-        OnSubmit,
-        OnAbort,
-        OnKeyDown,
-        OnKeyPress,
-        OnKeyUp,
-        OnClick,
-        OnDblClick,
-        OnMouseDown,
-        OnMouseMove,
-        OnMouseOut,
-        OnMouseOver,
-        OnMouseUp
-    };
-
-    // All HTML compatible events that could be found parsing the application xml
-    static const string events[eventsNumber] = {
-        "onload",  /* Script to be run when a document load */
-        "onunload",  /*  Script to be run when a document unload */
-        "onblur",  /* Script to be run when an element loses focus */
-        "onchange",  /* Script to be run when an element changes */
-        "onfocus",  /* Script to be run when an element gets focus */
-        "onreset",  /*  Script to be run when a form is reset */
-        "onselect",  /* Script to be run when a document load */
-        "onsubmit",  /* Script to be run when a form is submitted */
-        "onabort",  /* Script to be run when loading of an image is interrupted */
-        "onkeydown",  /* Script to be run when a key is pressed */
-        "onkeypress",  /* Script to be run when a key is pressed and released */
-        "onkeyup",  /* Script to be run when a key is released */
-        "onclick",  /* Script to be run on a mouse click */
-        "ondblclick",  /* Script to be run on a mouse double-click */
-        "onmousedown",  /* Script to be run when mouse button is pressed */
-        "onmousemove",  /* Script to be run when mouse pointer moves */
-        "onmouseout",  /* Script to be run when mouse pointer moves out of an element */
-        "onmouseover",  /* Script to be run when mouse pointer moves over an element */
-        "onmouseup",  /* Script to be run when mouse button is released */
-    };
-
-    static bool isEvent(string stringToSearch)
-    {
-        for(int i=0; i < eventsNumber; i++)
-            if (stringToSearch.compare(events[i]) == 0)
-                return true; // found
-        return false; // not found
-    }
-
-};
-
-// This will old a possible interface
-struct PortholeInterfaceType: public ReferenceType
-{
-    int minWidth;
-    int minHeight;
-    string id;
-    string orientation;
-    string layout;
-};
-
-// A device specifications object
-struct PortholeDevice: public ReferenceType
-{
-    int deviceWidth;
-    int deviceHeight;
-    string deviceOrientation; // Portrait or Landscape
-    Ref<PortholeInterfaceType> interfaceType;
-};
-
-// An element object
-struct PortholeElement: ReferenceType
-{
-    string id;
-    string type;
-    string cameraType; // Defined if type is camera stream
-    string htmlValue;
-};
-
-// A omega Camera wrapper for Porthole
-struct PortholeCamera: ReferenceType
-{
-    int id;
-    float targetFps; // The desired output fps for this camera.
-    int highFps; // When the frame rate passes this fps, increase stream quality.
-    int lowFps; // When the frame rate is lower than this fps, decrease stream quality.
-    Camera* camera;
-    PixelData* canvas;
-    int canvasWidth, canvasHeight;
-    float size; // 1.0 is default value = device size
-    //unsigned int oldusStreamSent; // Timestamp of last stream sent via socket
-
-    PortholeCamera() :
-        targetFps(60),
-        highFps(15),
-        lowFps(5)
-    {}
-};
-
-// An obj binded with a Javascript event
-struct PortholeEvent
-{
-    PortholeEvent(const String& clid):
-        clientId(clid)
-        {}
-
-    std::string htmlEvent;
-    int mouseButton;
-    char key;
-    const String& clientId;
-    std::string value;
-    PortholeCamera* sessionCamera;
-    Dictionary<String, String> args;
-};
-
-// Porthole functions binder
-struct PortholeFunctionsBinder: ReferenceType
-{
-    typedef void(*memberFunction)(PortholeEvent&);
-
-    void addFunction(std::string funcName, memberFunction func)
-    {
-        cppFuncMap[funcName] = func;
-    }
-
-    void addPythonScript(std::string script, string key, string elemid){
-        pythonFunMap[key] = script;
-        pythonFunIdMap[key] = elemid;
-        scriptNumber++;
-    }
-
-    void callFunction(std::string funcName, PortholeEvent &ev)
-    {
-        std::map<std::string, memberFunction>::const_iterator cpp_it;
-        cpp_it = cppFuncMap.find(funcName);
-        if (cpp_it != cppFuncMap.end())	return (*cpp_it->second)(ev);
-
-        std::map<std::string, string>::const_iterator py_it;
-        py_it = pythonFunMap.find(funcName);
-        if (py_it != pythonFunMap.end())
-        {
-            PythonInterpreter* pi = SystemManager::instance()->getScriptInterpreter();
-
-            // Substitute special %value% token
-            String pythonScript = omicron::StringUtils::replaceAll(py_it->second, PORTHOLE_EVENT_TOKEN_VALUE, ev.value);
-
-            // Substitute other argument tokens.
-            typedef KeyValue<String, String> ArgItem;
-            foreach(ArgItem i, ev.args)
-            {
-                String key = ostr("%%%1%%%", %i.getKey());
-                pythonScript = omicron::StringUtils::replaceAll(pythonScript, key, i.getValue());
-            }
-            
-            pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_KEY, boost::lexical_cast<std::string>(ev.key));
-            pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_MOUSE_BTN, boost::lexical_cast<std::string>(ev.mouseButton));
-            pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_EVENT, boost::lexical_cast<std::string>(ev.htmlEvent));
-            pythonScript = omicron::StringUtils::replaceAll(pythonScript, "%client_id%", "\"" + ev.clientId + "\"");
-
-            if (ev.sessionCamera != NULL)
-                pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_CAMERA_ID, boost::lexical_cast<std::string>(ev.sessionCamera->id));
-
-            pi->queueCommand(pythonScript); 
-        }
-        return;
-    }
-
-    bool isCppDefined(string funcName)
-    {
-        std::map<std::string, memberFunction>::const_iterator it;
-        it = cppFuncMap.find(funcName);
-        if (it != cppFuncMap.end()) return true;
-        return false;
-    }
-
-    std::map<std::string, memberFunction> cppFuncMap;
-    std::map<std::string, string> pythonFunMap;
-    std::map<std::string, string> pythonFunIdMap;
-    int scriptNumber;
-};
 
 // Xml Document
 static omega::xml::TiXmlDocument* xmlDoc;
@@ -305,7 +106,7 @@ public:
     static vector<string> findHtmlScripts();
 
     // Start application XML parsing
-    static void parseXmlFile(char* xmlPath);
+    static void parseXmlFile(const char* xmlPath);
 
     // Functions binder getter and setter
     static PortholeFunctionsBinder* getPortholeFunctionsBinder() { return functionsBinder; }
@@ -347,7 +148,7 @@ private:
     static std::map<string, omega::xml::TiXmlElement* > interfacesMap;
 
     // A map between an element id and the element data
-    static std::map<string, PortholeElement*> elementsMap;
+    static std::map<string, Ref<PortholeElement> > elementsMap;
 
     // Global canvas width and height and current pointer position. 
     // Used to convert differential mouse positions into absolute ones.

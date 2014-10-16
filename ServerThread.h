@@ -45,9 +45,6 @@ using namespace omicron;
 //! Path to resources, such as html files
 static String sWebserverDataRoot; 
 
-//! CSS path
-static String css_path;
-
 class PortholeService;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -79,14 +76,6 @@ public:
 
     // Set port
     void setPort(int portNumber); 
-
-    // Set funtions binder
-    void setFunctionsBinder(PortholeFunctionsBinder* binder); 
-
-    void setXMLfile(char* xmlPath);
-
-    // Set funtions binder
-    void setCSSPath(char* cssPath); 
 
     // Thread process
     virtual void threadProc();

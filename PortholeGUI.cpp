@@ -32,6 +32,7 @@
  ******************************************************************************/
 #include "PortholeGUI.h"
 #include "PortholeService.h"
+#include "HTML.h"
 #include <omicron/xml/tinyxml.h>
 #include <iostream>
 
@@ -41,8 +42,11 @@ using namespace std;
 PortholeFunctionsBinder* PortholeGUI::functionsBinder;
 vector< Ref<PortholeInterfaceType> > PortholeGUI::interfaces;
 std::map<string, omega::xml::TiXmlElement* > PortholeGUI::interfacesMap;
-std::map<string, PortholeElement*> PortholeGUI::elementsMap;
+std::map<string, Ref<PortholeElement> > PortholeGUI::elementsMap;
 std::map<int, PortholeCamera*> PortholeGUI::CamerasMap;
+
+// define initial image quality: {0,1}
+#define IMAGE_QUALITY 1
 
 ///////////////////////////////////////////////////////////////////////////////
 inline float percentToFloat(String percent){
@@ -162,6 +166,8 @@ string PortholeGUI::create(bool firstTime)
 
     string result = "";
 
+    // If interface layout is vertical or horizontal, create a table to contain
+    // all the html.
     if(device->interfaceType->layout == "vertical" ||
         device->interfaceType->layout == "horizontal")
     {
@@ -273,7 +279,10 @@ string PortholeGUI::create(bool firstTime)
         }
         else if (element->type == "script")
         {
+            //result.append("<script type=\"application/javascript\">");
             String escapedjs = StringUtils::replaceAll(element->htmlValue, "\"", "\\\"");
+            //result.append(escapedjs);
+            //result.append("</script>");
             calljs(escapedjs);
         }
 
@@ -449,16 +458,16 @@ String PortholeGUI::flushJavascriptQueueToJson()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/*Recursive*/void PortholeGUI::searchNode(omega::xml::TiXmlElement* node){
-
+void PortholeGUI::searchNode(omega::xml::TiXmlElement* node)
+{
     if ( !node ) return;
 
     const char* id = node->Attribute("id");
 
     // Parse attributes
     omega::xml::TiXmlAttribute* pAttrib = node->FirstAttribute();
-    while(pAttrib){
-
+    while(pAttrib)
+    {
         string attribute = pAttrib->Name();
         StringUtils::toLowerCase(attribute);
 
@@ -496,67 +505,65 @@ String PortholeGUI::flushJavascriptQueueToJson()
         pAttrib = pAttrib->Next();
     }
 
-    // Check recursively
-    for (omega::xml::TiXmlElement* pChild = node->FirstChildElement(); pChild != 0; pChild = pChild->NextSiblingElement()){
+    // Traverse children
+    for (omega::xml::TiXmlElement* pChild = node->FirstChildElement(); 
+        pChild != 0; 
+        pChild = pChild->NextSiblingElement())
+    {
         searchNode(pChild);
     }
 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-vector<string> PortholeGUI::findHtmlScripts(){
-
+vector<string> PortholeGUI::findHtmlScripts()
+{
     vector<string> result;
-
     omega::xml::TiXmlNode* guiElements = xmlDoc->FirstChildElement()->FirstChildElement();
-
     searchNode(guiElements->ToElement());
-
     return result;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::parseXmlFile(char* xmlPath)
+void PortholeGUI::parseXmlFile(const char* xmlPath)
 {
+    // Clean current xml interface data
+    interfaces.clear();
+    interfacesMap.clear();
+    elementsMap.clear();
+
+
     ::xmlDoc = new omega::xml::TiXmlDocument(xmlPath);
     bool loadOkay = xmlDoc->LoadFile();
-    if (!loadOkay){
-        ofwarn("Porthole: Failed to load XML file: %1%:%2% - %3%", 
+    if (!loadOkay)
+    {
+        oferror("Porthole: Failed to load XML file: %1%:%2% - %3%", 
             %xmlDoc->ErrorRow() %xmlDoc->ErrorCol() %xmlDoc->ErrorDesc());
-        abort();
+        return;
     }
 
     // Recursive search for Python Scripts inside events handlers
     findHtmlScripts();
-
     omega::xml::TiXmlNode* guiElements = xmlDoc->FirstChildElement()->FirstChildElement();
 
     // Parse the GUI elements
-    for (omega::xml::TiXmlNode* pChild = guiElements->FirstChildElement(); pChild != 0; pChild = pChild->NextSiblingElement()){
+    for (omega::xml::TiXmlNode* pChild = guiElements->FirstChildElement(); 
+        pChild != 0; 
+        pChild = pChild->NextSiblingElement()){
 
         PortholeElement* element = new PortholeElement();
 
         // Parse attributes
         omega::xml::TiXmlAttribute* pAttrib = pChild->ToElement()->FirstAttribute();
-        while(pAttrib){
-
+        while(pAttrib)
+        {
             string attribute = pAttrib->Name();
             StringUtils::toLowerCase(attribute);
 
-            // Save id attribute
-            if (attribute.compare("id")==0){
-                element->id = pAttrib->Value();
-            }
-
-            // Save type attribute
-            else if (attribute.compare("type")==0){
-                element->type = pAttrib->Value();
-            }
-
-            // Save camera type attribute
-            else if (attribute.compare("camera")==0){
-                element->cameraType = pAttrib->Value();
-            }
+            // Save attributes
+            if(attribute == "id") element->id = pAttrib->Value();
+            else if(attribute == "type") element->type = pAttrib->Value();
+            else if (attribute == "camera") element->cameraType = pAttrib->Value();
 
             // Next attribute
             pAttrib = pAttrib->Next();
@@ -566,15 +573,14 @@ void PortholeGUI::parseXmlFile(char* xmlPath)
         StringUtils::toLowerCase(element->cameraType);
 
         // For HTML and script elements, just add all the content to the element
-        if  (element->type == "html"){
-
+        if(element->type == "html")
+        {
             // Parse the GUI elements
             for (omega::xml::TiXmlNode* pHtmlChild = pChild->FirstChildElement(); pHtmlChild != 0; pHtmlChild = pHtmlChild->NextSiblingElement()){
                 
                 omega::xml::TiXmlPrinter* xmlPrinter = new omega::xml::TiXmlPrinter();
                 
                 pHtmlChild->Accept( xmlPrinter );
-                //cout << "Added: " << id << " -> " << xmlPrinter->CStr() << endl;
                 element->htmlValue.append(xmlPrinter->CStr());
                 // delete new line
                 element->htmlValue.erase(std::remove(element->htmlValue.begin(), element->htmlValue.end(), '\n'), element->htmlValue.end());
@@ -587,8 +593,8 @@ void PortholeGUI::parseXmlFile(char* xmlPath)
         {
             element->htmlValue = pChild->ToElement()->GetText();
         }
-
-        if(element->id.length() > 0 && element->type.length() > 0){
+        if(element->id.length() > 0 && element->type.length() > 0)
+        {
             elementsMap[element->id] = element;
         }
 
@@ -598,8 +604,10 @@ void PortholeGUI::parseXmlFile(char* xmlPath)
 
     // Parse the GUI elemets disposition
     // For each specified interface size
-    for (omega::xml::TiXmlElement* pInterfaceChild = guiDisposition->FirstChildElement(); pInterfaceChild != 0; pInterfaceChild = pInterfaceChild->NextSiblingElement()){
-
+    for (omega::xml::TiXmlElement* pInterfaceChild = guiDisposition->FirstChildElement(); 
+        pInterfaceChild != 0; 
+        pInterfaceChild = pInterfaceChild->NextSiblingElement())
+    {
             // Get element name
             String interfaceId = "";
 
@@ -607,33 +615,26 @@ void PortholeGUI::parseXmlFile(char* xmlPath)
 
             // Parse attributes
             omega::xml::TiXmlAttribute* pAttrib = pInterfaceChild->FirstAttribute();
-            while(pAttrib){
+            while(pAttrib)
+            {
 
                 string attribute = pAttrib->Name();
                 StringUtils::toLowerCase(attribute);
 
-                // Save id attribute
-                if (attribute.compare("id")==0){
-                    interfaceId = pAttrib->Value();
-                }
-
-                // Save min width attribute
-                if (attribute.compare("minwidth")==0){
-                    minWidth = pAttrib->IntValue();
-                }
-
-
-                // Save min height attribute
-                else if (attribute.compare("minheight")==0){
-                    minHeight = pAttrib->IntValue();
-                }
+                // Save attributes
+                if(attribute == "id") interfaceId = pAttrib->Value();
+                else if(attribute == "minwidth") minWidth = pAttrib->IntValue();
+                else if(attribute == "minheight") minHeight = pAttrib->IntValue();
 
                 // Next attribute
                 pAttrib = pAttrib->Next();
             }
 
         // For each orientation
-        for (omega::xml::TiXmlElement* pOrientationChild = pInterfaceChild->FirstChildElement(); pOrientationChild != 0; pOrientationChild = pOrientationChild->NextSiblingElement()){
+        for (omega::xml::TiXmlElement* pOrientationChild = pInterfaceChild->FirstChildElement(); 
+            pOrientationChild != 0; 
+            pOrientationChild = pOrientationChild->NextSiblingElement())
+        {
                 
             // Get element name
             string orientation = string(pOrientationChild->Value());
@@ -644,22 +645,21 @@ void PortholeGUI::parseXmlFile(char* xmlPath)
 
             // Parse attributes
             omega::xml::TiXmlAttribute* pAttrib = pOrientationChild->FirstAttribute();
-            while(pAttrib){
-
+            while(pAttrib)
+            {
                 string attribute = pAttrib->Name();
                 StringUtils::toLowerCase(attribute);
 
                 // Save layout attribute
-                if (attribute.compare("layout")==0){
-                    layout = std::string(pAttrib->Value());
-                }
+                if (attribute == "layout") layout = pAttrib->Value();
 
                 // Next attribute
                 pAttrib = pAttrib->Next();
             }
 
             // Check orientation and save node in the map
-            if (orientation.compare("portrait")==0 || orientation.compare("port")==0){
+            if (orientation == "portrait" || orientation =="port")
+            {
                 PortholeInterfaceType* interfaceType = new PortholeInterfaceType();
                 interfaceType->minWidth = minWidth;
                 interfaceType->minHeight = minHeight;
@@ -670,7 +670,7 @@ void PortholeGUI::parseXmlFile(char* xmlPath)
                 cout << ">> Added interface:" << interfaceId << " " << orientation << " " << minWidth << " " << minHeight << endl;
                 interfacesMap[interfaceId + orientation] = pOrientationChild;
             }
-            else if (orientation.compare("landscape")==0 || orientation.compare("land")==0){
+            else if(orientation == "landscape" || orientation == "land"){
                 PortholeInterfaceType* interfaceType = new PortholeInterfaceType();
                 interfaceType->minWidth = minHeight;
                 interfaceType->minHeight = minWidth;
@@ -685,9 +685,3 @@ void PortholeGUI::parseXmlFile(char* xmlPath)
     }
 
 }
-
-///////////////////////////////////////////////////////////////////////////////
-//void PortholeGUI::setStreamQuality(float quality)
-//{
-//    this->sessionCamera->size = quality;
-//}

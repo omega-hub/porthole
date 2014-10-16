@@ -1,0 +1,32 @@
+<gui>
+    <elements>
+        <element id="chat_area" type="HTML">
+            <div id="chat_area" style="width: 100%; height: 100%; overflow:scroll;"></div>
+            <input type="text" name="text" style="width:100%" onkeypress="%js submitOnEnter(this, event)"></input>
+        </element>
+        
+        <element id="slider_script" type="script">
+            function messageReceived(text) {
+                var p = document.createElement('p');
+                p.innerHTML = text;
+                document.getElementById('chat_area').appendChild(p);
+            }    
+
+            function submitOnEnter(inputElement, event) {
+                if(event.keyCode == 13) {
+                    var text = inputElement.value;
+                    phCall("postMessage('{0}', %client_id%)", text)
+                }
+            }
+        </element>
+    </elements>
+  
+  <interfaces>
+    <interface minWidth="0" minHeight="0" id="default">
+      <portrait layout="vertical">
+        <element width="100%" height="100%" id="chat_area"/>
+        <element id="slider_script"/>
+      </portrait>
+    </interface>
+  </interfaces>
+</gui>
