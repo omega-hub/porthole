@@ -502,7 +502,9 @@ inline void handle_message(per_session_data* data, recv_message* message,
     else if(strcmp(message->event_type.c_str(), MSG_EVENT_KEYUP) == 0)
     {
         PortholeService* svc = data->guiManager->getService();
-        char key = message->key;
+        // HACK: for some reason, Key UP on browser returns UPPERCASE 
+        char key = tolower(message->key);
+        //ofmsg("Key up %1%", %key);
         uint flags = 0;
         svc->postKeyEvent(Event::Up, key, flags, data->userId);
     }
@@ -512,6 +514,7 @@ inline void handle_message(per_session_data* data, recv_message* message,
         PortholeService* svc = data->guiManager->getService();
         char key = message->key;
         uint flags = 0;
+        //ofmsg("Key down %1%", %key);
         svc->postKeyEvent(Event::Down, key, flags, data->userId);
     }
 
@@ -855,7 +858,7 @@ void ServerThread::threadProc()
     //fprintf(stderr, " Using no-fork service loop\n");
     oldus = 0;
     n = 0;
-    while (n >= 0 && !SystemManager::instance()->isExitRequested()) 
+    while (/*n >= 0 &&*/ !SystemManager::instance()->isExitRequested()) 
     {
         struct timeval tv;
 
@@ -871,8 +874,14 @@ void ServerThread::threadProc()
          * immediately and quickly.  Negative return means we are
          * in process of closing
          */
-
         n = libwebsocket_service(context, 50);
+        // Even if we get n < 0 we attempt to keep running. -1 seems to return
+        // if we start porthole earlier in an omegalib app, but does not seem to
+        // cause any problem..
+        if(n < 0)
+        {
+            ofmsg("Websocket libwebsocket_service returned: %1%", %n);
+        }
     }
 
     // Destroy context when main loop ends

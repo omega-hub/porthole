@@ -10,7 +10,7 @@
     <element id="pointer_script" type="script">
         function lockPointer() 
         {
-            document.documentElement.webkitRequestPointerLock();
+            document.documentElement.requestPointerLock();
         }  
 
         document.addEventListener("mousemove", onMouseMove);
@@ -74,8 +74,9 @@
         {
 			var JSONEvent = {
 				"event_type": "keyup",
-                "key": e.charCode
+                "key": e.keyCode
 			};
+            console.log(e);
 			socket.send(JSON.stringify(JSONEvent));
         }
         
@@ -83,7 +84,7 @@
         {
 			var JSONEvent = {
 				"event_type": "keydown",
-                "key": e.charCode
+                "key": e.keyCode
 			};
 			socket.send(JSON.stringify(JSONEvent));
         }
