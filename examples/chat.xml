@@ -5,7 +5,7 @@
             <input type="text" name="text" style="width:100%" onkeypress="%js submitOnEnter(this, event)"></input>
         </element>
         
-        <element id="slider_script" type="script">
+        <element id="chat_script" type="script">
             function messageReceived(text) {
                 var p = document.createElement('p');
                 p.innerHTML = text;
@@ -14,8 +14,7 @@
 
             function submitOnEnter(inputElement, event) {
                 if(event.keyCode == 13) {
-                    var text = inputElement.value;
-                    phCall("postMessage('{0}', %client_id%)", text)
+                    phCall("postMessage('{0}', %client_id%)", inputElement.value)
                 }
             }
         </element>
@@ -25,7 +24,7 @@
     <interface minWidth="0" minHeight="0" id="default">
       <portrait layout="vertical">
         <element width="100%" height="100%" id="chat_area"/>
-        <element id="slider_script"/>
+        <element id="chat_script"/>
       </portrait>
     </interface>
   </interfaces>

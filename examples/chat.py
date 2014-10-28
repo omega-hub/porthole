@@ -5,12 +5,8 @@ import porthole
 # Setup porthole
 porthole.initialize()
 ps = porthole.getService()
-ps.setServerStartedCommand("print('porthole web server ready! connect to http://localhost:4080')")
 ps.load('./chat.xml')
 
-#------------------------------------------------------------------------------
-def msg(text):
-    ps.broadcastjs("messageReceived('{0}')".format(text), '')
-    
+# Client call this function when posting a message.
 def postMessage(message, sender):
     ps.broadcastjs("messageReceived('{0}: {1}')".format(sender, message), '')
