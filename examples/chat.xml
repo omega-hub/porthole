@@ -26,6 +26,10 @@
         <element width="100%" height="100%" id="chat_area"/>
         <element id="chat_script"/>
       </portrait>
+      <landscape layout="vertical">
+        <element width="100%" height="100%" id="chat_area"/>
+        <element id="chat_script"/>
+      </landscape>
     </interface>
   </interfaces>
 </gui>
