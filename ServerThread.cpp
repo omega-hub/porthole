@@ -799,6 +799,12 @@ use_ssl(0), opts(0), n(0)
     string fullPath;
     DataManager::findFile(defaultPage, fullPath);
 
+    if(fullPath == "")
+    {
+        ofwarn("Porthole: could not find default page %1%, using res/index.html", %defaultPage);
+        fullPath = "porthole / res / index.html";
+    }
+
     sWebserverDataRoot = fullPath.substr(0,fullPath.find_last_of("/\\"));
     sWebserverDefaultPage = fullPath.substr(fullPath.find_last_of("/\\"));
 
