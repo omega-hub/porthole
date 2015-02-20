@@ -99,7 +99,7 @@ void ServerThread::sendFile(libwebsocket *wsi, const String& filename)
 {
     String filePath = filename;
     // Default file request points to index.html
-    if(filePath == "/") filePath = "/index.html";
+    if(filePath == "/") filePath = sWebserverDefaultPage;
     // Always add . to absolute paths starting with /
     if(filePath[0] == '/') filePath = "." + filePath;
 
@@ -737,6 +737,7 @@ int ServerThread::callback_websocket(struct libwebsocket_context *context,
             handle_message(data, &message, context, wsi);
         }
 
+        libwebsocket_callback_on_writable(context, wsi);
         break;
     }
     case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
@@ -790,15 +791,16 @@ struct libwebsocket_protocols protocols[] =
 PortholeService* ServerThread::service = NULL;
 
 ///////////////////////////////////////////////////////////////////////////////
-ServerThread::ServerThread(PortholeService* owner):
+ServerThread::ServerThread(PortholeService* owner, const String& defaultPage) :
 use_ssl(0), opts(0), n(0)
 {
     service = owner;
     // Set DATA FOLDER PATH
     string fullPath;
-    DataManager::findFile("porthole/res/index.html", fullPath);
+    DataManager::findFile(defaultPage, fullPath);
 
     sWebserverDataRoot = fullPath.substr(0,fullPath.find_last_of("/\\"));
+    sWebserverDefaultPage = fullPath.substr(fullPath.find_last_of("/\\"));
 
     minterface="";
 

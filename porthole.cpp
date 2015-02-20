@@ -48,7 +48,7 @@ PortholeService* getService()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool initialize(int port = 4080)
+bool initialize(int port = 4080, const String& defaultPage = "porthole/res/index.html")
 {
     // The service gets created only on the master node.
     if(SystemManager::instance()->isMaster() && !sServiceInstance)
@@ -56,7 +56,7 @@ bool initialize(int port = 4080)
         sServiceInstance = new PortholeService();
         ServiceManager* svcManager = SystemManager::instance()->getServiceManager();
         svcManager->addService(sServiceInstance);
-        sServiceInstance->start(port);
+        sServiceInstance->start(port, defaultPage);
 
         return true;
     }
@@ -67,7 +67,7 @@ bool initialize(int port = 4080)
 // Python wrapper code.
 #ifdef OMEGA_USE_PYTHON
 #include "omega/PythonInterpreterWrapper.h"
-BOOST_PYTHON_FUNCTION_OVERLOADS(initializeOverloads, initialize, 0, 1)
+BOOST_PYTHON_FUNCTION_OVERLOADS(initializeOverloads, initialize, 0, 2)
 BOOST_PYTHON_MODULE(porthole)
 {
     PYAPI_REF_BASE_CLASS(PortholeService)

@@ -50,14 +50,14 @@ PortholeService::~PortholeService()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeService::start(int port)
+void PortholeService::start(int port, const String& defaultPage)
 {
     myBinder = new PortholeFunctionsBinder();
     myBinder->clear();
 
     PortholeGUI::setPortholeFunctionsBinder(myBinder);
 
-    portholeServer = new ServerThread(this);
+    portholeServer = new ServerThread(this, defaultPage);
     portholeServer->setPort(port);
     portholeServer->start();
 }

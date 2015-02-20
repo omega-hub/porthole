@@ -44,6 +44,7 @@ using namespace omicron;
 
 //! Path to resources, such as html files
 static String sWebserverDataRoot; 
+static String sWebserverDefaultPage;
 
 class PortholeService;
 
@@ -69,7 +70,7 @@ public:
 public:
 
     // Constructor
-    ServerThread(PortholeService* owner);
+    ServerThread(PortholeService* owner, const String& defaultPage);
 
     // Destructor
     ~ServerThread();

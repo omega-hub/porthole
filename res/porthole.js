@@ -153,9 +153,15 @@ try {
     ////////////////////////////////////////////////////////////////////////////
     // Open socket: send the device specification
     socket.onopen = function () {
-        // Send device specifications
-        sendSpec();
-        firstTime = 0;
+        // If we have a porthole_content elements to be filled with a 
+        // server-generated interface (see porthole xml interface definition files)
+        // send the device specification. This will trigger the server to generate
+        // an html interface for this device and send it over websocked inside
+        // an html_elements message
+        if(document.getElementById("porthole_content") != null) {
+            sendSpec();
+            firstTime = 0;
+        }
         
         // Request the porthole functions binder script. This script is generated 
         // by the porthole server and contains the code necessary to forward 

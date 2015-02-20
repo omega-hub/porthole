@@ -51,8 +51,9 @@ public:
     PortholeService();
     ~PortholeService();
 
-    // Setup and poll
-    void start(int port); // Start the server and listen to port
+    //! Start the server listen to the specified port and serve the specified
+    //! default page.
+    void start(int port, const String& defaultPage);
 
     //! Loads an xml interface file. Must be called after start. Can be called
     //! multiple times to load a different interface or to re-load an existing one.
