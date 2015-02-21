@@ -1,0 +1,51 @@
+<!--
+This example runs a standalone chat web application that does not require any
+server-side python script to run. The porthole phJSCall function is used to 
+broadcast javascript calls to clients directly.
+Run this example with:
+> orun porthole/server.cfg porthole/examples_direct/chat_standalone.html
+-->
+<html lang="en">
+<head>
+    <title>Porthole</title>
+</head>
+    <style>
+        #chat_container {
+            display: flex; 
+            flex-direction: column; 
+            height: 100%;
+        }
+        #message_area {
+            flex-grow: 1; 
+            overflow: scroll;
+        }
+        #input_box {
+            flex-shrink: 0; 
+        }
+    </style>
+<body>
+    <div id="chat_container">
+        <div id="message_area"></div>
+        <input id="input_box" type="text" onkeypress="submitOnEnter(this, event)"></input>
+    </div>
+    
+    <script src="porthole/res/porthole.js"></script>
+    <script>
+        function messageReceived(who, text) {
+            var p = document.createElement('p');
+            p.innerHTML = who + ': ' + text + messageReceived.name;
+            chatArea = document.getElementById('message_area')
+            chatArea.appendChild(p);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }    
+
+        function submitOnEnter(inputElement, event) {
+            if(event.keyCode == 13) {
+                porthole.jscall("messageReceived(%client_id%, '{0}')", inputElement.value)
+                messageReceived('Me', inputElement.value)
+                inputElement.value = '';
+            }
+        }
+    </script>
+</body>
+</html>

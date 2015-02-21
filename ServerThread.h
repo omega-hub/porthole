@@ -68,6 +68,7 @@ public:
     static void sendFunctionBindings(libwebsocket *wsi);
 
 public:
+    static PortholeService* service;
 
     // Constructor
     ServerThread(PortholeService* owner, const String& defaultPage);
@@ -82,8 +83,6 @@ public:
     virtual void threadProc();
 
 private:
-    static PortholeService* service;
-
     // Server params
     int port;
     struct libwebsocket_context *context; 

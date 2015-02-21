@@ -2,6 +2,61 @@ var socket;
 var JSONToSend = ''; 
 
 ////////////////////////////////////////////////////////////////////////////////
+// PORTHOLE JAVASCRIPT API
+function phSetInterface(interfaceId) {
+    interface_id = interfaceId;
+    sendSpec();
+}
+
+function phSetSliderValue(sliderId, value) {
+    eval(sliderId + "_skip_next_event = true;")
+    document.getElementById(sliderId).value = value;
+}
+
+function phCall() {
+    var theString = arguments[0];
+    
+    // start with the second argument (i = 1)
+    for (var i = 1; i < arguments.length; i++) {
+        // "gm" = RegEx options for Global search (more than one instance)
+        // and for Multiline search
+        var regEx = new RegExp("\\{" + (i - 1) + "\\}", "gm");
+        theString = theString.replace(regEx, arguments[i]);
+    }
+    var callMsg = {
+        "event_type": "input",
+        "value": "phCall",
+        "function": theString
+    };
+    socket.send(JSON.stringify(callMsg));
+}
+
+function phJSCall() {
+    var theString = arguments[0];
+    
+    // start with the second argument (i = 1)
+    for (var i = 1; i < arguments.length; i++) {
+        // "gm" = RegEx options for Global search (more than one instance)
+        // and for Multiline search
+        var regEx = new RegExp("\\{" + (i - 1) + "\\}", "gm");
+        theString = theString.replace(regEx, arguments[i]);
+    }
+    var callMsg = {
+        "event_type": "input",
+        "value": "phJSCall",
+        "function": theString
+    };
+    socket.send(JSON.stringify(callMsg));
+}
+
+// Better-looking API, 
+porthole = {}
+porthole.jscall = phJSCall
+porthole.call = phCall
+porthole.setInterface = phSetInterface
+
+
+////////////////////////////////////////////////////////////////////////////////
 // Add an event handler to an element
 function addEvent(elem, type, eventHandle) {
     if (elem == null || elem == undefined) return;
@@ -56,37 +111,6 @@ function getURLArg()
     return result;
 } 
 
-////////////////////////////////////////////////////////////////////////////////
-// PORTHOLE JAVASCRIPT API
-function phSetInterface(interfaceId) {
-    interface_id = interfaceId;
-    sendSpec();
-}
-
-function phSetSliderValue(sliderId, value) {
-    eval(sliderId + "_skip_next_event = true;")
-    document.getElementById(sliderId).value = value;
-}
-
-function phCall() {
-    var theString = arguments[0];
-    
-    // start with the second argument (i = 1)
-    for (var i = 1; i < arguments.length; i++) {
-        // "gm" = RegEx options for Global search (more than one instance)
-        // and for Multiline search
-        var regEx = new RegExp("\\{" + (i - 1) + "\\}", "gm");
-        theString = theString.replace(regEx, arguments[i]);
-    }
-    var callMsg = {
-        "event_type": "input",
-        "value": "phCall",
-        "function": theString
-    };
-    socket.send(JSON.stringify(callMsg));
-}
-
-    
 ////////////////////////////////////////////////////////////////////////////////
 // SEND SPEC TO SERVER
 var SEND_SPEC_INTERVAL = 1000; // in Millis 
