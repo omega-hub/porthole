@@ -1,6 +1,16 @@
 var socket; 
 var JSONToSend = ''; 
 
+var runningInWebView = false;
+
+if(typeof OMEGA != 'undefined') {
+    console.log("Running in WebView")
+    runningInWebView = true;
+}
+else {
+    setInterval("window.requestAnimFrame(omegaFrame)", 18)
+}
+    
 ////////////////////////////////////////////////////////////////////////////////
 // PORTHOLE JAVASCRIPT API
 function phSetInterface(interfaceId) {
@@ -325,4 +335,34 @@ function cameraLoop() {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Wrapper around omegalib frame function, to use on a normal browser when we
+// are not running inside an omegalib webView
+var context = {};
+context.frame = 0;
+context.time = 0;
+context.dt = 0;
+var initialTime = Date.now() / 1000;
+context.time = initialTime;
+
+context.modelview = null;
+context.projection = null;
+context.cameraPosition = [0, 2, 0]
+
+context.tileTopLeft = null
+context.tileBottomLeft = null
+context.tileBottomRight = null
+context.activeCanvasRect = null
+context.activeRect = null
+
+function omegaFrame() {
+    // Update context
+    context.frame++;
+    curTime = (Date.now() / 1000) - initialTime;
+    context.dt = curTime - context.time;
+    context.time = curTime;
+    
+    // Call the user code frame function
+    frame(context)
+}
 

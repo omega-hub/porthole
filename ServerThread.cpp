@@ -751,6 +751,7 @@ int ServerThread::callback_websocket(struct libwebsocket_context *context,
     case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
         //dump_handshake_info((struct lws_tokens *)(long)user);
         /* you could return non-zero here and kill the connection */
+        libwebsocket_callback_on_writable(context, wsi);
         break;
 
     case LWS_CALLBACK_CLOSED:
@@ -763,10 +764,12 @@ int ServerThread::callback_websocket(struct libwebsocket_context *context,
         service->notifyDisconnected(cliName);
         // Call gui destructor
         service->destroyClient(data->guiManager);
+        libwebsocket_callback_on_writable(context, wsi);
         break;
     }
 
     default:
+        libwebsocket_callback_on_writable(context, wsi);
         break;
     }
     return 0;
@@ -853,7 +856,7 @@ void ServerThread::threadProc()
     unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 1024 +
                           LWS_SEND_BUFFER_POST_PADDING];
 
-    cout << ">> Porthole initialization" << endl;
+    omsg("Porthole server thread started");
     
     // Initialize the websockets context
     context = libwebsocket_create_context(port, minterface, protocols,
