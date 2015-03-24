@@ -1,29 +1,34 @@
 # PORTHOLE Add websockets lib and zlib if on windows
 if(OMEGA_OS_WIN)
-	add_subdirectory(zlib)
+    add_subdirectory(zlib)
 endif(OMEGA_OS_WIN)
 add_subdirectory(websockets)
 
 # Set module name and source files here
 add_library(porthole MODULE 
-	PortholeService.h
-	PortholeGUI.h
-	porthole.cpp
-	PortholeService.cpp
-	PortholeGUI.cpp
-	ServerThread.cpp
-	# A tiny JSON library
-	vjson/block_allocator.cpp
-	vjson/json.cpp)
+    PortholeService.h
+    PortholeGUI.h
+    porthole.cpp
+    PortholeService.cpp
+    PortholeGUI.cpp
+    ServerThread.cpp
+    # A tiny JSON library
+    vjson/block_allocator.cpp
+    vjson/json.cpp)
 
 # Set the module library dependencies here
 target_link_libraries(porthole omega websockets)
 
+# If the low latency encoder module is enabled, link against it.
+if(TARGET llenc)
+    target_link_libraries(porthole llenc)
+endif()
+
 include_directories(websockets/include)
 if (OMEGA_OS_WIN)
-	include_directories(websockets/win32helpers)
-	target_link_libraries(porthole zlib)
-	include_directories(zlib)
+    include_directories(websockets/win32helpers)
+    target_link_libraries(porthole zlib)
+    include_directories(zlib)
 endif()
 
 # Add porthole pointer server executable
