@@ -38,7 +38,8 @@ using namespace omicron;
 
 ///////////////////////////////////////////////////////////////////////////////
 PortholeService::PortholeService():
-myPointerBounds(Vector2i::Zero()), myPointerSpeed(1), myBinder(NULL)
+myPointerBounds(Vector2i::Zero()), myPointerSpeed(1), myBinder(NULL),
+myHardwareEncoderEnabled(true)
 {
 }
 
@@ -52,6 +53,8 @@ PortholeService::~PortholeService()
 ///////////////////////////////////////////////////////////////////////////////
 void PortholeService::start(int port, const String& defaultPage)
 {
+    // TODO read config/porthole/hardwareEncoderEnabled from system config to
+
     myBinder = new PortholeFunctionsBinder();
     myBinder->clear();
 

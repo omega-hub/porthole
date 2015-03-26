@@ -36,6 +36,11 @@
 #include <omicron/xml/tinyxml.h>
 #include <iostream>
 
+// H264 hardware encoder support
+#ifdef llenc_ENABLED
+#include "llenc/Encoder.h"
+#endif
+
 using namespace omega;
 using namespace std;
 
@@ -98,7 +103,6 @@ PortholeGUI::~PortholeGUI()
 {
     if(sessionCamera != NULL)
     {
-        //service->notifyCameraCreated(sessionCamera->camera);
         Engine::instance()->destroyCamera(this->sessionCamera->camera);
     }
 }
@@ -235,47 +239,43 @@ string PortholeGUI::create(bool firstTime)
         // Create a session camera
         else if (element->type == "camera_stream")
         {
-
-            // Default camera case
-            if (strcmp(element->cameraType.c_str(),"default")==0)
+            // Parse camera mask
+            uint camMask = 0;
+            Vector<String> args = StringUtils::split(element->cameraType, ", ");
+            // The first word is always treated as the 'camera name' and ignored here. The second word (if present) is
+            // used as the camera render pass mask. It is used to specify which render passes will draw content for this camera.
+            if(args.size() == 2)
             {
-                if (firstTime || this->sessionCamera == NULL)
-                {
-                    createCustomCamera(true, percentToFloat(width), percentToFloat(height));
-                }
-                else
-                {
-                    modCustomCamera(percentToFloat(width), percentToFloat(height));
-                }
+                camMask = boost::lexical_cast<uint>(args[1]);
+                // Use argument as bit number for the camera mask
+                camMask = 1 << camMask;
             }
-            // Custom camera case
-            else 
+
+            if (firstTime || this->sessionCamera == NULL)
             {
-                // Parse camera mask
-                uint camMask = 0;
-                Vector<String> args = StringUtils::split(element->cameraType, ", ");
-                // The first word is always treated as the 'camera name' and ignored here. The second word (if present) is
-                // used as the camera render pass mask. It is used to specify which render passes will draw content for this camera.
-                if(args.size() == 2)
-                {
-                    camMask = boost::lexical_cast<uint>(args[1]);
-                    // Use argument as bit number for the camera mask
-                    camMask = 1 << camMask;
-                }
-
-                if (firstTime || this->sessionCamera == NULL)
-                {
-                    createCustomCamera(percentToFloat(width), percentToFloat(height), camMask);
-                }
-                else
-                {
-                    modCustomCamera(percentToFloat(width), percentToFloat(height));
-                }
+                createCustomCamera(percentToFloat(width), percentToFloat(height), camMask);
             }
-            // load camera script here?
-            element->htmlValue = ostr("<canvas id=\"camera-canvas\" class=\"camera_container\" data-camera_id = \"%1%\" width=\"%2%\" height=\"%3%\"></canvas>", 
-                %sessionCamera->id %sessionCamera->canvas->getWidth() %sessionCamera->canvas->getHeight());
+            else
+            {
+                modCustomCamera(percentToFloat(width), percentToFloat(height));
+            }
 
+#ifdef llenc_ENABLED
+            if(service->isHardwareEncoderEnabled())
+            {
+                // load camera script here?
+                element->htmlValue = ostr(
+                    "<video id=\"camera-stream\" class=\"camera_container\" data-camera_id = \"%1%\" width=\"%2%\" height=\"%3%\"></video>",
+                    %sessionCamera->id %sessionCamera->canvas->getWidth() % sessionCamera->canvas->getHeight());
+            }
+            else
+#endif
+            {
+                // load camera script here?
+                element->htmlValue = ostr(
+                    "<canvas id=\"camera-canvas\" class=\"camera_container\" data-camera_id = \"%1%\" width=\"%2%\" height=\"%3%\"></canvas>",
+                    %sessionCamera->id %sessionCamera->canvas->getWidth() % sessionCamera->canvas->getHeight());
+            }
         }
         else if (element->type == "script")
         {
@@ -329,7 +329,6 @@ string PortholeGUI::create(bool firstTime)
 */
 void PortholeGUI::createCustomCamera(float widthPercent, float heightPercent, uint cameraMask)
 {
-
     // Get the global engine
     Engine* myEngine = Engine::instance();
 
@@ -340,21 +339,15 @@ void PortholeGUI::createCustomCamera(float widthPercent, float heightPercent, ui
     int height = (int)( heightPercent * IMAGE_QUALITY * device->deviceHeight / 4 ) * 4;
     // cout << "Width: " << width  << " - height: " << height << endl;
 
-    PixelData* sessionCanvas = new PixelData(PixelData::FormatRgb,  width,  height);
-
     uint flags = Camera::DrawScene | Camera::DrawOverlay;
-
-    Camera* sessionCamera = myEngine->createCamera(flags);
-    sessionCamera->setMask(cameraMask);
+    Camera* camera = myEngine->createCamera(flags);
+    camera->setMask(cameraMask);
     // Set the camera name using the client id and camera id
-    String cameraName = ostr("%1%-%2%", %clientId %sessionCamera->getCameraId());
-    sessionCamera->setName(cameraName);
-    service->notifyCameraCreated(sessionCamera);
+    String cameraName = ostr("%1%-%2%", %clientId %camera->getCameraId());
+    camera->setName(cameraName);
+    service->notifyCameraCreated(camera);
 
-    // Notify camera creation
-
-
-    DisplayTileConfig* dtc = sessionCamera->getCustomTileConfig();
+    DisplayTileConfig* dtc = camera->getCustomTileConfig();
     // Setup projection
     dtc->enabled = true;
     dtc->setPixelSize(width, height);
@@ -372,24 +365,37 @@ void PortholeGUI::createCustomCamera(float widthPercent, float heightPercent, ui
         Vector3f(base * as, -base, -2) + ho);
 
     // Initialize the camera position to be the same as the main camera.
-    sessionCamera->setPosition(defaultCamera->getPosition());
-    sessionCamera->setHeadOffset(defaultCamera->getHeadOffset());
-    sessionCamera->getOutput(0)->setReadbackTarget(sessionCanvas);
-    sessionCamera->getOutput(0)->setEnabled(true);
+    camera->setPosition(defaultCamera->getPosition());
+    camera->setHeadOffset(defaultCamera->getHeadOffset());
 
-    // Save the new Camera and PixelData objects
-    PortholeCamera* camera = new PortholeCamera();
-    camera->id = sessionCamera->getCameraId();
-    camera->camera =sessionCamera;
-    camera->canvas = sessionCanvas;
-    camera->canvasWidth = width;
-    camera->canvasHeight = height;
-    camera->size = IMAGE_QUALITY;
+    // Create the Porthole camera object, storing the new camera and other
+    // related objects.
+    PortholeCamera* pc = new PortholeCamera();
+    pc->id = camera->getCameraId();
+    pc->camera = camera;
+    pc->canvasWidth = width;
+    pc->canvasHeight = height;
+    pc->size = IMAGE_QUALITY;
 
     // Save new camera
-    PortholeGUI::CamerasMap[camera->id] = camera; // Global map
-    this->sessionCamera = camera; // Session
+    PortholeGUI::CamerasMap[pc->id] = pc; // Global map
+    this->sessionCamera = pc; // Session
 
+    // If low latency hardware encoding is available, use that. Otherwise, 
+    // fall back to the old JPEG encoding & streaming.
+#ifdef llenc_ENABLED
+    if(service->isHardwareEncoderEnabled())
+    {
+        pc->streamer = new llenc::CameraStreamer();
+        pc->camera->addListener(pc->streamer);
+    }
+#endif
+
+    PixelData* sessionCanvas = new PixelData(PixelData::FormatRgb,  width,  height);
+    pc->camera->getOutput(0)->setReadbackTarget(sessionCanvas);
+    pc->camera->getOutput(0)->setEnabled(true);
+
+    pc->canvas = sessionCanvas;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

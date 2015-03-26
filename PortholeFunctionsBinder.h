@@ -37,6 +37,10 @@
 #define PORTHOLE_EVENT_TOKEN_MOUSE_BTN "%btn%"
 #define PORTHOLE_EVENT_TOKEN_EVENT "%event%"
 
+#ifdef llenc_ENABLED
+#include "llenc/CameraStreamer.h"
+#endif
+
 using namespace omicron;
 using namespace omega;
 
@@ -85,6 +89,10 @@ struct PortholeCamera : ReferenceType
     float size; // 1.0 is default value = device size
     //unsigned int oldusStreamSent; // Timestamp of last stream sent via socket
 
+    // H264 hardware encoder support
+#ifdef llenc_ENABLED
+    Ref<llenc::CameraStreamer> streamer;
+#endif
     PortholeCamera() :
         targetFps(60),
         highFps(15),

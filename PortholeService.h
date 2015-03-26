@@ -55,6 +55,8 @@ public:
     //! default page.
     void start(int port, const String& defaultPage);
 
+    bool isHardwareEncoderEnabled() { return myHardwareEncoderEnabled; }
+
     //! Loads an xml interface file. Must be called after start. Can be called
     //! multiple times to load a different interface or to re-load an existing one.
     void load(const String& interfaceFile);
@@ -126,6 +128,8 @@ private:
     // Bounds for pointer events coming in from web clients. 
     Vector2i myPointerBounds;
     float myPointerSpeed;
+
+    bool myHardwareEncoderEnabled;
 };
 
 #endif

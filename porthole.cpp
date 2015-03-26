@@ -35,7 +35,7 @@
 #include "PortholeService.h"
 #include "PortholeGUI.h"
 
-#define PORTHOLE_VERSION "1.1"
+#define PORTHOLE_VERSION "2"
 
 using namespace omega;
 
@@ -88,6 +88,6 @@ BOOST_PYTHON_MODULE(porthole)
     def("initialize", initialize, initializeOverloads());
     def("getService", getService, PYAPI_RETURN_REF);
 
-    ofmsg(">>>>> Porthole version %1% ready", %PORTHOLE_VERSION);
+    ofmsg(">>>>> Porthole %1% ready", %PORTHOLE_VERSION);
 }
 #endif

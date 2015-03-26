@@ -167,6 +167,7 @@ function sendSpecTimeout() {
 
 // Camera stream vars
 var img = new Image();
+var stream = null;
 var ctx;
 var camera;
 
@@ -206,10 +207,33 @@ try {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    socket.onmessage = function got_packet(msg) {
-
-        var message = JSON.parse(msg.data);
-
+    socket.onmessage = function gotPacket(msg) {
+       
+        if(msg.data instanceof ArrayBuffer) {
+           handlePacket(data)
+        } else {
+            var message = JSON.parse(msg.data);
+            handleMessage(message);
+        }
+    }   
+        
+    ////////////////////////////////////////////////////////////////////////////
+    // Process a received binary data packet
+    function handlePacket(data) {
+        // Only binary data supported by porthole is an h264 bitstream.
+        if(stream == null) {
+            var video = document.querySelector('camera-stream');
+            var source = new MediaSource();
+            stream = source.addSourceBuffer('video/H264');
+            video.src = source;
+            
+            stream.appendBuffer(data);
+        }
+    }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    // Process a received JSON message
+    function handleMessage(message) {
         // Received image stream. Save it in the img variable
         if (message.event_type == "stream") {
             image = "data:image/jpeg;base64," + message.base64image;
@@ -256,6 +280,7 @@ try {
                 addEvent(window, "resize", sendSpecTimeout);
             }
         }
+        
         // Received Javascript code. Execute it.
         else if(message.event_type == "javascript")
         {
@@ -264,7 +289,6 @@ try {
                 window.eval(message.commands[i].js);
             }
         }
-
     }
 
     ////////////////////////////////////////////////////////////////////////////
