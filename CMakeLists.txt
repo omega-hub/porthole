@@ -22,6 +22,9 @@ target_link_libraries(porthole omega websockets)
 # If the low latency encoder module is enabled, link against it.
 if(TARGET llenc)
     target_link_libraries(porthole llenc)
+    if(OMEGA_OS_LINUX)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lnvidia-ifr")
+    endif()
 endif()
 
 include_directories(websockets/include)
