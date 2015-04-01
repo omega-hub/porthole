@@ -658,7 +658,7 @@ int stream_jpeg(libwebsocket_context *context, libwebsocket *wsi, per_session_da
 
     // Save new timestamp
     data->oldus = millisecondsSinceEpoch;
-
+    libwebsocket_callback_on_writable(context, wsi);
     return 0;
 }
 
@@ -724,7 +724,7 @@ int stream_h264(libwebsocket_context *context, libwebsocket *wsi, per_session_da
 
         e->unlockBitstream();
     }
-
+    libwebsocket_callback_on_writable(context, wsi);
     return 0;
 }
 #endif
@@ -765,9 +765,7 @@ int ServerThread::callback_websocket(struct libwebsocket_context *context,
         {
 #ifdef llenc_ENABLED
             if(data->guiManager->getSessionCamera()->streamer != NULL)
-            {
                 return stream_h264(context, wsi, data);
-            }
 #endif
             return stream_jpeg(context, wsi, data);
         }
