@@ -8,7 +8,7 @@ if(typeof OMEGA != 'undefined') {
     runningInWebView = true;
 }
 else {
-    setInterval("window.requestAnimFrame(omegaFrame)", 18)
+    //setInterval("window.requestAnimFrame(omegaFrame)", 18)
 }
     
 ////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +64,7 @@ porthole = {}
 porthole.jscall = phJSCall
 porthole.call = phCall
 porthole.setInterface = phSetInterface
-
+porthole.cameraCanvas = null;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Add an event handler to an element
@@ -167,7 +167,7 @@ function sendSpecTimeout() {
 
 // Camera stream vars
 var img = new Image();
-var stream = null;
+var player = null;
 var ctx;
 var camera;
 
@@ -178,12 +178,13 @@ try {
     // Create the socket
     if ("WebSocket" in window) {
         socket = new WebSocket(get_appropriate_ws_url(), "porthole_websocket");
-    } else if ("MozWebSocket" in window) {
-        socket = new MozWebSocket(get_appropriate_ws_url(), "porthole_websocket");
+    //} else if ("MozWebSocket" in window) {
+    //    socket = new MozWebSocket(get_appropriate_ws_url(), "porthole_websocket");
     } else {
         document.getElementById("porthole_content").innerHTML =
         "This Browser does not support WebSockets.<br />If using Opera, make sure to enable WebSockets.";
     }
+    socket.binaryType="arraybuffer";
 
     ////////////////////////////////////////////////////////////////////////////
     // Open socket: send the device specification
@@ -208,26 +209,49 @@ try {
 
     ////////////////////////////////////////////////////////////////////////////
     socket.onmessage = function gotPacket(msg) {
-       
         if(msg.data instanceof ArrayBuffer) {
-           handlePacket(data)
+           handlePacket(msg.data)
         } else {
             var message = JSON.parse(msg.data);
             handleMessage(message);
         }
     }   
-        
+
     ////////////////////////////////////////////////////////////////////////////
     // Process a received binary data packet
     function handlePacket(data) {
         // Only binary data supported by porthole is an h264 bitstream.
-        if(stream == null) {
-            var video = document.querySelector('camera-stream');
-            var source = new MediaSource();
-            stream = source.addSourceBuffer('video/H264');
-            video.src = source;
-            
-            stream.appendBuffer(data);
+        if(player != null) {
+            //console.log(data.byteLength);
+            player.decode(new Uint8Array(data));
+        } 
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    function frameDrawEnd() {
+        // Keep framerate of the camera
+        now = new Date().getTime();
+        dt = now - lastT;
+        lastT = now;
+        //console.log("fps: " + parseInt(1000 / dt));
+
+        if ( ( 1000 / dt ) > FPS_MIN) {
+            overFPS = false;
+        }
+        else {
+            // if first time we are over fps, save now
+            if ( !overFPS ) overstart = now;
+            overFPS = true;
+            if ( ( now - overstart ) > FPS_DELTA ) {
+                var JSONEvent = {
+                    "event_type": "fps_adjust",
+                    "camera_id": parseInt(camera.getAttribute("data-camera_id")),
+                    "fps": (( 1000 / dt ) * 1.2)
+                };
+                //console.log("asking for fps: " + parseInt(1000 / dt));
+                socket.send(JSON.stringify(JSONEvent));
+                overstart = now;
+            }
         }
     }
     
@@ -275,10 +299,10 @@ try {
             initializeCameraStreams();
             
             // Add events listeners
-            if (!isTouchable) {
+            //if (!isTouchable) {
                 // avoid resize message when touchable keyboard appears on mobile devices
-                addEvent(window, "resize", sendSpecTimeout);
-            }
+             //   addEvent(window, "resize", sendSpecTimeout);
+            //}
         }
         
         // Received Javascript code. Execute it.
@@ -286,6 +310,7 @@ try {
         {
             for(var i = 0; i < message.commands.length; i++)
             {
+                console.log('exec ' + message.commands[i].js)
                 window.eval(message.commands[i].js);
             }
         }
@@ -309,7 +334,7 @@ var lastT, dt;
 var overFPS = false;
 var overSTART = 0;
 
-var FPS_MIN = 40;
+var FPS_MIN = 20;
 var FPS_TARGET = 50;
 var FPS_DELTA = 1000; // In ms - adjust frame rate every second.
 
@@ -333,22 +358,37 @@ window.requestAnimFrame = (function () {
 
 ////////////////////////////////////////////////////////////////////////////////
 function initializeCameraStreams() {
+    // camera canvas can have two different ids. If we find a camera-canvas, we
+    // initialize jpeg streaming. If we find camera-h264-stream, we initialize
+    // H264 stream.
     camera = document.getElementById('camera-canvas');
 
-    if (camera == null) return;
+    if (camera == null) {
+        camera = document.getElementById('camera-h264-stream');
+        if(camera == null) return;
 
-    camera.width = camera.parentNode.clientWidth;
-    camera.height = camera.parentNode.clientHeight;
-    
-    ctx = camera.getContext("2d");
+        player = new Player({useWorker: true});
+        player.canvas = camera;
+        player.onFrameDrawEnd = frameDrawEnd;
+        
+        camera.width = camera.parentNode.clientWidth;
+        camera.height = camera.parentNode.clientHeight;
+    } else {
+        camera.width = camera.parentNode.clientWidth;
+        camera.height = camera.parentNode.clientHeight;
+        
+        ctx = camera.getContext("2d");
 
-    // OK, we have the camera, so start camera loop
-    cameraLoopEnabled = true;
+        // OK, we have the camera, so start camera loop
+        cameraLoopEnabled = true;
 
-    // Combine setInterval and requestAnimationFrame in order to get a desired fps
-    clearInterval(cameraLoopCallback);
-    cameraLoopCallback = setInterval("window.requestAnimFrame(cameraLoop)",
-                       1000 / FPS_TARGET);
+        // Combine setInterval and requestAnimationFrame in order to get a desired fps
+        clearInterval(cameraLoopCallback);
+        cameraLoopCallback = setInterval("window.requestAnimFrame(cameraLoop)",
+                           1000 / FPS_TARGET);
+    }
+
+    porthole.cameraCanvas = camera;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

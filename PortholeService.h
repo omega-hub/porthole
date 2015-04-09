@@ -56,6 +56,7 @@ public:
     void start(int port, const String& defaultPage);
 
     bool isHardwareEncoderEnabled() { return myHardwareEncoderEnabled; }
+    bool isDynamicStreamQualityEnabled() { return myDynamicStreamQualityEnabled; }
 
     //! Loads an xml interface file. Must be called after start. Can be called
     //! multiple times to load a different interface or to re-load an existing one.
@@ -121,7 +122,7 @@ private:
     String myCameraCreatedCommand;
     String myCameraDestroyedCommand;
     String myServerStartedCommand;
-    PortholeFunctionsBinder* myBinder;
+    Ref<PortholeFunctionsBinder> myBinder;
 
     List< Ref<PortholeGUI> > myClients;
 
@@ -130,6 +131,7 @@ private:
     float myPointerSpeed;
 
     bool myHardwareEncoderEnabled;
+    bool myDynamicStreamQualityEnabled;
 };
 
 #endif

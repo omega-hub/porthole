@@ -1,20 +1,3 @@
-// universal module definition
-(function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
-        define([], factory);
-    } else if (typeof exports === 'object') {
-        // Node. Does not work with strict CommonJS, but
-        // only CommonJS-like environments that support module.exports,
-        // like Node.
-        module.exports = factory();
-    } else {
-        // Browser globals (root is window)
-        root.Decoder = factory();
-    }
-}(this, function () {
-  "use strict";
-  
   var global;
   
   function initglobal(){
@@ -864,9 +847,4 @@ function A(a){a&&(p.print(a),p.fa(a));H=i;d("abort() at "+Fa()+"\nIf this abort(
 
     }, false);
   };
-  
-  
-  return Broadway;
-  
-}));
 

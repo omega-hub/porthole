@@ -62,6 +62,8 @@ inline float percentToFloat(String percent){
 PortholeGUI::PortholeGUI(PortholeService* owner, const String& cliid):
 service(owner), clientId(cliid), pointerSpeed(1)
 {
+    ofmsg("Porthole GUI client connected: %1%", %clientId);
+    
     this->sessionCamera = NULL;
 
     // Get canvas size from service first. If canvas size is (0,0), read it 
@@ -101,10 +103,7 @@ service(owner), clientId(cliid), pointerSpeed(1)
 ///////////////////////////////////////////////////////////////////////////////
 PortholeGUI::~PortholeGUI()
 {
-    if(sessionCamera != NULL)
-    {
-        Engine::instance()->destroyCamera(this->sessionCamera->camera);
-    }
+    ofmsg("Porthole GUI client disconnected: %1%", %clientId);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -239,6 +238,7 @@ string PortholeGUI::create(bool firstTime)
         // Create a session camera
         else if (element->type == "camera_stream")
         {
+
             // Parse camera mask
             uint camMask = 0;
             Vector<String> args = StringUtils::split(element->cameraType, ", ");
@@ -250,7 +250,6 @@ string PortholeGUI::create(bool firstTime)
                 // Use argument as bit number for the camera mask
                 camMask = 1 << camMask;
             }
-
             if (firstTime || this->sessionCamera == NULL)
             {
                 createCustomCamera(percentToFloat(width), percentToFloat(height), camMask);
@@ -260,29 +259,26 @@ string PortholeGUI::create(bool firstTime)
                 modCustomCamera(percentToFloat(width), percentToFloat(height));
             }
 
+            String canvasId = "camera-canvas";
 #ifdef llenc_ENABLED
-            if(service->isHardwareEncoderEnabled())
-            {
-                // load camera script here?
-                element->htmlValue = ostr(
-                    "<video id=\"camera-stream\" class=\"camera_container\" data-camera_id = \"%1%\" width=\"%2%\" height=\"%3%\"></video>",
-                    %sessionCamera->id %sessionCamera->canvas->getWidth() % sessionCamera->canvas->getHeight());
-            }
-            else
+            if(service->isHardwareEncoderEnabled()) canvasId = "camera-h264-stream";
 #endif
-            {
-                // load camera script here?
-                element->htmlValue = ostr(
-                    "<canvas id=\"camera-canvas\" class=\"camera_container\" data-camera_id = \"%1%\" width=\"%2%\" height=\"%3%\"></canvas>",
-                    %sessionCamera->id %sessionCamera->canvas->getWidth() % sessionCamera->canvas->getHeight());
-            }
+            // tabindex='1' is used to make the canvas focusable, so we can get key events from it
+            element->htmlValue = ostr(
+                "<canvas id=\"%1%\" class=\"camera_container\" data-camera_id = \"%2%\" width=\"%3%\" height=\"%4%\" tabindex='1'></canvas>",
+                %canvasId %sessionCamera->id %sessionCamera->canvasWidth % sessionCamera->canvasHeight);
         }
         else if (element->type == "script")
         {
-            //result.append("<script type=\"application/javascript\">");
-            String escapedjs = StringUtils::replaceAll(element->htmlValue, "\"", "\\\"");
-            //result.append(escapedjs);
-            //result.append("</script>");
+            String jsCode = element->htmlValue;
+            if(StringUtils::endsWith(element->htmlValue, ".js"))
+            {
+                jsCode = ostr(
+                    "var _js = document.createElement('script'); "
+                    "_js.type = 'text/javascript'; _js.src = '%1%'; "
+                    "document.body.appendChild(_js);", %element->htmlValue);
+            }
+            String escapedjs = StringUtils::replaceAll(jsCode, "\"", "\\\"");
             calljs(escapedjs);
         }
 
@@ -337,7 +333,7 @@ void PortholeGUI::createCustomCamera(float widthPercent, float heightPercent, ui
     // Round down width to a multiple of 4.
     int width = (int)( widthPercent * IMAGE_QUALITY * device->deviceWidth / 4 ) * 4;
     int height = (int)( heightPercent * IMAGE_QUALITY * device->deviceHeight / 4 ) * 4;
-    // cout << "Width: " << width  << " - height: " << height << endl;
+    //cout << "Width: " << width  << " - height: " << height << endl;
 
     uint flags = Camera::DrawScene | Camera::DrawOverlay;
     Camera* camera = myEngine->createCamera(flags);
@@ -370,12 +366,18 @@ void PortholeGUI::createCustomCamera(float widthPercent, float heightPercent, ui
 
     // Create the Porthole camera object, storing the new camera and other
     // related objects.
-    PortholeCamera* pc = new PortholeCamera();
+    Ref<PortholeCamera> pc = new PortholeCamera();
     pc->id = camera->getCameraId();
     pc->camera = camera;
+    //pc->camera = defaultCamera;
     pc->canvasWidth = width;
     pc->canvasHeight = height;
     pc->size = IMAGE_QUALITY;
+
+    pc->fpsStat = Stat::create(ostr("Stream %1% fps", %pc->id), StatsManager::Fps);
+    pc->streamStat = Stat::create(ostr("Stream %1% bw(Kbps)", %pc->id), StatsManager::Count1);
+    pc->fpsStat->addSample(pc->targetFps);
+    pc->streamStat->addSample(0);
 
     // Save new camera
     PortholeGUI::CamerasMap[pc->id] = pc; // Global map
@@ -386,21 +388,30 @@ void PortholeGUI::createCustomCamera(float widthPercent, float heightPercent, ui
 #ifdef llenc_ENABLED
     if(service->isHardwareEncoderEnabled())
     {
-        pc->streamer = new llenc::CameraStreamer();
-        pc->camera->addListener(pc->streamer);
-    }
+        if(pc->camera->getListener() != NULL)
+        {
+            pc->streamer = (llenc::CameraStreamer*)pc->camera->getListener();
+        }
+        else
+        {
+            pc->streamer = new llenc::CameraStreamer();
+            pc->camera->addListener(pc->streamer);
+        }
+    } 
+    else
 #endif
+    {
+        PixelData* sessionCanvas = new PixelData(PixelData::FormatRgb,  width,  height);
+        pc->camera->getOutput(0)->setReadbackTarget(sessionCanvas);
+        pc->camera->getOutput(0)->setEnabled(true);
 
-    PixelData* sessionCanvas = new PixelData(PixelData::FormatRgb,  width,  height);
-    pc->camera->getOutput(0)->setReadbackTarget(sessionCanvas);
-    pc->camera->getOutput(0)->setEnabled(true);
-
-    pc->canvas = sessionCanvas;
+        pc->canvas = sessionCanvas;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::modCustomCamera(float widthPercent, float heightPercent){ 
-
+void PortholeGUI::modCustomCamera(float widthPercent, float heightPercent)
+{ 
     // Retrieve the camera to be modified
     PortholeCamera* portholeCamera = this->sessionCamera;
 
@@ -673,7 +684,7 @@ void PortholeGUI::parseXmlFile(const char* xmlPath)
                 interfaceType->orientation = "portrait";
                 interfaceType->layout = layout;
                 interfaces.push_back(interfaceType);
-                cout << ">> Added interface:" << interfaceId << " " << orientation << " " << minWidth << " " << minHeight << endl;
+                //cout << ">> Added interface:" << interfaceId << " " << orientation << " " << minWidth << " " << minHeight << endl;
                 interfacesMap[interfaceId + orientation] = pOrientationChild;
             }
             else if(orientation == "landscape" || orientation == "land"){
@@ -684,7 +695,7 @@ void PortholeGUI::parseXmlFile(const char* xmlPath)
                 interfaceType->orientation = "landscape";
                 interfaceType->layout = layout;
                 interfaces.push_back(interfaceType);
-                cout << ">> Added interface:" << interfaceId << " " << orientation << " " << minHeight << " " << minWidth << endl;
+                //cout << ">> Added interface:" << interfaceId << " " << orientation << " " << minHeight << " " << minWidth << endl;
                 interfacesMap[interfaceId + orientation] = pOrientationChild;
             }
         }	

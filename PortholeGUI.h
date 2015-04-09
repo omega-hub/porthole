@@ -125,7 +125,7 @@ private:
     Ref<PortholeDevice> device;
 
     // The camera of this session
-    PortholeCamera* sessionCamera;
+    Ref<PortholeCamera> sessionCamera;
 
     String clientId;
 

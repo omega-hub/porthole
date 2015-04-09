@@ -87,7 +87,5 @@ BOOST_PYTHON_MODULE(porthole)
 
     def("initialize", initialize, initializeOverloads());
     def("getService", getService, PYAPI_RETURN_REF);
-
-    ofmsg(">>>>> Porthole %1% ready", %PORTHOLE_VERSION);
 }
 #endif

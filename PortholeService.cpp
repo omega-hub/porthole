@@ -39,7 +39,8 @@ using namespace omicron;
 ///////////////////////////////////////////////////////////////////////////////
 PortholeService::PortholeService():
 myPointerBounds(Vector2i::Zero()), myPointerSpeed(1), myBinder(NULL),
-myHardwareEncoderEnabled(false)
+myHardwareEncoderEnabled(true),
+myDynamicStreamQualityEnabled(false)
 {
 }
 

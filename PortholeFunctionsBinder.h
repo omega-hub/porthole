@@ -84,10 +84,13 @@ struct PortholeCamera : ReferenceType
     int highFps; // When the frame rate passes this fps, increase stream quality.
     int lowFps; // When the frame rate is lower than this fps, decrease stream quality.
     Camera* camera;
-    PixelData* canvas;
+    Ref<PixelData> canvas;
     int canvasWidth, canvasHeight;
     float size; // 1.0 is default value = device size
     //unsigned int oldusStreamSent; // Timestamp of last stream sent via socket
+
+    Ref<Stat> fpsStat;
+    Ref<Stat> streamStat;
 
     // H264 hardware encoder support
 #ifdef llenc_ENABLED
@@ -96,8 +99,17 @@ struct PortholeCamera : ReferenceType
     PortholeCamera() :
         targetFps(60),
         highFps(15),
-        lowFps(5)
+        lowFps(5),
+        camera(NULL)
     {}
+    
+    ~PortholeCamera()
+    {
+#ifdef llenc_ENABLED
+        if(streamer != NULL) camera->removeListener(streamer);
+#endif        
+        if(camera != NULL) Engine::instance()->destroyCamera(camera);
+    }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -118,7 +130,7 @@ struct PortholeEvent
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-class PortholeFunctionsBinder : ReferenceType
+class PortholeFunctionsBinder : public ReferenceType
 {
 public:
     typedef void(*memberFunction)(PortholeEvent&);

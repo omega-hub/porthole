@@ -239,7 +239,7 @@ int ServerThread::callback_http(libwebsocket_context *context, libwebsocket *wsi
     case LWS_CALLBACK_FILTER_NETWORK_CONNECTION:
         libwebsockets_get_peer_addresses((int)(long)user, client_name,
                  sizeof(client_name), client_ip, sizeof(client_ip));
-        ofmsg("Received network connect from %1% (%2%)", %client_name %client_ip);
+        oflog(Debug, "Porthole: connect from %1% (%2%)", %client_name %client_ip);
         break;
 
     default:
@@ -261,8 +261,8 @@ struct per_session_data
 
 ///////////////////////////////////////////////////////////////////////////////
 void sendHtmlElements(bool firstTime, struct per_session_data* data, struct libwebsocket_context *context,
-        struct libwebsocket *wsi){
-
+        struct libwebsocket *wsi)
+{
         string deviceBasedHtml = data->guiManager->create(firstTime);
 
         string toSend = "{\"event_type\" : \"html_elements\", \"innerHTML\" : \"";
@@ -488,7 +488,7 @@ void handle_message(per_session_data* data, recv_message* message,
         // Process button flag 
         // (see http://www.quirksmode.org/js/events_properties.html#button)
         uint flags = Event::Left;
-        if(message->button == 1) flags = Event::Middle;
+        if(message->button == 1) flags = Event::Middle; 
         if(message->button == 2) flags = Event::Right;
 
         // When scale is 1, the position is differential
@@ -544,23 +544,32 @@ void handle_message(per_session_data* data, recv_message* message,
         pc->targetFps = (pc->targetFps + (int)(message->fps)) / 2;
         if(pc->targetFps < 1) pc->targetFps = 1;
         if(pc->targetFps < 40) pc->targetFps++;
+
         //ofmsg("Adjusting fps to %1%", % pc->targetFps);
+        pc->fpsStat->addSample(pc->targetFps);
 
-        if(pc->targetFps < pc->lowFps && pc->size > 0.5f)
+        PortholeService* svc = data->guiManager->getService();
+        
+        if(svc->isDynamicStreamQualityEnabled())
         {
-            if(pc->targetFps <= pc->lowFps / 2) pc->size = 0.2f;
-            else pc->size = 0.5f;
-            // Everytime we decrease the quality, increase high fps requirement.
-            pc->highFps+= 5;
-            sendHtmlElements(false, data, context, wsi);
-        }
-        else if(pc->targetFps > pc->highFps && pc->size < 1.0f)
-        {
-            pc->size = 1.0f;
-            sendHtmlElements(false, data, context, wsi);
+            if(pc->targetFps < pc->lowFps && pc->size > 0.5f)
+            {
+                if(pc->targetFps <= pc->lowFps / 2) pc->size = 0.2f;
+                else pc->size = 0.5f;
+                // Everytime we decrease the quality, increase high fps requirement.
+                pc->highFps+= 5;
+                sendHtmlElements(false, data, context, wsi);
+            }
+            else if(pc->targetFps > pc->highFps && pc->size < 1.0f)
+            {
+                pc->size = 1.0f;
+                sendHtmlElements(false, data, context, wsi);
+            }
         }
 
-    //	data->guiManager->modCustomCamera(message->cameraSize);
+#ifdef llenc_ENABLED
+        if(pc->streamer != NULL) pc->streamer->setTargetFps(pc->targetFps);
+#endif
     }
 
     // Javascript functions bind
@@ -669,9 +678,15 @@ int stream_h264(libwebsocket_context *context, libwebsocket *wsi, per_session_da
     PortholeCamera* pc = data->guiManager->getSessionCamera();
     llenc::Encoder* e = pc->streamer->getEncoder();
 
+    if(e == NULL)
+    {
+        //libwebsocket_callback_on_writable(context, wsi);
+        return 0;
+    }
+
     if(!e->dataAvailable())
     {
-        libwebsocket_callback_on_writable(context, wsi);
+        //libwebsocket_callback_on_writable(context, wsi);
         return 0;
     }
 
@@ -679,41 +694,22 @@ int stream_h264(libwebsocket_context *context, libwebsocket *wsi, per_session_da
     uint32_t size;
     if(e->lockBitstream(&bitstream, &size))
     {
-        /*
-        // String to be send: base64 image and camera id
-        string toSend = "{\"event_type\":\"stream_h264\"";
-        toSend.append(",\"camera_id\":" + boost::lexical_cast<string>(pc->id) +
-            "}");
-
-        // Send the base64 image
-        // OMG MY EYES SO MANY ALLOCS.
-        // TODO: clean this entire thing up.
-        unsigned char* buf;
-        buf = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + toSend.length() + LWS_SEND_BUFFER_POST_PADDING];
-        unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
-        int n = sprintf((char *)p, "%s", toSend.c_str());
-
-        // WEBSOCKET WRITE
-        n = libwebsocket_write(wsi, p, n, LWS_WRITE_TEXT);
-        if(n < 0) {
-            fprintf(stderr, "ERROR writing to socket");
-            return 1;
-        }
-
-
-        // Free the buffer
-        delete[] buf;
-        */
         // Now send the bitstream as binary data
         unsigned char* buf = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + size + LWS_SEND_BUFFER_POST_PADDING];
         unsigned char* p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
 
+        // Record bandwidth. 
+        // Estimate bandwidth by multiplying current bitstream size by fps.
+        // then convert bytes/sec to Kbps
+        double bw = (double)size * (double)pc->targetFps / 128.0f;
+        pc->streamStat->addSample(bw);
+
         memcpy(p, bitstream, size);
 
-        ofmsg("H264 sending %1% bytes", %size);
+        //ofmsg("H264 sending %1% bytes", %size);
 
         // WEBSOCKET WRITE
-        int n = libwebsocket_write(wsi, p, n, LWS_WRITE_BINARY);
+        int n = libwebsocket_write(wsi, p, size, LWS_WRITE_BINARY);
         if(n < 0) {
             fprintf(stderr, "ERROR writing to socket");
             return 1;
@@ -724,7 +720,13 @@ int stream_h264(libwebsocket_context *context, libwebsocket *wsi, per_session_da
 
         e->unlockBitstream();
     }
-    libwebsocket_callback_on_writable(context, wsi);
+    else
+    {
+        omsg("Bitstream lock failed");
+        oexit(0);
+    }
+
+    //libwebsocket_callback_on_writable(context, wsi);
     return 0;
 }
 #endif
@@ -763,11 +765,17 @@ int ServerThread::callback_websocket(struct libwebsocket_context *context,
         // Check if we have stream to send: if not, pass the token
         if (data->guiManager->isCameraReadyToStream() )
         {
+            int res = 0;    
 #ifdef llenc_ENABLED
             if(data->guiManager->getSessionCamera()->streamer != NULL)
-                return stream_h264(context, wsi, data);
+            {
+                res = stream_h264(context, wsi, data);
+            } else
 #endif
-            return stream_jpeg(context, wsi, data);
+            {
+                res = stream_jpeg(context, wsi, data);
+            }
+            if(res != 0) return res;
         }
 
         // See if we have javascript callbacks that we need to send to the
@@ -775,6 +783,7 @@ int ServerThread::callback_websocket(struct libwebsocket_context *context,
         if(data->guiManager->isJavascriptQueued())
         {
             String toSend = data->guiManager->flushJavascriptQueueToJson();
+            //ofmsg("send %1%", %toSend);
             // Send the base64 image
             unsigned char* buf;
             buf = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + toSend.length() + LWS_SEND_BUFFER_POST_PADDING];
@@ -904,7 +913,7 @@ use_ssl(0), opts(0), n(0)
     }
 
     sUserIdStart = owner->getServiceId() * 100;
-    ofmsg("PortholeService: initial user id = %1%", %sUserIdStart);
+    oflog(Verbose, "PortholeService: initial user id = %1%", %sUserIdStart);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -968,7 +977,7 @@ void ServerThread::threadProc()
         // cause any problem..
         if(n < 0)
         {
-            ofmsg("Websocket libwebsocket_service returned: %1%", %n);
+            oflog(Verbose, "Websocket libwebsocket_service returned: %1%", %n);
         }
     }
 

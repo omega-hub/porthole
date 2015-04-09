@@ -99,6 +99,10 @@ p.decode(<binary>);
     };
     
     this.webgl = webgl;
+
+    // OMEGA HACK START
+    var onFrameDrawEnd = null;
+    // OMEGA HACK END
     
     
     var lastWidth;
@@ -126,6 +130,10 @@ p.decode(<binary>);
       self.webGLCanvas.UTexture.fill(buffer.subarray(lumaSize, lumaSize + chromaSize));
       self.webGLCanvas.VTexture.fill(buffer.subarray(lumaSize + chromaSize, lumaSize + 2 * chromaSize));
       self.webGLCanvas.drawScene();
+
+      // OMEGA HACK START
+      if(self.onFrameDrawEnd != null) self.onFrameDrawEnd();
+      // OMEGA HACK END
     };
     
     if (!webgl){
