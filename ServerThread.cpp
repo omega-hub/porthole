@@ -58,48 +58,6 @@ unsigned int sUserIdStart = 1000;
 unsigned int sUserIdCounter = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
-enum demo_protocols {
-    /* always first */
-    PROTOCOL_HTTP = 0,
-    PROTOCOL_WEBSOCKET,
-    /* always last */
-    DEMO_PROTOCOL_COUNT
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// May be used for filtering allowing connections by the header content
-void ServerThread::dump_handshake_info(struct lws_tokens *lwst)
-{
-    //int n;
-    static const char *token_names[WSI_TOKEN_COUNT] = {
-        /*[WSI_TOKEN_GET_URI]		=*/ "GET URI",
-        /*[WSI_TOKEN_HOST]		=*/ "Host",
-        /*[WSI_TOKEN_CONNECTION]	=*/ "Connection",
-        /*[WSI_TOKEN_KEY1]		=*/ "key 1",
-        /*[WSI_TOKEN_KEY2]		=*/ "key 2",
-        /*[WSI_TOKEN_PROTOCOL]		=*/ "Protocol",
-        /*[WSI_TOKEN_UPGRADE]		=*/ "Upgrade",
-        /*[WSI_TOKEN_ORIGIN]		=*/ "Origin",
-        /*[WSI_TOKEN_DRAFT]		=*/ "Draft",
-        /*[WSI_TOKEN_CHALLENGE]		=*/ "Challenge",
-
-        /* new for 04 */
-        /*[WSI_TOKEN_KEY]		=*/ "Key",
-        /*[WSI_TOKEN_VERSION]		=*/ "Version",
-        /*[WSI_TOKEN_SWORIGIN]		=*/ "Sworigin",
-
-        /* new for 05 */
-        /*[WSI_TOKEN_EXTENSIONS]	=*/ "Extensions",
-
-        /* client receives these */
-        /*[WSI_TOKEN_ACCEPT]		=*/ "Accept",
-        /*[WSI_TOKEN_NONCE]		=*/ "Nonce",
-        /*[WSI_TOKEN_HTTP]		=*/ "Http",
-        /*[WSI_TOKEN_MUXURL]	=*/ "MuxURL",
-    };
-}
-
-///////////////////////////////////////////////////////////////////////////////
 void ServerThread::sendFile(libwebsocket *wsi, const String& filename)
 {
     String filePath = filename;
