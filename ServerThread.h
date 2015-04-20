@@ -35,6 +35,7 @@
 
 #include <omega.h>
 #include "websockets/libwebsockets.h"
+#include "vjson/json.h"
 #include "PortholeGUI.h"
 
 using namespace std;
@@ -49,23 +50,60 @@ static String sWebserverDefaultPage;
 class PortholeService;
 
 ///////////////////////////////////////////////////////////////////////////////
+struct recv_message{
+    string event_type;
+    float x,y;
+    float scale; // This value ranges about {0,2;6}: >1 is zoom in, <1 is zoom out
+    float deltaRotation;
+    int width,height;
+    string orientation;
+    string jsFunction;
+    int cameraId;
+    bool firstTime;
+    float fps; // Target fps
+    int button;
+    char key;
+    string value;
+
+    Dictionary<String, String> args;
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Struct of data to be passed across the entire session
+struct per_session_data 
+{
+    PortholeGUI* guiManager;
+    unsigned int userId;
+    unsigned long long oldus;
+    std::string test_flag;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 //! Implements, in a separate thread, the HTTP server for Porthole Service
 class ServerThread: public Thread
 {
 public:
-    // Handshake manager
-    static void dump_handshake_info(lws_tokens *lwst);
-
-    // HTTP callback
-    static int callback_http(libwebsocket_context *context, libwebsocket *wsi,
+    // Websocket
+    static int callbackWebsocket(libwebsocket_context *context, libwebsocket *wsi, 
         libwebsocket_callback_reasons reason, void *user, void *in, size_t len);
+    static int streamJpeg(libwebsocket_context *context, libwebsocket *wsi, per_session_data* data);
+#ifdef llenc_ENABLED
+    static int streamH264(libwebsocket_context *context, libwebsocket *wsi, per_session_data* data);
+#endif
 
-    // websocket callback
-    static int callback_websocket(libwebsocket_context *context, libwebsocket *wsi, 
+    // Http
+    static int callbackHttp(libwebsocket_context *context, libwebsocket *wsi,
         libwebsocket_callback_reasons reason, void *user, void *in, size_t len);
-
     static void sendFile(libwebsocket *wsi, const String& filename);
     static void sendFunctionBindings(libwebsocket *wsi);
+    
+    // Json
+    static void parseJsonMessage(json_value *value, per_session_data* data, recv_message* message);
+    static void handleJsonMessage(per_session_data* data, recv_message* message, 
+        libwebsocket_context *context, libwebsocket *wsi);
+    static void sendHtmlElements(bool firstTime, per_session_data* data,
+        libwebsocket_context *context, libwebsocket *wsi);
 
 public:
     static PortholeService* service;
@@ -95,6 +133,8 @@ private:
     int use_ssl;
     const char* cert_path;
     const char* key_path;
-
+    
+    static unsigned int sUserIdStart;
+    static unsigned int sUserIdCounter;
 };
 #endif

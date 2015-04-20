@@ -12,6 +12,9 @@ add_library(porthole MODULE
     PortholeService.cpp
     PortholeGUI.cpp
     ServerThread.cpp
+    ServerThread_Json.cpp
+    ServerThread_Http.cpp
+    ServerThread_Ws.cpp
     # A tiny JSON library
     vjson/block_allocator.cpp
     vjson/json.cpp)
