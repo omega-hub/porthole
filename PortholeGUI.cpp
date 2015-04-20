@@ -268,22 +268,28 @@ string PortholeGUI::create(bool firstTime)
                 "<canvas id=\"%1%\" class=\"camera_container\" data-camera_id = \"%2%\" width=\"%3%\" height=\"%4%\" tabindex='1'></canvas>",
                 %canvasId %sessionCamera->id %sessionCamera->canvasWidth % sessionCamera->canvasHeight);
         }
+        // Embedded script element
         else if (element->type == "script")
         {
             String jsCode = element->htmlValue;
-            if(StringUtils::endsWith(element->htmlValue, ".js"))
-            {
-                jsCode = ostr(
-                    "var _js = document.createElement('script'); "
-                    "_js.type = 'text/javascript'; _js.src = '%1%'; "
-                    "document.body.appendChild(_js);", %element->htmlValue);
-            }
             String escapedjs = StringUtils::replaceAll(jsCode, "\"", "\\\"");
             calljs(escapedjs);
         }
-
+        // HTML and / or script file element
         if(element->type != "script")
         {
+            // If element type is a js file name, we load the file as part
+            // of this element.
+            if(StringUtils::endsWith(element->type, ".js"))
+            {
+                String jsCode = ostr(
+                    "var _js = document.createElement('script'); "
+                    "_js.type = 'text/javascript'; _js.src = '%1%'; "
+                    "document.body.appendChild(_js);", %element->type);
+                String escapedjs = StringUtils::replaceAll(jsCode, "\"", "\\\"");
+                calljs(escapedjs);            
+            }
+            
             // Create the HTML result for this element. embedded into a table
             // tr (for vertical) or td (for horizontal) element TODO Layouts Grid/Relative
             // HORIZONTAL
@@ -590,7 +596,7 @@ void PortholeGUI::parseXmlFile(const char* xmlPath)
         StringUtils::toLowerCase(element->cameraType);
 
         // For HTML and script elements, just add all the content to the element
-        if(element->type == "html")
+        if(element->type == "html" || StringUtils::endsWith(element->type, ".js"))
         {
             // Parse the GUI elements
             for (omega::xml::TiXmlNode* pHtmlChild = pChild->FirstChildElement(); pHtmlChild != 0; pHtmlChild = pHtmlChild->NextSiblingElement()){
