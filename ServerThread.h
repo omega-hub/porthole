@@ -43,9 +43,6 @@ using namespace omicron;
 
 #define ZOOM_STEP 0.025
 
-//! Path to resources, such as html files
-static String sWebserverDataRoot; 
-static String sWebserverDefaultPage;
 
 class PortholeService;
 
@@ -92,19 +89,19 @@ public:
     static int streamH264(libwebsocket_context *context, libwebsocket *wsi, per_session_data* data);
 #endif
 
-    // Http
-    static int callbackHttp(libwebsocket_context *context, libwebsocket *wsi,
-        libwebsocket_callback_reasons reason, void *user, void *in, size_t len);
-    static void sendFile(libwebsocket *wsi, const String& filename);
-    static void sendFunctionBindings(libwebsocket *wsi);
-    
     // Json
     static void parseJsonMessage(json_value *value, per_session_data* data, recv_message* message);
     static void handleJsonMessage(per_session_data* data, recv_message* message, 
         libwebsocket_context *context, libwebsocket *wsi);
     static void sendHtmlElements(bool firstTime, per_session_data* data,
         libwebsocket_context *context, libwebsocket *wsi);
-
+        
+    // Http
+    static int callbackHttp(libwebsocket_context *context, libwebsocket *wsi,
+        libwebsocket_callback_reasons reason, void *user, void *in, size_t len);
+    static void sendFile(libwebsocket *wsi, const String& filename);
+    static void sendFunctionBindings(libwebsocket *wsi);
+    
 public:
     static PortholeService* service;
 
@@ -136,5 +133,9 @@ private:
     
     static unsigned int sUserIdStart;
     static unsigned int sUserIdCounter;
+    //! Path to resources, such as html files
+    static String sWebserverDataRoot; 
+    static String sWebserverDefaultPage;
+    
 };
 #endif

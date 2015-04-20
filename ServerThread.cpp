@@ -49,6 +49,10 @@ unsigned int ServerThread::sUserIdStart = 1000;
 // Global variables, yay!
 unsigned int ServerThread::sUserIdCounter = 0;
 
+String ServerThread::sWebserverDataRoot; 
+String ServerThread::sWebserverDefaultPage;
+
+
 ////////////////////////////////////////////////////////////////////////////////
 /* list of supported protocols and callbacks */
 struct libwebsocket_protocols protocols[] = 

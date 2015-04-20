@@ -91,6 +91,8 @@ void ServerThread::sendFile(libwebsocket *wsi, const String& filename)
         fullFilePath = sWebserverDataRoot + "/" + filePath;
     }
 
+    oflog(Verbose, "[ServerThread::sendFile] serve %1%", %filePath);
+    
     // Set mime type
     String mime = "text/plain";
     if(StringUtils::endsWith(fullFilePath, ".ico")) mime = "image/x-icon";
