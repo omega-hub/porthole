@@ -481,10 +481,140 @@ String PortholeGUI::flushJavascriptQueueToJson()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::searchNode(omega::xml::TiXmlElement* node)
+void PortholeGUI::parseElementDefinition(omega::xml::TiXmlElement* elem)
+{
+    PortholeElement* element = new PortholeElement();
+
+    // Parse attributes
+    omega::xml::TiXmlAttribute* pAttrib = elem->ToElement()->FirstAttribute();
+    while(pAttrib)
+    {
+        string attribute = pAttrib->Name();
+        StringUtils::toLowerCase(attribute);
+
+        // Save attributes
+        if(attribute == "id") element->id = pAttrib->Value();
+        else if(attribute == "type") element->type = pAttrib->Value();
+        else if (attribute == "camera") element->cameraType = pAttrib->Value();
+
+        // Next attribute
+        pAttrib = pAttrib->Next();
+    }
+
+    StringUtils::toLowerCase(element->type);
+    StringUtils::toLowerCase(element->cameraType);
+
+    // For HTML and script elements, just add all the content to the element
+    if(element->type == "html" || StringUtils::endsWith(element->type, ".js"))
+    {
+        // Parse the GUI elements
+        for (omega::xml::TiXmlNode* pHtmlChild = elem->FirstChildElement(); pHtmlChild != 0; pHtmlChild = pHtmlChild->NextSiblingElement()){
+            
+            omega::xml::TiXmlPrinter* xmlPrinter = new omega::xml::TiXmlPrinter();
+            
+            pHtmlChild->Accept( xmlPrinter );
+            element->htmlValue.append(xmlPrinter->CStr());
+            // delete new line
+            element->htmlValue.erase(std::remove(element->htmlValue.begin(), element->htmlValue.end(), '\n'), element->htmlValue.end());
+
+            delete xmlPrinter;
+        }
+
+    }
+    else if(element->type == "script")
+    {
+        element->htmlValue = elem->ToElement()->GetText();
+    }
+    if(element->id.length() > 0 && element->type.length() > 0)
+    {
+        elementsMap[element->id] = element;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void PortholeGUI::parseInterfaceDefinition(omega::xml::TiXmlElement* elem)
+{
+    // Get element name
+    String interfaceId = "";
+
+    int minWidth=0, minHeight=0;
+
+    // Parse attributes
+    omega::xml::TiXmlAttribute* pAttrib = elem->FirstAttribute();
+    while(pAttrib)
+    {
+
+        string attribute = pAttrib->Name();
+        StringUtils::toLowerCase(attribute);
+
+        // Save attributes
+        if(attribute == "id") interfaceId = pAttrib->Value();
+        else if(attribute == "minwidth") minWidth = pAttrib->IntValue();
+        else if(attribute == "minheight") minHeight = pAttrib->IntValue();
+
+        // Next attribute
+        pAttrib = pAttrib->Next();
+    }
+
+    // For each orientation
+    for (omega::xml::TiXmlElement* pOrientationChild = elem->FirstChildElement(); 
+        pOrientationChild != 0; 
+        pOrientationChild = pOrientationChild->NextSiblingElement())
+    {
+            
+        // Get element name
+        string orientation = string(pOrientationChild->Value());
+        StringUtils::toLowerCase(orientation);
+
+        // Layout attribute
+        std::string layout;
+
+        // Parse attributes
+        omega::xml::TiXmlAttribute* pAttrib = pOrientationChild->FirstAttribute();
+        while(pAttrib)
+        {
+            string attribute = pAttrib->Name();
+            StringUtils::toLowerCase(attribute);
+
+            // Save layout attribute
+            if (attribute == "layout") layout = pAttrib->Value();
+
+            // Next attribute
+            pAttrib = pAttrib->Next();
+        }
+
+        // Check orientation and save node in the map
+        if (orientation == "portrait" || orientation =="port")
+        {
+            PortholeInterfaceType* interfaceType = new PortholeInterfaceType();
+            interfaceType->minWidth = minWidth;
+            interfaceType->minHeight = minHeight;
+            interfaceType->id = interfaceId;
+            interfaceType->orientation = "portrait";
+            interfaceType->layout = layout;
+            interfaces.push_back(interfaceType);
+            //cout << ">> Added interface:" << interfaceId << " " << orientation << " " << minWidth << " " << minHeight << endl;
+            interfacesMap[interfaceId + orientation] = pOrientationChild;
+        }
+        else if(orientation == "landscape" || orientation == "land"){
+            PortholeInterfaceType* interfaceType = new PortholeInterfaceType();
+            interfaceType->minWidth = minHeight;
+            interfaceType->minHeight = minWidth;
+            interfaceType->id = interfaceId;
+            interfaceType->orientation = "landscape";
+            interfaceType->layout = layout;
+            interfaces.push_back(interfaceType);
+            //cout << ">> Added interface:" << interfaceId << " " << orientation << " " << minHeight << " " << minWidth << endl;
+            interfacesMap[interfaceId + orientation] = pOrientationChild;
+        }
+    }	
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void PortholeGUI::parseNode(omega::xml::TiXmlElement* node)
 {
     if ( !node ) return;
-
+    
     const char* id = node->Attribute("id");
 
     // Parse attributes
@@ -527,24 +657,19 @@ void PortholeGUI::searchNode(omega::xml::TiXmlElement* node)
         // Next attribute
         pAttrib = pAttrib->Next();
     }
-
+    
     // Traverse children
     for (omega::xml::TiXmlElement* pChild = node->FirstChildElement(); 
         pChild != 0; 
         pChild = pChild->NextSiblingElement())
     {
-        searchNode(pChild);
+        parseNode(pChild);
     }
 
-}
-
-///////////////////////////////////////////////////////////////////////////////
-vector<string> PortholeGUI::findHtmlScripts()
-{
-    vector<string> result;
-    omega::xml::TiXmlNode* guiElements = xmlDoc->FirstChildElement()->FirstChildElement();
-    searchNode(guiElements->ToElement());
-    return result;
+    // If this xml node is an porthole element or interface node, parse it
+    String nodeName = node->Value();
+    if(nodeName == "element") parseElementDefinition(node);
+    else if(nodeName == "interface") parseInterfaceDefinition(node);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -565,146 +690,5 @@ void PortholeGUI::parseXmlFile(const char* xmlPath)
         return;
     }
 
-    // Recursive search for Python Scripts inside events handlers
-    findHtmlScripts();
-    omega::xml::TiXmlNode* guiElements = xmlDoc->FirstChildElement()->FirstChildElement();
-
-    // Parse the GUI elements
-    for (omega::xml::TiXmlNode* pChild = guiElements->FirstChildElement(); 
-        pChild != 0; 
-        pChild = pChild->NextSiblingElement()){
-
-        PortholeElement* element = new PortholeElement();
-
-        // Parse attributes
-        omega::xml::TiXmlAttribute* pAttrib = pChild->ToElement()->FirstAttribute();
-        while(pAttrib)
-        {
-            string attribute = pAttrib->Name();
-            StringUtils::toLowerCase(attribute);
-
-            // Save attributes
-            if(attribute == "id") element->id = pAttrib->Value();
-            else if(attribute == "type") element->type = pAttrib->Value();
-            else if (attribute == "camera") element->cameraType = pAttrib->Value();
-
-            // Next attribute
-            pAttrib = pAttrib->Next();
-        }
-
-        StringUtils::toLowerCase(element->type);
-        StringUtils::toLowerCase(element->cameraType);
-
-        // For HTML and script elements, just add all the content to the element
-        if(element->type == "html" || StringUtils::endsWith(element->type, ".js"))
-        {
-            // Parse the GUI elements
-            for (omega::xml::TiXmlNode* pHtmlChild = pChild->FirstChildElement(); pHtmlChild != 0; pHtmlChild = pHtmlChild->NextSiblingElement()){
-                
-                omega::xml::TiXmlPrinter* xmlPrinter = new omega::xml::TiXmlPrinter();
-                
-                pHtmlChild->Accept( xmlPrinter );
-                element->htmlValue.append(xmlPrinter->CStr());
-                // delete new line
-                element->htmlValue.erase(std::remove(element->htmlValue.begin(), element->htmlValue.end(), '\n'), element->htmlValue.end());
-
-                delete xmlPrinter;
-            }
-
-        }
-        else if(element->type == "script")
-        {
-            element->htmlValue = pChild->ToElement()->GetText();
-        }
-        if(element->id.length() > 0 && element->type.length() > 0)
-        {
-            elementsMap[element->id] = element;
-        }
-
-    }
-
-    omega::xml::TiXmlNode* guiDisposition = guiElements->NextSiblingElement();
-
-    // Parse the GUI elemets disposition
-    // For each specified interface size
-    for (omega::xml::TiXmlElement* pInterfaceChild = guiDisposition->FirstChildElement(); 
-        pInterfaceChild != 0; 
-        pInterfaceChild = pInterfaceChild->NextSiblingElement())
-    {
-            // Get element name
-            String interfaceId = "";
-
-            int minWidth=0, minHeight=0;
-
-            // Parse attributes
-            omega::xml::TiXmlAttribute* pAttrib = pInterfaceChild->FirstAttribute();
-            while(pAttrib)
-            {
-
-                string attribute = pAttrib->Name();
-                StringUtils::toLowerCase(attribute);
-
-                // Save attributes
-                if(attribute == "id") interfaceId = pAttrib->Value();
-                else if(attribute == "minwidth") minWidth = pAttrib->IntValue();
-                else if(attribute == "minheight") minHeight = pAttrib->IntValue();
-
-                // Next attribute
-                pAttrib = pAttrib->Next();
-            }
-
-        // For each orientation
-        for (omega::xml::TiXmlElement* pOrientationChild = pInterfaceChild->FirstChildElement(); 
-            pOrientationChild != 0; 
-            pOrientationChild = pOrientationChild->NextSiblingElement())
-        {
-                
-            // Get element name
-            string orientation = string(pOrientationChild->Value());
-            StringUtils::toLowerCase(orientation);
-
-            // Layout attribute
-            std::string layout;
-
-            // Parse attributes
-            omega::xml::TiXmlAttribute* pAttrib = pOrientationChild->FirstAttribute();
-            while(pAttrib)
-            {
-                string attribute = pAttrib->Name();
-                StringUtils::toLowerCase(attribute);
-
-                // Save layout attribute
-                if (attribute == "layout") layout = pAttrib->Value();
-
-                // Next attribute
-                pAttrib = pAttrib->Next();
-            }
-
-            // Check orientation and save node in the map
-            if (orientation == "portrait" || orientation =="port")
-            {
-                PortholeInterfaceType* interfaceType = new PortholeInterfaceType();
-                interfaceType->minWidth = minWidth;
-                interfaceType->minHeight = minHeight;
-                interfaceType->id = interfaceId;
-                interfaceType->orientation = "portrait";
-                interfaceType->layout = layout;
-                interfaces.push_back(interfaceType);
-                //cout << ">> Added interface:" << interfaceId << " " << orientation << " " << minWidth << " " << minHeight << endl;
-                interfacesMap[interfaceId + orientation] = pOrientationChild;
-            }
-            else if(orientation == "landscape" || orientation == "land"){
-                PortholeInterfaceType* interfaceType = new PortholeInterfaceType();
-                interfaceType->minWidth = minHeight;
-                interfaceType->minHeight = minWidth;
-                interfaceType->id = interfaceId;
-                interfaceType->orientation = "landscape";
-                interfaceType->layout = layout;
-                interfaces.push_back(interfaceType);
-                //cout << ">> Added interface:" << interfaceId << " " << orientation << " " << minHeight << " " << minWidth << endl;
-                interfacesMap[interfaceId + orientation] = pOrientationChild;
-            }
-        }	
-    }
-
+    parseNode(xmlDoc->FirstChildElement());
 }

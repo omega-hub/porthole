@@ -102,11 +102,11 @@ public:
     // size: the ratio of camera: 1.0 is full size
     void modCustomCamera(float widthPercent, float heightPercent);
 
-    // Parse HTML gui_element and look for Javascript events 
-    static vector<string> findHtmlScripts();
-
     // Start application XML parsing
     static void parseXmlFile(const char* xmlPath);
+    static void parseNode(omega::xml::TiXmlElement* node);
+    static void parseElementDefinition(omega::xml::TiXmlElement* elem);
+    static void parseInterfaceDefinition(omega::xml::TiXmlElement* elem);
 
     // Functions binder getter and setter
     static PortholeFunctionsBinder* getPortholeFunctionsBinder() { return functionsBinder; }
@@ -135,8 +135,6 @@ private:
 
     // Create a Porthole custom camera and a PixelData associated
     void createCustomCamera(float widthPercent, float heightPercent, uint cameraMask = 0); 
-
-    static void searchNode(omega::xml::TiXmlElement* node);
 
     // Functions binder object
     static PortholeFunctionsBinder* functionsBinder;
