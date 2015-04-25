@@ -107,6 +107,7 @@ public:
     static void parseNode(omega::xml::TiXmlElement* node);
     static void parseElementDefinition(omega::xml::TiXmlElement* elem);
     static void parseInterfaceDefinition(omega::xml::TiXmlElement* elem);
+    static void parseInclude(omega::xml::TiXmlElement* elem);
 
     // Functions binder getter and setter
     static PortholeFunctionsBinder* getPortholeFunctionsBinder() { return functionsBinder; }

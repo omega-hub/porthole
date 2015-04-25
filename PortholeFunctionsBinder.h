@@ -51,7 +51,7 @@ struct PortholeInterfaceType : public ReferenceType
     int minWidth;
     int minHeight;
     string id;
-    string orientation;
+    //string orientation;
     string layout;
 };
 

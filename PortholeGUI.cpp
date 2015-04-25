@@ -148,7 +148,7 @@ void PortholeGUI::setDeviceSpecifications(int width, int height, const String& o
     {
         if (width > interfaces.at(i)->minWidth && 
             height > interfaces.at(i)->minHeight &&
-            orientation.compare(interfaces.at(i)->orientation)==0 &&
+            //orientation.compare(interfaces.at(i)->orientation)==0 &&
             interfaceId == interfaces.at(i)->id)
             device->interfaceType = interfaces.at(i);
     }
@@ -162,7 +162,10 @@ string PortholeGUI::create(bool firstTime)
         return "Interface not available for this device";
     }
 
-    string interfaceKey = device->interfaceType->id + device->interfaceType->orientation;
+    string interfaceKey = device->interfaceType->id + device->deviceOrientation;
+    
+    ofmsg("Getting interface %1%", %interfaceKey); 
+    
     omega::xml::TiXmlElement* root = interfacesMap[interfaceKey];
 
     if (root == NULL) return "Interface not available for this device";
@@ -583,31 +586,52 @@ void PortholeGUI::parseInterfaceDefinition(omega::xml::TiXmlElement* elem)
             pAttrib = pAttrib->Next();
         }
 
+        PortholeInterfaceType* interfaceType = new PortholeInterfaceType();
+        interfaceType->minWidth = minWidth;
+        interfaceType->minHeight = minHeight;
+        interfaceType->id = interfaceId;
+        interfaceType->layout = layout;
+        interfaces.push_back(interfaceType);
+        
         // Check orientation and save node in the map
+        // If the interface orientation is not specified, save the interface for 
+        // both portrait and landscape mode.
         if (orientation == "portrait" || orientation =="port")
         {
-            PortholeInterfaceType* interfaceType = new PortholeInterfaceType();
-            interfaceType->minWidth = minWidth;
-            interfaceType->minHeight = minHeight;
-            interfaceType->id = interfaceId;
-            interfaceType->orientation = "portrait";
-            interfaceType->layout = layout;
-            interfaces.push_back(interfaceType);
-            //cout << ">> Added interface:" << interfaceId << " " << orientation << " " << minWidth << " " << minHeight << endl;
+            //interfaceType->orientation = "portrait";
             interfacesMap[interfaceId + orientation] = pOrientationChild;
         }
-        else if(orientation == "landscape" || orientation == "land"){
-            PortholeInterfaceType* interfaceType = new PortholeInterfaceType();
-            interfaceType->minWidth = minHeight;
-            interfaceType->minHeight = minWidth;
-            interfaceType->id = interfaceId;
-            interfaceType->orientation = "landscape";
-            interfaceType->layout = layout;
-            interfaces.push_back(interfaceType);
-            //cout << ">> Added interface:" << interfaceId << " " << orientation << " " << minHeight << " " << minWidth << endl;
+        else if(orientation == "landscape" || orientation == "land")
+        {
+            //interfaceType->orientation = "landscape";
             interfacesMap[interfaceId + orientation] = pOrientationChild;
+        }
+        else
+        {
+            interfacesMap[interfaceId + "landscape"] = pOrientationChild;
+            interfacesMap[interfaceId + "portrait"] = pOrientationChild;
         }
     }	
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void PortholeGUI::parseInclude(omega::xml::TiXmlElement* elem)
+{
+    const char* fileName = elem->Attribute("file");
+    if(fileName == NULL)
+    {
+        owarn("Porthole: include element missing file attribute");
+        return;
+    }
+    String interfaceFilePath;
+    if(DataManager::findFile(fileName, interfaceFilePath))
+    {
+        parseXmlFile(interfaceFilePath.c_str());
+    }
+    else
+    {
+        ofwarn("PortholeService::load: could not find interface file %1%", %fileName);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -670,6 +694,7 @@ void PortholeGUI::parseNode(omega::xml::TiXmlElement* node)
     String nodeName = node->Value();
     if(nodeName == "element") parseElementDefinition(node);
     else if(nodeName == "interface") parseInterfaceDefinition(node);
+    else if(nodeName == "include") parseInclude(node);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
