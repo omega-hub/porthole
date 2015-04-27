@@ -1,0 +1,6 @@
+<element id="fullscreenButton" type="porthole/elements/fullscreenButton.js">
+    <input type="image" src="porthole/elements/fullscreenButton.png" 
+        onclick="%js toggleFullscreen(porthole_content)" 
+        width="64"  tabindex="-1"
+        style="position: fixed; bottom: 0px; right: 0px;"></input>
+</element>
