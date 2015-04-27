@@ -504,11 +504,14 @@ void PortholeGUI::parseElementDefinition(omega::xml::TiXmlElement* elem)
         pAttrib = pAttrib->Next();
     }
 
-    StringUtils::toLowerCase(element->type);
+    //StringUtils::toLowerCase(element->type);
     StringUtils::toLowerCase(element->cameraType);
 
     // For HTML and script elements, just add all the content to the element
-    if(element->type == "html" || StringUtils::endsWith(element->type, ".js"))
+    if(element->type == "html" || 
+        element->type == "HTML" ||
+        element->type == "Html" ||
+            StringUtils::endsWith(element->type, ".js"))
     {
         // Parse the GUI elements
         for (omega::xml::TiXmlNode* pHtmlChild = elem->FirstChildElement(); pHtmlChild != 0; pHtmlChild = pHtmlChild->NextSiblingElement()){
