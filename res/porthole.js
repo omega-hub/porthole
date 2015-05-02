@@ -299,10 +299,10 @@ try {
             initializeCameraStreams();
             
             // Add events listeners
-            //if (!isTouchable) {
+            if (!isTouchable) {
                 // avoid resize message when touchable keyboard appears on mobile devices
-             //   addEvent(window, "resize", sendSpecTimeout);
-            //}
+                addEvent(window, "resize", sendSpecTimeout);
+            }
         }
         
         // Received Javascript code. Execute it.
