@@ -18,6 +18,7 @@ if(porthole.cameraCanvas != null) {
         drag_block_vertical: true,
         drag_block_horizontal: true,
         drag_min_distance: 1,
+        drag_max_touches: 0,
 
         transform: true,
         scale_treshold: 0,
@@ -86,7 +87,7 @@ function onKeyUp(e)
 		"event_type": "keyup",
         "key": e.keyCode
 	};
-    console.log(e);
+    //console.log(e);
 	socket.send(JSON.stringify(JSONEvent));
 }
 
@@ -100,7 +101,7 @@ function onKeyDown(e)
         "key": key
 	};
 
-    console.log(key);
+    //console.log(key);
 	socket.send(JSON.stringify(JSONEvent));
 }
 
@@ -112,8 +113,10 @@ hammer.on("drag", function (ev)
 
    lastX = ev.gesture.center.pageX;
    lastY = ev.gesture.center.pageY;
+   
+   if(ev.gesture) console.log(ev.gesture.touches.length)
 
-    console.log(movementX);
+    //console.log(movementX);
 	var JSONEvent = {
 		"event_type": "drag",
 		"camera_id": 2,
