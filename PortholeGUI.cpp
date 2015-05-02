@@ -152,6 +152,9 @@ void PortholeGUI::setDeviceSpecifications(int width, int height, const String& o
             interfaceId == interfaces.at(i)->id)
             device->interfaceType = interfaces.at(i);
     }
+    
+    oflog(Verbose, "[PortholeGUI::setDeviceSpecifications] %1%x%2% %3%  interface=%4%",
+        %width %height %orientation %device->interfaceType->id);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -164,7 +167,7 @@ string PortholeGUI::create(bool firstTime)
 
     string interfaceKey = device->interfaceType->id + device->deviceOrientation;
     
-    ofmsg("Getting interface %1%", %interfaceKey); 
+    ofmsg("[PortholeGUI] Getting interface <%1%>", %interfaceKey); 
     
     omega::xml::TiXmlElement* root = interfacesMap[interfaceKey];
 
@@ -351,6 +354,8 @@ void PortholeGUI::createCustomCamera(float widthPercent, float heightPercent, ui
     String cameraName = ostr("%1%-%2%", %clientId %camera->getCameraId());
     camera->setName(cameraName);
     service->notifyCameraCreated(camera);
+    
+    oflog(Verbose, "[PortholeGUI::createCustomCamera]: %1% <%2%x%3%>", %cameraName %width %height);
 
     DisplayTileConfig* dtc = camera->getCustomTileConfig();
     // Setup projection
@@ -435,18 +440,13 @@ void PortholeGUI::modCustomCamera(float widthPercent, float heightPercent)
     int width = (int)(widthPercent * portholeCamera->size * device->deviceWidth / 4) * 4;
     int height = (int)(heightPercent * portholeCamera->size * device->deviceHeight / 4) * 4;
 
-    // cout << "Width: " << width  << " - height: " << height << endl;
-
-    // Set new camera target
-    portholeCamera->canvas = new PixelData(PixelData::FormatRgb, width, height);
-    sessionCamera->getOutput(0)->setReadbackTarget(portholeCamera->canvas);
-    sessionCamera->getOutput(0)->setEnabled(true);
+    oflog(Verbose, "[PortholeGUI::modCustomCamera]: %1% (%2%x%3%)", 
+        %sessionCamera->getName() %width %height);
 
     DisplayTileConfig* dtc = sessionCamera->getCustomTileConfig();
     // Setup projection
     dtc->enabled = true;
     dtc->setPixelSize(width, height);
-    // Setup a default projection
 
     float as = (float)width / height;
     float base = 1.0f;
@@ -458,6 +458,23 @@ void PortholeGUI::modCustomCamera(float widthPercent, float heightPercent)
         Vector3f(-base * as, base, -2) + ho,
         Vector3f(-base * as, -base, -2) + ho,
         Vector3f(base * as, -base, -2) + ho);
+        
+#ifdef llenc_ENABLED
+    if(service->isHardwareEncoderEnabled())
+    {
+        /*if(pc->streamer != NULL)
+        {
+            
+        }*/
+    }
+    else
+#endif
+    {
+        // Set new camera target
+        portholeCamera->canvas = new PixelData(PixelData::FormatRgb, width, height);
+        sessionCamera->getOutput(0)->setReadbackTarget(portholeCamera->canvas);
+        sessionCamera->getOutput(0)->setEnabled(true);
+    }
 
     portholeCamera->canvasWidth = width;
     portholeCamera->canvasHeight = height;
