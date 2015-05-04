@@ -37,12 +37,11 @@
 #define PORTHOLE_EVENT_TOKEN_MOUSE_BTN "%btn%"
 #define PORTHOLE_EVENT_TOKEN_EVENT "%event%"
 
-#ifdef llenc_ENABLED
-#include "llenc/CameraStreamer.h"
-#endif
+#include <omegaToolkit.h>
 
 using namespace omicron;
 using namespace omega;
+using namespace omegaToolkit;
 
 ///////////////////////////////////////////////////////////////////////////////
 // This will old a possible interface
@@ -93,9 +92,8 @@ struct PortholeCamera : ReferenceType
     Ref<Stat> streamStat;
 
     // H264 hardware encoder support
-#ifdef llenc_ENABLED
-    Ref<llenc::CameraStreamer> streamer;
-#endif
+    Ref<CameraStreamer> streamer;
+    
     PortholeCamera() :
         targetFps(60),
         highFps(15),
@@ -105,9 +103,7 @@ struct PortholeCamera : ReferenceType
     
     ~PortholeCamera()
     {
-#ifdef llenc_ENABLED
         if(streamer != NULL) camera->removeListener(streamer);
-#endif        
         if(camera != NULL) Engine::instance()->destroyCamera(camera);
     }
 };

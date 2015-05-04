@@ -36,11 +36,6 @@
 #include <omicron/xml/tinyxml.h>
 #include <iostream>
 
-// H264 hardware encoder support
-#ifdef llenc_ENABLED
-#include "llenc/Encoder.h"
-#endif
-
 using namespace omega;
 using namespace std;
 
@@ -266,9 +261,7 @@ string PortholeGUI::create(bool firstTime)
             }
 
             String canvasId = "camera-canvas";
-#ifdef llenc_ENABLED
             if(service->isHardwareEncoderEnabled()) canvasId = "camera-h264-stream";
-#endif
             // tabindex='1' is used to make the canvas focusable, so we can get key events from it
             element->htmlValue = ostr(
                 "<canvas id=\"%1%\" class=\"camera_container\" data-camera_id = \"%2%\" width=\"%3%\" height=\"%4%\" tabindex='1'></canvas>",
@@ -399,21 +392,19 @@ void PortholeGUI::createCustomCamera(float widthPercent, float heightPercent, ui
 
     // If low latency hardware encoding is available, use that. Otherwise, 
     // fall back to the old JPEG encoding & streaming.
-#ifdef llenc_ENABLED
     if(service->isHardwareEncoderEnabled())
     {
         if(pc->camera->getListener() != NULL)
         {
-            pc->streamer = (llenc::CameraStreamer*)pc->camera->getListener();
+            pc->streamer = (CameraStreamer*)pc->camera->getListener();
         }
         else
         {
-            pc->streamer = new llenc::CameraStreamer();
+            pc->streamer = new CameraStreamer("llenc");
             pc->camera->addListener(pc->streamer);
         }
     } 
     else
-#endif
     {
         PixelData* sessionCanvas = new PixelData(PixelData::FormatRgb,  width,  height);
         pc->camera->getOutput(0)->setReadbackTarget(sessionCanvas);
@@ -459,16 +450,7 @@ void PortholeGUI::modCustomCamera(float widthPercent, float heightPercent)
         Vector3f(-base * as, -base, -2) + ho,
         Vector3f(base * as, -base, -2) + ho);
         
-#ifdef llenc_ENABLED
-    if(service->isHardwareEncoderEnabled())
-    {
-        /*if(pc->streamer != NULL)
-        {
-            
-        }*/
-    }
-    else
-#endif
+    if(!service->isHardwareEncoderEnabled() || portholeCamera->streamer == NULL)
     {
         // Set new camera target
         portholeCamera->canvas = new PixelData(PixelData::FormatRgb, width, height);

@@ -41,10 +41,6 @@
 #include <iomanip>
 #include <fstream>
 
-// H264 hardware encoder support
-#ifdef llenc_ENABLED
-#include "llenc/Encoder.h"
-#endif
 
 using namespace omega;
 using namespace omicron;
@@ -231,11 +227,10 @@ int ServerThread::streamJpeg(libwebsocket_context *context, libwebsocket *wsi, p
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-#ifdef llenc_ENABLED
 int ServerThread::streamH264(libwebsocket_context *context, libwebsocket *wsi, per_session_data* data)
 {
     PortholeCamera* pc = data->guiManager->getSessionCamera();
-    llenc::Encoder* e = pc->streamer->getEncoder();
+    IEncoder* e = pc->streamer->getEncoder();
 
     if(e == NULL)
     {
@@ -288,4 +283,4 @@ int ServerThread::streamH264(libwebsocket_context *context, libwebsocket *wsi, p
     //libwebsocket_callback_on_writable(context, wsi);
     return 0;
 }
-#endif
+
