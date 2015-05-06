@@ -158,6 +158,8 @@ function sendSpec()
     send_spec_waiting = false; // sendSpecTimeout could be called again
 }
 
+porthole.requestInterfaceRefresh = sendSpec;
+
 function sendSpecTimeout() {
     if (!send_spec_waiting) {
         send_spec_waiting = true;

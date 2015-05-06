@@ -230,17 +230,19 @@ int ServerThread::streamJpeg(libwebsocket_context *context, libwebsocket *wsi, p
 int ServerThread::streamH264(libwebsocket_context *context, libwebsocket *wsi, per_session_data* data)
 {
     PortholeCamera* pc = data->guiManager->getSessionCamera();
-    IEncoder* e = pc->streamer->getEncoder();
+    IEncoder* e = pc->streamer->lockEncoder();
 
     if(e == NULL)
     {
         //libwebsocket_callback_on_writable(context, wsi);
+        pc->streamer->unlockEncoder();
         return 0;
     }
 
     if(!e->dataAvailable())
     {
         //libwebsocket_callback_on_writable(context, wsi);
+        pc->streamer->unlockEncoder();
         return 0;
     }
 
@@ -266,6 +268,7 @@ int ServerThread::streamH264(libwebsocket_context *context, libwebsocket *wsi, p
         int n = libwebsocket_write(wsi, p, size, LWS_WRITE_BINARY);
         if(n < 0) {
             fprintf(stderr, "ERROR writing to socket");
+            pc->streamer->unlockEncoder();
             return 1;
         }
 
@@ -281,6 +284,7 @@ int ServerThread::streamH264(libwebsocket_context *context, libwebsocket *wsi, p
     }
 
     //libwebsocket_callback_on_writable(context, wsi);
+    pc->streamer->unlockEncoder();
     return 0;
 }
 

@@ -10,4 +10,6 @@ function toggleFullscreen(docEl) {
   else {
     cancelFullScreen.call(doc);
   }
+  
+  porthole.requestInterfaceRefresh();
 }
