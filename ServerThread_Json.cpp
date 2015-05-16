@@ -206,7 +206,7 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
         // Process button flag 
         // (see http://www.quirksmode.org/js/events_properties.html#button)
         uint flags = Event::Left;
-        if(message->button == 1) flags = Event::Middle;
+        if(message->button == 3) flags = Event::Middle;
         if(message->button == 2) flags = Event::Right;
 
         // When scale is 1, the position is differential
@@ -221,7 +221,6 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
             svc->postPointerEvent(Event::Up, id, message->x, message->y, flags, data->userId);
         }
     }
-
     else if(strcmp(message->event_type.c_str(), MSG_EVENT_MOUSEDOWN) == 0)
     {
         PortholeService* svc = data->guiManager->getService();
@@ -229,7 +228,7 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
         // Process button flag 
         // (see http://www.quirksmode.org/js/events_properties.html#button)
         uint flags = Event::Left;
-        if(message->button == 1) flags = Event::Middle; 
+        if(message->button == 3) flags = Event::Middle; 
         if(message->button == 2) flags = Event::Right;
 
         // When scale is 1, the position is differential

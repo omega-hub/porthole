@@ -214,8 +214,7 @@ string PortholeGUI::create(bool firstTime)
 
         if (element == NULL)
         {
-            std::cout << "!! >> XID Error: No element found. Check <element> ids inside <interface> elements."
-                "Check if that element has been defined inside <elements>" << std::endl;
+            oferror("!! >> XID Error: No element %1% found.", %id);
             abort();
         }
 
