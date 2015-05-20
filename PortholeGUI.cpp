@@ -49,8 +49,30 @@ std::map<int, PortholeCamera*> PortholeGUI::CamerasMap;
 #define IMAGE_QUALITY 1
 
 ///////////////////////////////////////////////////////////////////////////////
-inline float percentToFloat(String percent){
-    return (float)(atoi(StringUtils::replaceAll(percent, "%", "").c_str()))/100;
+int convertWidth(String v, PortholeDevice* d)
+{
+    if(StringUtils::endsWith(v, "%"))
+    {
+        float percent = (float)(atoi(StringUtils::replaceAll(v, "%", "").c_str()))/100;
+        return (int)(percent * d->deviceWidth);
+    }
+    
+    return atoi(StringUtils::replaceAll(v, "px", "").c_str());
+    //int width = (int)( widthPercent * IMAGE_QUALITY * device->deviceWidth / 4 ) * 4;
+    //int height = (int)( heightPercent * IMAGE_QUALITY * device->deviceHeight / 4 ) * 4;
+    //return (float)(atoi(StringUtils::replaceAll(percent, "%", "").c_str()))/100;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+int convertHeight(String v, PortholeDevice* d)
+{
+    if(StringUtils::endsWith(v, "%"))
+    {
+        float percent = (float)(atoi(StringUtils::replaceAll(v, "%", "").c_str()))/100;
+        return (int)(percent * d->deviceHeight);
+    }
+    
+    return atoi(StringUtils::replaceAll(v, "px", "").c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -252,11 +274,11 @@ string PortholeGUI::create(bool firstTime)
             }
             if (firstTime || this->sessionCamera == NULL)
             {
-                createCustomCamera(percentToFloat(width), percentToFloat(height), camMask);
+                createCustomCamera(convertWidth(width, device), convertHeight(height, device), camMask);
             }
             else
             {
-                modCustomCamera(percentToFloat(width), percentToFloat(height));
+                modCustomCamera(convertWidth(width, device), convertHeight(height, device));
             }
 
             String canvasId = "camera-canvas";
@@ -327,7 +349,7 @@ string PortholeGUI::create(bool firstTime)
 /* 
 *	Camera creation function
 */
-void PortholeGUI::createCustomCamera(float widthPercent, float heightPercent, uint cameraMask)
+void PortholeGUI::createCustomCamera(int width, int height, uint cameraMask)
 {
     // Get the global engine
     Engine* myEngine = Engine::instance();
@@ -335,8 +357,8 @@ void PortholeGUI::createCustomCamera(float widthPercent, float heightPercent, ui
     // Initialize camera size
     // Workaround. This avoid a canvas drawing bug
     // Round down width to a multiple of 4.
-    int width = (int)( widthPercent * IMAGE_QUALITY * device->deviceWidth / 4 ) * 4;
-    int height = (int)( heightPercent * IMAGE_QUALITY * device->deviceHeight / 4 ) * 4;
+    //int width = (int)( widthPercent * IMAGE_QUALITY * device->deviceWidth / 4 ) * 4;
+    //int height = (int)( heightPercent * IMAGE_QUALITY * device->deviceHeight / 4 ) * 4;
     //cout << "Width: " << width  << " - height: " << height << endl;
 
     uint flags = Camera::DrawScene | Camera::DrawOverlay;
@@ -414,7 +436,7 @@ void PortholeGUI::createCustomCamera(float widthPercent, float heightPercent, ui
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::modCustomCamera(float widthPercent, float heightPercent)
+void PortholeGUI::modCustomCamera(int width, int height)
 { 
     // Retrieve the camera to be modified
     PortholeCamera* portholeCamera = this->sessionCamera;
@@ -427,8 +449,8 @@ void PortholeGUI::modCustomCamera(float widthPercent, float heightPercent)
     // Initialize camera size
     // Workaround. This avoid a canvas drawing bug
     // Round down width to a multiple of 4.
-    int width = (int)(widthPercent * portholeCamera->size * device->deviceWidth / 4) * 4;
-    int height = (int)(heightPercent * portholeCamera->size * device->deviceHeight / 4) * 4;
+    //int width = (int)(widthPercent * portholeCamera->size * device->deviceWidth / 4) * 4;
+    //int height = (int)(heightPercent * portholeCamera->size * device->deviceHeight / 4) * 4;
 
     oflog(Verbose, "[PortholeGUI::modCustomCamera]: %1% (%2%x%3%)", 
         %sessionCamera->getName() %width %height);

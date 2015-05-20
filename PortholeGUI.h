@@ -100,7 +100,7 @@ public:
 
     // Mod the camera with id cameraId 
     // size: the ratio of camera: 1.0 is full size
-    void modCustomCamera(float widthPercent, float heightPercent);
+    void modCustomCamera(int width, int height);
 
     // Start application XML parsing
     static void parseXmlFile(const char* xmlPath);
@@ -135,7 +135,7 @@ private:
     Lock javascriptQueueLock;
 
     // Create a Porthole custom camera and a PixelData associated
-    void createCustomCamera(float widthPercent, float heightPercent, uint cameraMask = 0); 
+    void createCustomCamera(int width, int height, uint cameraMask = 0); 
 
     // Functions binder object
     static PortholeFunctionsBinder* functionsBinder;
