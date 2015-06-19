@@ -85,9 +85,7 @@ public:
     static int callbackWebsocket(libwebsocket_context *context, libwebsocket *wsi, 
         libwebsocket_callback_reasons reason, void *user, void *in, size_t len);
     static int streamJpeg(libwebsocket_context *context, libwebsocket *wsi, per_session_data* data);
-#ifdef llenc_ENABLED
     static int streamH264(libwebsocket_context *context, libwebsocket *wsi, per_session_data* data);
-#endif
 
     // Json
     static void parseJsonMessage(json_value *value, per_session_data* data, recv_message* message);
