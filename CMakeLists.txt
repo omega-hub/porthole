@@ -1,3 +1,5 @@
+module_version(1.1)
+
 # PORTHOLE Add websockets lib and zlib if on windows
 if(OMEGA_OS_WIN)
     add_subdirectory(zlib)
