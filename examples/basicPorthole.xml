@@ -22,7 +22,8 @@
 
     <interfaces>
         <interface minWidth="0" minHeight="0" id="default">
-            <landscape layout="free">
+           
+			<landscape layout="free">
                 <element width="100%" height="100%" id="camera"/>
                 <element x="0px" y="80px" id="caption"/>
                 <element x="100px" y="132px" id="left"/>
@@ -30,6 +31,14 @@
                 <element x="132px" y="100px" id="up"/>
                 <element x="132px" y="164px" id="down"/>
             </landscape>
+			 <portrait layout="free">
+                <element width="100%" height="100%" id="camera"/>
+                <element x="0px" y="80px" id="caption"/>
+                <element x="100px" y="132px" id="left"/>
+                <element x="164px" y="132px" id="right"/>
+                <element x="132px" y="100px" id="up"/>
+                <element x="132px" y="164px" id="down"/>
+            </portrait>
         </interface>
     </interfaces>
 </gui>

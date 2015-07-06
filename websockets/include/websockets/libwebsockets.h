@@ -41,7 +41,7 @@ extern "C" {
 
 #define strcasecmp stricmp
 
-typedef int ssize_t;
+typedef int ws_ssize_t;
 
 #ifdef LWS_DLL
 #ifdef LWS_INTERNAL

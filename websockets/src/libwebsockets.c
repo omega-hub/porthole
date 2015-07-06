@@ -1462,7 +1462,7 @@ libwebsocket_service_fd(struct libwebsocket_context *context,
 	struct libwebsocket *new_wsi;
 	int n;
 	int m;
-	ssize_t len;
+	ws_ssize_t len;
 	int accept_fd;
 	unsigned int clilen;
 	struct sockaddr_in cli_addr;
