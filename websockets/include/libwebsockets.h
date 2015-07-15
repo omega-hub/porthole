@@ -27,6 +27,8 @@ extern "C" {
 #include <cstddef>
 #endif
 
+typedef int ws_ssize_t;
+
 #ifdef WIN32
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -40,8 +42,6 @@ extern "C" {
 #include <websockets/gettimeofday.h>
 
 #define strcasecmp stricmp
-
-typedef int ws_ssize_t;
 
 #ifdef LWS_DLL
 #ifdef LWS_INTERNAL
