@@ -162,6 +162,7 @@ void ServerThread::threadProc()
         {
             oflog(Verbose, "Websocket libwebsocket_service returned: %1%", %n);
         }
+        osleep(5);
     }
 
     // Destroy context when main loop ends
