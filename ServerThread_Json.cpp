@@ -331,17 +331,31 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
         // originally only html events could be 'attached' to python or C++ calls.
         // If we wanted to call a server function from within a javascript function,
         // that was not possible, until phCall was introduced.
-        if(ev.value == "phCall")
+        // We support 3 call modes here:
+        // _call is for calling python commands
+        // _jscall is for sending javascript commands to other porthole clients
+        // _mccall is for sending python commands to other mission control clients
+        if(ev.value == "_call")
         {
             PythonInterpreter* pi = SystemManager::instance()->getScriptInterpreter();
             String call = StringUtils::replaceAll(message->jsFunction, "%client_id%", "\"" + ev.clientId + "\"");
             pi->queueCommand(call);
         }
-        else if(ev.value == "phJSCall")
+        else if(ev.value == "_jscall")
         {
             String call = StringUtils::replaceAll(message->jsFunction, "%client_id%", "\"" + ev.clientId + "\"");
             call = StringUtils::replaceAll(call, "\"", "\\\"");
             ServerThread::service->broadcastjs(call, ev.clientId);
+        }
+        else if(ev.value == "_mccall")
+        {
+            MissionControlClient* mc = SystemManager::instance()->getMissionControlClient();
+            if(mc != NULL)
+            {
+                String call = StringUtils::replaceAll(message->jsFunction, "%client_id%", "\"" + ev.clientId + "\"");
+                call = StringUtils::replaceAll(call, "\"", "\\\"");
+                mc->postCommand(call);
+            }
         }
         else
         {

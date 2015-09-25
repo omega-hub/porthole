@@ -13,17 +13,20 @@ else {
     
 ////////////////////////////////////////////////////////////////////////////////
 // PORTHOLE JAVASCRIPT API
-function phSetInterface(interfaceId) {
+porthole = {}
+porthole.cameraCanvas = null;
+
+porthole.setInterface = function(interfaceId) {
     interface_id = interfaceId;
     sendSpec();
 }
 
-function phSetSliderValue(sliderId, value) {
+porthole.setSliderValue = function(sliderId, value) {
     eval(sliderId + "_skip_next_event = true;")
     document.getElementById(sliderId).value = value;
 }
 
-function phCall() {
+porthole.call = function() {
     var theString = arguments[0];
     
     // start with the second argument (i = 1)
@@ -35,13 +38,13 @@ function phCall() {
     }
     var callMsg = {
         "event_type": "input",
-        "value": "phCall",
+        "value": "_call",
         "function": theString
     };
     socket.send(JSON.stringify(callMsg));
 }
 
-function phJSCall() {
+porthole.jscall = function() {
     var theString = arguments[0];
     
     // start with the second argument (i = 1)
@@ -53,18 +56,29 @@ function phJSCall() {
     }
     var callMsg = {
         "event_type": "input",
-        "value": "phJSCall",
+        "value": "_jscall",
         "function": theString
     };
     socket.send(JSON.stringify(callMsg));
 }
 
-// Better-looking API, 
-porthole = {}
-porthole.jscall = phJSCall
-porthole.call = phCall
-porthole.setInterface = phSetInterface
-porthole.cameraCanvas = null;
+porthole.call = function() {
+    var theString = arguments[0];
+    
+    // start with the second argument (i = 1)
+    for (var i = 1; i < arguments.length; i++) {
+        // "gm" = RegEx options for Global search (more than one instance)
+        // and for Multiline search
+        var regEx = new RegExp("\\{" + (i - 1) + "\\}", "gm");
+        theString = theString.replace(regEx, arguments[i]);
+    }
+    var callMsg = {
+        "event_type": "input",
+        "value": "_mccall",
+        "function": theString
+    };
+    socket.send(JSON.stringify(callMsg));
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Add an event handler to an element
