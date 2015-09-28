@@ -62,7 +62,7 @@ porthole.jscall = function() {
     socket.send(JSON.stringify(callMsg));
 }
 
-porthole.call = function() {
+porthole.mccall = function() {
     var theString = arguments[0];
     
     // start with the second argument (i = 1)
