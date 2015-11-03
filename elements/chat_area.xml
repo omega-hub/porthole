@@ -1,4 +1,0 @@
-<element id="chat_area" type="porthole/elements/chat_area.js">
-    <div id="chat_box" style="width: 100%; height: 100%; overflow:scroll;"></div>
-    <input type="text" name="text" style="width:100%" onkeypress="%js submitOnEnter(this, event)"></input>
-</element>

@@ -3,7 +3,7 @@
 import porthole
 
 # Setup porthole
-porthole.initialize(8080, 'porthole/examples_direct/chat.html')
+porthole.initialize(8080, 'porthole/examples/direct/chat.html')
 ps = porthole.getService()
 #ps.load('porthole/res/default.xml')
 

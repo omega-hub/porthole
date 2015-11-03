@@ -1,4 +1,4 @@
-module_version(2.0)
+module_version(3.0)
 
 # PORTHOLE Add websockets lib and zlib if on windows
 if(OMEGA_OS_WIN)
@@ -30,22 +30,5 @@ if (OMEGA_OS_WIN)
     target_link_libraries(porthole zlib)
     include_directories(zlib)
 endif()
-
-# Add porthole pointer server executable
-add_executable(ppserver ppserver.cpp)
-target_link_libraries(ppserver omega)
-set_target_properties(ppserver PROPERTIES FOLDER apps)
-
-###############################################################################
-# Install commands
-install(DIRECTORY examples/ DESTINATION omegalib/examples/porthole)
-install(DIRECTORY . DESTINATION omegalib/modules/porthole 
-    PATTERN ".git" EXCLUDE
-    PATTERN "vjson" EXCLUDE
-    PATTERN "websockets" EXCLUDE
-    PATTERN "portholeCustomDraw" EXCLUDE
-    PATTERN "zlib" EXCLUDE
-    PATTERN "*.cpp" EXCLUDE
-    PATTERN "*.h" EXCLUDE)
 
 declare_native_module(porthole)
