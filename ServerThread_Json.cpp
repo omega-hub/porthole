@@ -35,6 +35,7 @@
 #include "websockets/private-libwebsockets.h"
 #include "websockets/extension-deflate-stream.h"
 #include "base64.h"
+#include <modulesConfig.h>
 
 #include <iostream>
 #include <iomanip>

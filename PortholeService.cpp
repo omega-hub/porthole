@@ -32,6 +32,7 @@
  ******************************************************************************/
 #include "PortholeService.h"
 #include "ServerThread.h"
+#include <modulesConfig.h>
 
 using namespace omega;
 using namespace omicron;
