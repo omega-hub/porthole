@@ -542,9 +542,18 @@ void PortholeGUI::parseElementDefinition(omega::xml::TiXmlElement* elem)
             element->htmlValue.append(xmlPrinter->CStr());
             // delete new line
             element->htmlValue.erase(std::remove(element->htmlValue.begin(), element->htmlValue.end(), '\n'), element->htmlValue.end());
-
+            oflog(Debug, "[porthole::element %1%] %2%", %element->id %element->htmlValue);
             delete xmlPrinter;
         }
+        //omega::xml::TiXmlPrinter* xmlPrinter = new omega::xml::TiXmlPrinter();
+
+        //elem->Accept(xmlPrinter);
+        //element->htmlValue.append(xmlPrinter->CStr());
+        // delete new line
+        //element->htmlValue.erase(std::remove(element->htmlValue.begin(), element->htmlValue.end(), '\n'), element->htmlValue.end());
+        //oflog(Debug, "[porthole::element %1%] %2%", %element->id %element->htmlValue);
+        //delete xmlPrinter;
+
 
     }
     else if(element->type == "script")
@@ -705,19 +714,21 @@ void PortholeGUI::parseNode(omega::xml::TiXmlElement* node)
         pAttrib = pAttrib->Next();
     }
     
-    // Traverse children
-    for (omega::xml::TiXmlElement* pChild = node->FirstChildElement(); 
-        pChild != 0; 
-        pChild = pChild->NextSiblingElement())
-    {
-        parseNode(pChild);
-    }
-
     // If this xml node is an porthole element or interface node, parse it
     String nodeName = node->Value();
     if(nodeName == "element") parseElementDefinition(node);
     else if(nodeName == "interface") parseInterfaceDefinition(node);
     else if(nodeName == "include") parseInclude(node);
+    else
+    {
+        // Traverse children
+        for(omega::xml::TiXmlElement* pChild = node->FirstChildElement();
+            pChild != 0;
+            pChild = pChild->NextSiblingElement())
+        {
+            parseNode(pChild);
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -729,7 +740,7 @@ void PortholeGUI::parseXmlFile(const char* xmlPath)
     elementsMap.clear();
 
 
-    ::xmlDoc = new omega::xml::TiXmlDocument(xmlPath);
+    xml::TiXmlDocument* xmlDoc = new omega::xml::TiXmlDocument(xmlPath);
     bool loadOkay = xmlDoc->LoadFile();
     if (!loadOkay)
     {

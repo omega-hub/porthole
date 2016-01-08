@@ -11,6 +11,7 @@ add_library(porthole MODULE
     PortholeService.h
     PortholeGUI.h
     porthole.cpp
+    PortholePage.cpp
     PortholeService.cpp
     PortholeGUI.cpp
     ServerThread.cpp

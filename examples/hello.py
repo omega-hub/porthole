@@ -1,5 +1,5 @@
-# Basic porthole-based chat example (no graphics)
-# open a browser to http://127.0.0.1:4080
+#@config: { orun: { initScript = ""; appStart = ""; }; }; 
+# Basic porthole example
 import porthole
 
 # Setup porthole

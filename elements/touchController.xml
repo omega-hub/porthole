@@ -1,0 +1,7 @@
+<touchController>
+    <element id="touchController" type="html">
+        <script src="porthole/elements/Vector2.js"></script>
+        <script src="prthole/elements/touchController.js"></script>
+        <canvas id="controllerCanvas"></canvas>
+    </element>
+</touchController>
