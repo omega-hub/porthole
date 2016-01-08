@@ -35,6 +35,7 @@
 
 #include "PortholeService.h"
 #include "PortholeGUI.h"
+#include "base64.h"
 
 #define PORTHOLE_VERSION "2"
 
@@ -65,6 +66,13 @@ bool initialize(int port = 4080, const String& defaultPage = "porthole/res/index
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+String base64EncodeImage(PixelData* image, ImageUtils::ImageFormat format)
+{
+    Ref<ByteArray> bytes = ImageUtils::encode(image, format);
+    return base64_encode(bytes->getData(), bytes->getSize());
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Python wrapper code.
 #ifdef OMEGA_USE_PYTHON
 #include "omega/PythonInterpreterWrapper.h"
@@ -88,5 +96,6 @@ BOOST_PYTHON_MODULE(porthole)
 
     def("initialize", initialize, initializeOverloads());
     def("getService", getService, PYAPI_RETURN_REF);
+    def("base64EncodeImage", base64EncodeImage);
 }
 #endif
