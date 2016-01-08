@@ -30,6 +30,8 @@
 * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ******************************************************************************/
+#ifndef __PORTHOLE_FUNCTIONS_BINDER__
+#define __PORTHOLE_FUNCTIONS_BINDER__
 
 #define PORTHOLE_EVENT_TOKEN_CAMERA_ID "%id%"
 #define PORTHOLE_EVENT_TOKEN_VALUE "%value%"
@@ -200,3 +202,4 @@ public:
     std::map<std::string, string> pythonFunIdMap;
     int scriptNumber;
 };
+#endif
