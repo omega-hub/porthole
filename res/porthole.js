@@ -307,6 +307,7 @@ try {
         
         // Received HTML data, place it in porthole_content div.
         else if (message.event_type == "html_elements") {
+            console.log('exec ' + message.innerHTML)
             document.getElementById("porthole_content").innerHTML = message.innerHTML;
             
             // If we have a camera stream element (i.e. a canvas called camera-canvas)
@@ -326,7 +327,7 @@ try {
         {
             for(var i = 0; i < message.commands.length; i++)
             {
-                console.log('exec ' + message.commands[i].js)
+                //console.log('exec ' + message.commands[i].js)
                 window.eval(message.commands[i].js);
             }
         }
