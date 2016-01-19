@@ -308,9 +308,7 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
             }
         }
 
-#ifdef llenc_ENABLED
         if(pc->streamer != NULL) pc->streamer->setTargetFps(pc->targetFps);
-#endif
     }
 
     // Javascript functions bind

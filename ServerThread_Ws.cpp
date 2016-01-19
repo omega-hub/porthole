@@ -81,12 +81,10 @@ int ServerThread::callbackWebsocket(struct libwebsocket_context *context,
         if (data->client->isCameraReadyToStream() )
         {
             int res = 0;    
-#ifdef llenc_ENABLED
-            if(data->guiManager->getSessionCamera()->streamer != NULL)
+            if(data->client->getSessionCamera()->streamer != NULL)
             {
                 res = streamH264(context, wsi, data);
             } else
-#endif
             {
                 res = streamJpeg(context, wsi, data);
             }

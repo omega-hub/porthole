@@ -14,7 +14,7 @@ l.setColor(Color('white'))
 l.setAmbient(Color(0.2, 0.2, 0.2, 1))
 
 # Setup porthole
-porthole.initialize()
+porthole.initialize(4080, './stream.html')
 porthole.getService().load('porthole/examples/direct/basicPorthole.xml')
 porthole.getService().setServerStartedCommand("print('porthole web server ready! connect to http://localhost:4080')")
 porthole.getService().setCameraCreatedCommand("onCameraCreated(%id%)")
