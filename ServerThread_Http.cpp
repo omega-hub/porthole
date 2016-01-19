@@ -116,7 +116,7 @@ void ServerThread::sendFunctionBindings(libwebsocket *wsi)
     string content = "";
 
     // Python scripts
-    PortholeFunctionsBinder* functionsBinder = PortholeGUI::getPortholeFunctionsBinder();
+    PortholeFunctionsBinder* functionsBinder = PortholeClient::getPortholeFunctionsBinder();
     std::map<std::string, string>::const_iterator py_it;
     for(py_it = functionsBinder->pythonFunMap.begin(); py_it != functionsBinder->pythonFunMap.end(); py_it++)
     {

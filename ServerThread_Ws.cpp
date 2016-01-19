@@ -67,7 +67,7 @@ int ServerThread::callbackWebsocket(struct libwebsocket_context *context,
         String cliName = ostr("%1%:%2%:%3%", %fd %cliip %cliname);
         service->notifyConnected(cliName);
         // Allocate gui manager
-        data->guiManager = service->createClient(cliName);
+        data->client = service->createClient(cliName);
         data->userId = sUserIdStart + sUserIdCounter++;
         data->oldus = 0;
 
@@ -78,7 +78,7 @@ int ServerThread::callbackWebsocket(struct libwebsocket_context *context,
     case LWS_CALLBACK_SERVER_WRITEABLE:
     {
         // Check if we have stream to send: if not, pass the token
-        if (data->guiManager->isCameraReadyToStream() )
+        if (data->client->isCameraReadyToStream() )
         {
             int res = 0;    
 #ifdef llenc_ENABLED
@@ -95,9 +95,9 @@ int ServerThread::callbackWebsocket(struct libwebsocket_context *context,
 
         // See if we have javascript callbacks that we need to send to the
         // client
-        if(data->guiManager->isJavascriptQueued())
+        if(data->client->isJavascriptQueued())
         {
-            String toSend = data->guiManager->flushJavascriptQueueToJson();
+            String toSend = data->client->flushJavascriptQueueToJson();
             //ofmsg("send %1%", %toSend);
             // Send the base64 image
             unsigned char* buf;
@@ -158,7 +158,7 @@ int ServerThread::callbackWebsocket(struct libwebsocket_context *context,
         String cliName = ostr("%1%:%2%:%3%", %fd %cliip %cliname);
         service->notifyDisconnected(cliName);
         // Call gui destructor
-        service->destroyClient(data->guiManager);
+        service->destroyClient(data->client);
         libwebsocket_callback_on_writable(context, wsi);
         break;
     }
@@ -174,7 +174,8 @@ int ServerThread::callbackWebsocket(struct libwebsocket_context *context,
 ///////////////////////////////////////////////////////////////////////////////
 int ServerThread::streamJpeg(libwebsocket_context *context, libwebsocket *wsi, per_session_data* data)
 {
-    PortholeCamera* pc = data->guiManager->getSessionCamera();
+    //PortholeCamera* pc = data->guiManager->getSessionCamera();
+    PortholeCamera* pc = NULL;
     struct timeval tv;
     gettimeofday(&tv, NULL);
     unsigned long long millisecondsSinceEpoch =
@@ -230,7 +231,7 @@ int ServerThread::streamJpeg(libwebsocket_context *context, libwebsocket *wsi, p
 ///////////////////////////////////////////////////////////////////////////////
 int ServerThread::streamH264(libwebsocket_context *context, libwebsocket *wsi, per_session_data* data)
 {
-    PortholeCamera* pc = data->guiManager->getSessionCamera();
+    PortholeCamera* pc = data->client->getSessionCamera();
     IEncoder* e = pc->streamer->lockEncoder();
 
     if(e == NULL)

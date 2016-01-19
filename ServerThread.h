@@ -36,7 +36,7 @@
 #include <omega.h>
 #include "websockets/libwebsockets.h"
 #include "vjson/json.h"
-#include "PortholeGUI.h"
+#include "PortholeClient.h"
 
 using namespace std;
 using namespace omicron;
@@ -70,7 +70,7 @@ struct recv_message{
 // Struct of data to be passed across the entire session
 struct per_session_data 
 {
-    PortholeGUI* guiManager;
+    PortholeClient* client;
     unsigned int userId;
     unsigned long long oldus;
     std::string test_flag;

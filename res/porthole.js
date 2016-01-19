@@ -12,18 +12,67 @@ else {
 }
     
 ////////////////////////////////////////////////////////////////////////////////
-// PORTHOLE JAVASCRIPT API
+// Porthole Javascript API
 porthole = {}
 porthole.cameraCanvas = null;
+porthole.pointerX = 0;
+porthole.pointerY = 0;
 
-porthole.setInterface = function(interfaceId) {
-    interface_id = interfaceId;
-    sendSpec();
+porthole.sendMouseMove = function(e)
+{
+    if(e.movementX == e.screenX &&
+        e.movementY == e.screenY) {
+        return;
+    }
+   movementX = e.movementX;
+   movementY = e.movementY;
+
+    var JSONEvent = {
+        "event_type": "drag",
+        "x": movementX,
+        "y": movementY
+    };
+    socket.send(JSON.stringify(JSONEvent));
 }
 
-porthole.setSliderValue = function(sliderId, value) {
-    eval(sliderId + "_skip_next_event = true;")
-    document.getElementById(sliderId).value = value;
+porthole.sendMouseUp = function(e)
+{
+    var JSONEvent = {
+        "event_type": "mouseup",
+        "button": e.button,
+        "x": movementX, 
+        "y": movementY
+    };
+    socket.send(JSON.stringify(JSONEvent));
+}
+
+porthole.sendMouseDown = function(e)
+{
+    var JSONEvent = {
+        "event_type": "mousedown",
+        "button": e.button,
+        "x": movementX, 
+        "y": movementY
+    };
+    socket.send(JSON.stringify(JSONEvent));
+}
+
+porthole.sendKeyUp = function(e)
+{
+    var JSONEvent = {
+        "event_type": "keyup",
+        "key": e.keyCode
+    };
+    socket.send(JSON.stringify(JSONEvent));
+}
+
+porthole.sendKeyDown = function(e)
+{
+    var JSONEvent = {
+        "event_type": "keydown",
+        "key": e.keyCode
+    };
+    socket.send(JSON.stringify(JSONEvent));
 }
 
 porthole.call = function() {

@@ -9,11 +9,10 @@ add_subdirectory(websockets)
 # Set module name and source files here
 add_library(porthole MODULE 
     PortholeService.h
-    PortholeGUI.h
+    PortholeClient.h
     porthole.cpp
-    PortholePage.cpp
     PortholeService.cpp
-    PortholeGUI.cpp
+    PortholeClient.cpp
     ServerThread.cpp
     ServerThread_Json.cpp
     ServerThread_Http.cpp

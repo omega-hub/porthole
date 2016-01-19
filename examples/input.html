@@ -1,0 +1,18 @@
+
+<html lang="en">
+<head>
+    <title>Porthole</title>
+</head>
+
+<body>
+    <script src="porthole/res/porthole.js"></script>
+    
+    <script>
+        document.addEventListener("mousemove", porthole.sendMouseMove);
+        document.addEventListener("mouseup", porthole.sendMouseUp);
+        document.addEventListener("mousedown", porthole.sendMouseDown);
+        document.addEventListener("keypress", porthole.sendKeyDown);
+        document.addEventListener("keyup", porthole.sendKeyUp);
+    </script>
+</body>
+</html>

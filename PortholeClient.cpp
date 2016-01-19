@@ -30,7 +30,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-#include "PortholeGUI.h"
+#include "PortholeClient.h"
 #include "PortholeService.h"
 #include "HTML.h"
 #include <omicron/xml/tinyxml.h>
@@ -39,11 +39,11 @@
 using namespace omega;
 using namespace std;
 
-PortholeFunctionsBinder* PortholeGUI::functionsBinder;
-vector< Ref<PortholeInterfaceType> > PortholeGUI::interfaces;
-std::map<string, omega::xml::TiXmlElement* > PortholeGUI::interfacesMap;
-std::map<string, Ref<PortholeElement> > PortholeGUI::elementsMap;
-std::map<int, PortholeCamera*> PortholeGUI::CamerasMap;
+PortholeFunctionsBinder* PortholeClient::functionsBinder;
+vector< Ref<PortholeInterfaceType> > PortholeClient::interfaces;
+std::map<string, omega::xml::TiXmlElement* > PortholeClient::interfacesMap;
+std::map<string, Ref<PortholeElement> > PortholeClient::elementsMap;
+std::map<int, PortholeCamera*> PortholeClient::CamerasMap;
 
 // define initial image quality: {0,1}
 #define IMAGE_QUALITY 1
@@ -76,7 +76,7 @@ int convertHeight(String v, PortholeDevice* d)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-PortholeGUI::PortholeGUI(PortholeService* owner, const String& cliid):
+PortholeClient::PortholeClient(PortholeService* owner, const String& cliid):
 service(owner), clientId(cliid), pointerSpeed(1)
 {
     ofmsg("Porthole GUI client connected: %1%", %clientId);
@@ -118,13 +118,13 @@ service(owner), clientId(cliid), pointerSpeed(1)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-PortholeGUI::~PortholeGUI()
+PortholeClient::~PortholeClient()
 {
     ofmsg("Porthole GUI client disconnected: %1%", %clientId);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::updatePointerPosition(int dx, int dy)
+void PortholeClient::updatePointerPosition(int dx, int dy)
 {
     dx *= pointerSpeed;
     dy *= pointerSpeed;
@@ -153,7 +153,7 @@ void PortholeGUI::updatePointerPosition(int dx, int dy)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::setDeviceSpecifications(int width, int height, const String& orientation, const String& interfaceId)
+void PortholeClient::setDeviceSpecifications(int width, int height, const String& orientation, const String& interfaceId)
 {
     // Set the device
     this->device = new PortholeDevice();
@@ -170,12 +170,12 @@ void PortholeGUI::setDeviceSpecifications(int width, int height, const String& o
             device->interfaceType = interfaces.at(i);
     }
     
-    oflog(Verbose, "[PortholeGUI::setDeviceSpecifications] %1%x%2% %3%  interface=%4%",
+    oflog(Verbose, "[PortholeClient::setDeviceSpecifications] %1%x%2% %3%  interface=%4%",
         %width %height %orientation %device->interfaceType->id);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-string PortholeGUI::create(bool firstTime)
+string PortholeClient::create(bool firstTime)
 {
     if(device->interfaceType == NULL)
     {
@@ -184,7 +184,7 @@ string PortholeGUI::create(bool firstTime)
 
     string interfaceKey = device->interfaceType->id + device->deviceOrientation;
     
-    ofmsg("[PortholeGUI] Getting interface <%1%>", %interfaceKey); 
+    ofmsg("[PortholeClient] Getting interface <%1%>", %interfaceKey); 
     
     omega::xml::TiXmlElement* root = interfacesMap[interfaceKey];
 
@@ -349,7 +349,7 @@ string PortholeGUI::create(bool firstTime)
 /* 
 *	Camera creation function
 */
-void PortholeGUI::createCustomCamera(int width, int height, uint cameraMask)
+void PortholeClient::createCustomCamera(int width, int height, uint cameraMask)
 {
     // Get the global engine
     Engine* myEngine = Engine::instance();
@@ -369,7 +369,7 @@ void PortholeGUI::createCustomCamera(int width, int height, uint cameraMask)
     camera->setName(cameraName);
     service->notifyCameraCreated(camera);
     
-    oflog(Verbose, "[PortholeGUI::createCustomCamera]: %1% <%2%x%3%>", %cameraName %width %height);
+    oflog(Verbose, "[PortholeClient::createCustomCamera]: %1% <%2%x%3%>", %cameraName %width %height);
 
     DisplayTileConfig* dtc = camera->getCustomTileConfig();
     // Setup projection
@@ -408,7 +408,7 @@ void PortholeGUI::createCustomCamera(int width, int height, uint cameraMask)
     pc->streamStat->addSample(0);
 
     // Save new camera
-    PortholeGUI::CamerasMap[pc->id] = pc; // Global map
+    PortholeClient::CamerasMap[pc->id] = pc; // Global map
     this->sessionCamera = pc; // Session
 
     // If low latency hardware encoding is available, use that. Otherwise, 
@@ -436,7 +436,7 @@ void PortholeGUI::createCustomCamera(int width, int height, uint cameraMask)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::modCustomCamera(int width, int height)
+void PortholeClient::modCustomCamera(int width, int height)
 { 
     // Retrieve the camera to be modified
     PortholeCamera* portholeCamera = this->sessionCamera;
@@ -452,7 +452,7 @@ void PortholeGUI::modCustomCamera(int width, int height)
     //int width = (int)(widthPercent * portholeCamera->size * device->deviceWidth / 4) * 4;
     //int height = (int)(heightPercent * portholeCamera->size * device->deviceHeight / 4) * 4;
 
-    oflog(Verbose, "[PortholeGUI::modCustomCamera]: %1% (%2%x%3%)", 
+    oflog(Verbose, "[PortholeClient::modCustomCamera]: %1% (%2%x%3%)", 
         %sessionCamera->getName() %width %height);
 
     DisplayTileConfig* dtc = sessionCamera->getCustomTileConfig();
@@ -484,7 +484,7 @@ void PortholeGUI::modCustomCamera(int width, int height)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-String PortholeGUI::flushJavascriptQueueToJson()
+String PortholeClient::flushJavascriptQueueToJson()
 {
     String json = "{\"event_type\":\"javascript\",\"commands\":[";
     // TODO: escape double quotes in js command
@@ -504,7 +504,7 @@ String PortholeGUI::flushJavascriptQueueToJson()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::parseElementDefinition(omega::xml::TiXmlElement* elem)
+void PortholeClient::parseElementDefinition(omega::xml::TiXmlElement* elem)
 {
     PortholeElement* element = new PortholeElement();
 
@@ -567,7 +567,7 @@ void PortholeGUI::parseElementDefinition(omega::xml::TiXmlElement* elem)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::parseInterfaceDefinition(omega::xml::TiXmlElement* elem)
+void PortholeClient::parseInterfaceDefinition(omega::xml::TiXmlElement* elem)
 {
     // Get element name
     String interfaceId = "";
@@ -647,7 +647,7 @@ void PortholeGUI::parseInterfaceDefinition(omega::xml::TiXmlElement* elem)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::parseInclude(omega::xml::TiXmlElement* elem)
+void PortholeClient::parseInclude(omega::xml::TiXmlElement* elem)
 {
     const char* fileName = elem->Attribute("file");
     if(fileName == NULL)
@@ -667,7 +667,7 @@ void PortholeGUI::parseInclude(omega::xml::TiXmlElement* elem)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::parseNode(omega::xml::TiXmlElement* node)
+void PortholeClient::parseNode(omega::xml::TiXmlElement* node)
 {
     if ( !node ) return;
     
@@ -732,7 +732,7 @@ void PortholeGUI::parseNode(omega::xml::TiXmlElement* node)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeGUI::parseXmlFile(const char* xmlPath)
+void PortholeClient::parseXmlFile(const char* xmlPath)
 {
     // Clean current xml interface data
     interfaces.clear();

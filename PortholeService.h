@@ -35,7 +35,7 @@
 
 #include <omega.h>
 //#include "websockets/libwebsockets.h"
-#include "PortholeGUI.h"
+#include "PortholeClient.h"
 
 using namespace std;
 using namespace omicron;
@@ -106,9 +106,9 @@ public:
     //! connections.
     void notifyServerStarted();
 
-    PortholeGUI* createClient(const String& name);
-    void destroyClient(PortholeGUI* gui);
-    PortholeGUI* findClient(const String& name);
+    PortholeClient* createClient(const String& name);
+    void destroyClient(PortholeClient* gui);
+    PortholeClient* findClient(const String& name);
 
     //! Sends a javascript call to the specified client
     void sendjs(const String& js, const String& destination);
@@ -124,7 +124,7 @@ private:
     String myServerStartedCommand;
     Ref<PortholeFunctionsBinder> myBinder;
 
-    List< Ref<PortholeGUI> > myClients;
+    List< Ref<PortholeClient> > myClients;
 
     // Bounds for pointer events coming in from web clients. 
     Vector2i myPointerBounds;

@@ -168,16 +168,16 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
 {
     if(strcmp(message->event_type.c_str(), MSG_EVENT_DRAG) == 0)
     {
-        PortholeService* svc = data->guiManager->getService();
+        PortholeService* svc = data->client->getService();
         int id = message->cameraId;
         // When scale is 1, the position is differential
-        if(message->scale == 1)
+        /*if(message->scale == 1)
         {
             data->guiManager->updatePointerPosition(message->x, message->y);
             const Vector2f& pt = data->guiManager->getPointerPosition();
             svc->postPointerEvent(Event::Move, id, pt[0], pt[1], 0, data->userId);
         }
-        else
+        else*/
         {
             svc->postPointerEvent(Event::Move, id, message->x, message->y, 0, data->userId);
         }
@@ -185,13 +185,13 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
 
     if (strcmp(message->event_type.c_str(),MSG_EVENT_TAP)==0)
     {
-        PortholeService* svc = data->guiManager->getService();
+        PortholeService* svc = data->client->getService();
         int id = message->cameraId; 
         // When scale is 1, the position is differential
         if(message->scale == 1)
         {
-            data->guiManager->updatePointerPosition(message->x, message->y);
-            const Vector2f& pt = data->guiManager->getPointerPosition();
+            data->client->updatePointerPosition(message->x, message->y);
+            const Vector2f& pt = data->client->getPointerPosition();
             svc->postPointerEvent(Event::Move, id, pt[0], pt[1], Event::Left, data->userId);
         }
         else 
@@ -202,7 +202,7 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
 
     else if(strcmp(message->event_type.c_str(), MSG_EVENT_MOUSEUP) == 0)
     {
-        PortholeService* svc = data->guiManager->getService();
+        PortholeService* svc = data->client->getService();
         int id = message->cameraId;
         // Process button flag 
         // (see http://www.quirksmode.org/js/events_properties.html#button)
@@ -213,8 +213,8 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
         // When scale is 1, the position is differential
         if(message->scale == 1)
         {
-            data->guiManager->updatePointerPosition(message->x, message->y);
-            const Vector2f& pt = data->guiManager->getPointerPosition();
+            data->client->updatePointerPosition(message->x, message->y);
+            const Vector2f& pt = data->client->getPointerPosition();
             svc->postPointerEvent(Event::Up, id, pt[0], pt[1], flags, data->userId);
         }
         else
@@ -224,7 +224,7 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
     }
     else if(strcmp(message->event_type.c_str(), MSG_EVENT_MOUSEDOWN) == 0)
     {
-        PortholeService* svc = data->guiManager->getService();
+        PortholeService* svc = data->client->getService();
         int id = message->cameraId;
         // Process button flag 
         // (see http://www.quirksmode.org/js/events_properties.html#button)
@@ -233,13 +233,13 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
         if(message->button == 2) flags = Event::Right;
 
         // When scale is 1, the position is differential
-        if(message->scale == 1)
+        /*if(message->scale == 1)
         {
             data->guiManager->updatePointerPosition(message->x, message->y);
             const Vector2f& pt = data->guiManager->getPointerPosition();
             svc->postPointerEvent(Event::Down, id, pt[0], pt[1], flags, data->userId);
         }
-        else
+        else*/
         {
             svc->postPointerEvent(Event::Down, id, message->x, message->y, flags, data->userId);
         }
@@ -247,7 +247,7 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
 
     else if(strcmp(message->event_type.c_str(), MSG_EVENT_KEYUP) == 0)
     {
-        PortholeService* svc = data->guiManager->getService();
+        PortholeService* svc = data->client->getService();
         // HACK: for some reason, Key UP on browser returns UPPERCASE 
         char key = tolower(message->key);
         //ofmsg("Key up %1%", %key);
@@ -257,7 +257,7 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
 
     else if(strcmp(message->event_type.c_str(), MSG_EVENT_KEYDOWN) == 0)
     {
-        PortholeService* svc = data->guiManager->getService();
+        PortholeService* svc = data->client->getService();
         char key = message->key;
         uint flags = 0;
         //ofmsg("Key down %1%", %key);
@@ -269,7 +269,7 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
     {
         // Save device specification
         // NOTE: message->value contains the interface ID
-        data->guiManager->setDeviceSpecifications(message->width,message->height,message->orientation, message->value);
+        data->client->setDeviceSpecifications(message->width,message->height,message->orientation, message->value);
 
         // Send the Html elements to the browser based on device specification
         sendHtmlElements(message->firstTime,data,context,wsi);
@@ -281,7 +281,7 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
     // Modify the camera size if FPS in client is too low
     else if (strcmp(message->event_type.c_str(),MSG_EVENT_FPS_ADJUST)==0)
     {
-        PortholeCamera* pc = data->guiManager->getSessionCamera();
+        PortholeCamera* pc = data->client->getSessionCamera();
         pc->targetFps = (pc->targetFps + (int)(message->fps)) / 2;
         if(pc->targetFps < 1) pc->targetFps = 1;
         if(pc->targetFps < 40) pc->targetFps++;
@@ -289,7 +289,7 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
         //ofmsg("Adjusting fps to %1%", % pc->targetFps);
         pc->fpsStat->addSample(pc->targetFps);
 
-        PortholeService* svc = data->guiManager->getService();
+        PortholeService* svc = data->client->getService();
         
         if(svc->isDynamicStreamQualityEnabled())
         {
@@ -316,8 +316,8 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
     // Javascript functions bind
     else if(strcmp(message->event_type.c_str(),MSG_EVENT_INPUT)==0){
         // Create event
-        PortholeEvent ev(data->guiManager->getId());
-        ev.sessionCamera = data->guiManager->getSessionCamera();
+        PortholeEvent ev(data->client->getId());
+        ev.sessionCamera = data->client->getSessionCamera();
         ev.mouseButton = message->button;
         ev.value = message->value;
 
@@ -364,7 +364,7 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
             ev.htmlEvent = message->jsFunction;
             ev.args = message->args;
             // Call the function or python script
-            PortholeGUI::getPortholeFunctionsBinder()->callFunction(message->jsFunction, ev);
+            PortholeClient::getPortholeFunctionsBinder()->callFunction(message->jsFunction, ev);
         }
     }
 
@@ -374,7 +374,7 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
 void ServerThread::sendHtmlElements(bool firstTime, per_session_data* data,
         libwebsocket_context *context, libwebsocket *wsi)
 {
-        string deviceBasedHtml = data->guiManager->create(firstTime);
+        string deviceBasedHtml = data->client->create(firstTime);
 
         string toSend = "{\"event_type\" : \"html_elements\", \"innerHTML\" : \"";
         toSend.append(omicron::StringUtils::replaceAll(deviceBasedHtml.c_str(),"\"","\\\""));

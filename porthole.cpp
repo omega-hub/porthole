@@ -34,7 +34,7 @@
 #include <omegaToolkit.h>
 
 #include "PortholeService.h"
-#include "PortholeGUI.h"
+#include "PortholeClient.h"
 #include "base64.h"
 
 #define PORTHOLE_VERSION "2"

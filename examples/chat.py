@@ -1,11 +1,10 @@
-#@config: { orun: { initScript = ""; appStart = ""; }; }; 
 # Basic porthole example
 import porthole
 
 # Setup porthole
-porthole.initialize()
+porthole.initialize(4080, './chat.html')
 ps = porthole.getService()
-ps.load('./chat.xml')
+
 
 # Client call this function when posting a message.
 def postMessage(message, sender):

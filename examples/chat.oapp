@@ -1,0 +1,9 @@
+config:
+{
+    orun:
+    {
+        initScript = "porthole/examples/chat.py";
+        appStart = "";
+    };    
+    pythonShellEnabled = true;
+};

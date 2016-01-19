@@ -18,7 +18,7 @@
 
         function submitOnEnter(inputElement, event) {
             if(event.keyCode == 13) {
-                phCall("postMessage('{0}', %client_id%)", inputElement.value)
+                porthole.call("postMessage('{0}', %client_id%)", inputElement.value)
             }
         }
     </script>

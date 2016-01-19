@@ -30,8 +30,8 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
-#ifndef __PORTHOLE_PAGE_H__
-#define __PORTHOLE_PAGE_H__
+#ifndef __PORTHOLE_CLIENT_H__
+#define __PORTHOLE_CLIENT_H__
 
 #include <omega.h>
 #include "PortholeFunctionsBinder.h"
@@ -41,27 +41,38 @@ using namespace omicron;
 using namespace std;
 
 // Xml Document
-static omega::xml::TiXmlDocument* xmlDoc;
+//static omega::xml::TiXmlDocument* xmlDoc;
 
 class PortholeService;
 
 ///////////////////////////////////////////////////////////////////////////////
 //! Implements the HTML GUI Manager for Porthole Service
-class PortholePage: public ReferenceType
+class PortholeClient: public ReferenceType
 {
 public:
 
     // Constructor
-    PortholePage(PortholeService* owner, const String& clientId);
+    PortholeClient(PortholeService* owner, const String& clientId);
 
     // Destructor
-    ~PortholePage();
+    ~PortholeClient();
 
     const String& getId() { return clientId; }
 
     // Create the device specifc html interface
-    String create(const String& filename);
+    string create(bool firstTime);
 
+    // Set device specifications
+    void setDeviceSpecifications(int width, int height, const String& orientation, const String& interfaceId);
+
+    // Return an object that contains the device specifications
+    PortholeDevice* getDevice() { return device; }
+
+    bool isCameraReadyToStream() 
+    { return (sessionCamera != NULL && sessionCamera->camera->isEnabled()); } 
+
+    // Get Porthole camera object for this client connected
+    PortholeCamera* getSessionCamera() { return sessionCamera; } 
     PortholeService* getService()
     { return service; }
 
@@ -87,23 +98,63 @@ public:
     //! then flushes the queue.
     String flushJavascriptQueueToJson();
 
+    // Mod the camera with id cameraId 
+    // size: the ratio of camera: 1.0 is full size
+    void modCustomCamera(int width, int height);
+
+    // Start application XML parsing
+    static void parseXmlFile(const char* xmlPath);
+    static void parseNode(omega::xml::TiXmlElement* node);
+    static void parseElementDefinition(omega::xml::TiXmlElement* elem);
+    static void parseInterfaceDefinition(omega::xml::TiXmlElement* elem);
+    static void parseInclude(omega::xml::TiXmlElement* elem);
+
     // Functions binder getter and setter
     static PortholeFunctionsBinder* getPortholeFunctionsBinder() { return functionsBinder; }
     static void setPortholeFunctionsBinder(PortholeFunctionsBinder* binder) { functionsBinder = binder;  functionsBinder->scriptNumber=0;}
 
-private:
-    void parseNode(omega::xml::TiXmlElement* node);
+    //! Global map of cameras by id
+    static std::map<int, PortholeCamera*> CamerasMap;
+
+    const Vector2f& getPointerPosition() { return pointerPosition; }
+    void updatePointerPosition(int dx, int dy);
 
 private:
     PortholeService* service;
+
+    // The device for which an interface will be created
+    Ref<PortholeDevice> device;
+
+    // The camera of this session
+    Ref<PortholeCamera> sessionCamera;
+
     String clientId;
 
     // Queue of javascript calls from the server to the client
     List<String> javascriptQueue;
     Lock javascriptQueueLock;
 
+    // Create a Porthole custom camera and a PixelData associated
+    void createCustomCamera(int width, int height, uint cameraMask = 0); 
+
     // Functions binder object
     static PortholeFunctionsBinder* functionsBinder;
+
+    // All the possible interfaces
+    static vector< Ref<PortholeInterfaceType> > interfaces; 
+
+    // A map between a device type and its GUI elements
+    static std::map<string, omega::xml::TiXmlElement* > interfacesMap;
+
+    // A map between an element id and the element data
+    static std::map<string, Ref<PortholeElement> > elementsMap;
+
+    // Global canvas width and height and current pointer position. 
+    // Used to convert differential mouse positions into absolute ones.
+    Vector2f pointerPosition;
+    Vector2i canvasSize;
+    bool normalizedPointerPosition;
+    float pointerSpeed;
 };
 
 #endif

@@ -64,7 +64,7 @@ void PortholeService::start(int port, const String& defaultPage)
     myBinder = new PortholeFunctionsBinder();
     myBinder->clear();
 
-    PortholeGUI::setPortholeFunctionsBinder(myBinder);
+    PortholeClient::setPortholeFunctionsBinder(myBinder);
 
     portholeServer = new ServerThread(this, defaultPage);
     portholeServer->setPort(port);
@@ -85,7 +85,7 @@ void PortholeService::load(const String& interfaceFile)
         String interfaceFilePath;
         if(DataManager::findFile(interfaceFile, interfaceFilePath))
         {
-            PortholeGUI::parseXmlFile(interfaceFilePath.c_str());
+            PortholeClient::parseXmlFile(interfaceFilePath.c_str());
         }
         else
         {
@@ -172,24 +172,24 @@ void PortholeService::postKeyEvent(Event::Type type, char key, uint flags, unsig
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-PortholeGUI* PortholeService::createClient(const String& name)
+PortholeClient* PortholeService::createClient(const String& name)
 {
-    PortholeGUI* cli = new PortholeGUI(this, name);
+    PortholeClient* cli = new PortholeClient(this, name);
     myClients.push_back(cli);
     return cli;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeService::destroyClient(PortholeGUI* gui)
+void PortholeService::destroyClient(PortholeClient* gui)
 {
     oassert(gui != NULL);
     myClients.remove(gui);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-PortholeGUI* PortholeService::findClient(const String& name)
+PortholeClient* PortholeService::findClient(const String& name)
 {
-    foreach(PortholeGUI* cli, myClients)
+    foreach(PortholeClient* cli, myClients)
     {
         if(cli->getId() == name) return cli;
     }
@@ -199,7 +199,7 @@ PortholeGUI* PortholeService::findClient(const String& name)
 ///////////////////////////////////////////////////////////////////////////////
 void PortholeService::sendjs(const String& js, const String& destination)
 {
-    foreach(PortholeGUI* cli, myClients)
+    foreach(PortholeClient* cli, myClients)
     {
         if(cli->getId() == destination)
         {
@@ -213,14 +213,14 @@ void PortholeService::broadcastjs(const String& js, const String& origin)
 {
     if(origin.empty())
     {
-        foreach(PortholeGUI* cli, myClients)
+        foreach(PortholeClient* cli, myClients)
         {
             cli->calljs(js);
         }
     }
     else
     {
-        foreach(PortholeGUI* cli, myClients)
+        foreach(PortholeClient* cli, myClients)
         {
             if(cli->getId() != origin) cli->calljs(js);
         }

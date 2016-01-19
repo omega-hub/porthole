@@ -1,0 +1,9 @@
+config:
+{
+    orun:
+    {
+        initScript = "porthole/examples/input.py";
+        appStart = "";
+    };    
+    pythonShellEnabled = true;
+};
