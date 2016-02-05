@@ -1,6 +1,7 @@
 ### Global Functions ###
 
 #### initialize ####
+#### otherMethod ####
 > `initialize([int port], [string defaultPage])`
 
 > `initialize(float x, float y, float z)`
