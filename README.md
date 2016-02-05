@@ -1,7 +1,7 @@
 ### Global Functions ###
 
 #### initialize ####
-> initialize(int port = 4080, string defaultPage = 'index.html')
+> initialize(int port = 4080, string defaultPage = "index.html")
 
 Initializes and starts the porthole web server
 - `int port` (optional): the port used by the web server. Default: 4080
@@ -33,4 +33,4 @@ Sets a command to be called when a client connects or disconnects.
 > sendjs(string js, string destination)
 
 #### broadcastjs ####
-> broadcastjs(string js, string origin = '')
+> broadcastjs(string js, string origin = "")
