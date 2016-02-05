@@ -22,7 +22,7 @@ The `PortholeService` class exposes all the basic methods offered by the porthol
 > setServerStartedCommand(string cmd)
 
 #### setConnectedCommand ####
-##### setDisconnectedCommand #####
+#### setDisconnectedCommand ####
 > setDisconnectedCommand(string cmd) 
 
 > setConnectedCommand(string cmd)
