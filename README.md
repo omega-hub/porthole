@@ -1,16 +1,12 @@
-## Porthole Python API ##
-All the porthole API is contained in the `porthole` python module. To start using porthole simply do
-```python
-import porthole
+### Global Functions ###
 
-# The two optional args are the port to be used by the web serter and the 
-# default page. If left unspecified, porthole will use port 4080 and will 
-# serve index.html by default
-porthole.initialize() 
+#### initialize ####
+**Syntax**: `initialize([int port], [string defaultPage])`
+Initialized and starts the porthole web server
+- `int port` (optional): the port used by the web server. Default: 4080
+- `string defaultPage` (optional): the page to serve when no file is specified. Default: index.html
 
-# Get the porthole service
-svc = porthole.getService()
-```
+
 
 
 ### `PortholeService` ###
