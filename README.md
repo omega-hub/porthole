@@ -14,12 +14,14 @@ Converts an image to a base64 string.
 - `PixelData image`: the image to be converted.
 - `ImageFormat format`: encoding to be used in the conversion.
 
+
 ----------------------------------------------------------------------------------------------------
 ### PortholeService ###
 The `PortholeService` class exposes all the basic methods offered by the porthole interface
 
 #### setServerStartedCommand ####
 > setServerStartedCommand(string cmd)
+
 
 #### setConnectedCommand ####
 #### setDisconnectedCommand ####
