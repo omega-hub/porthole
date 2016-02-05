@@ -8,7 +8,7 @@ Initialized and starts the porthole web server
 - `string defaultPage` (optional): the page to serve when no file is specified. Default: index.html
 
 > **Example**
-```
+```python
 import porthole
 porthole.initialize()
 ```
