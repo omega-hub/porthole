@@ -8,7 +8,7 @@ Initializes and starts the porthole web server
 - `string defaultPage` (optional): the page to serve when no file is specified. Default: index.html
 
 #### base64EncodeImage ####
-> `base64EncodeImage([PixelData](https://github.com/uic-evl/omegalib/wiki/PixelData))`
+> base64EncodeImage([PixelData](https://github.com/uic-evl/omegalib/wiki/PixelData))
 
 
 
