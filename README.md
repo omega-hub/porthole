@@ -2,9 +2,8 @@
 
 #### initialize ####
 > **Syntax**
->
-`initialize([int port], [string defaultPage])`
-`initialize(float x, float y, float z)`
+- `initialize([int port], [string defaultPage])`
+- `initialize(float x, float y, float z)`
 
 Initializes and starts the porthole web server
 - `int port` (optional): the port used by the web server. Default: 4080
