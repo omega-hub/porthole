@@ -43,3 +43,55 @@ Broadcasts javascript to all clients, excluding an optional origin.
 - `js`: the code to be executed
 - `origin`: optional client id of an origin client. The origin will be excluded from the broadcast.
 
+----------------------------------------------------------------------------------------------------
+### Porthole.js ###
+The `Porthole.js` interface is used in html files server by porthole to interface back with the server.
+
+> *Example*
+```html
+<html>
+<head>
+    <script src="porthole/res/porthole.js"></script>
+</head>
+<body>
+    <script>
+        porthole.connected = function() {
+            // Call the print function on the server, printing this client name
+            porthole.call("print('%client_id%')")
+        }
+    </script>
+</body>
+</html>
+```
+
+#### connected ####
+Stores a function that will be called when a connection with the server is established.
+
+#### socket ####
+The websocket object used for the server connection
+
+#### call ####
+> porthole.call(pythonCode, ...)
+
+#### jscall ####
+> porthole.jscall(jscode, ...)
+
+#### mccall ####
+> porthole.mccall(jscode, ...)
+
+#### sendMouseMove ####
+> porthole.sendMouseMove(event)
+
+#### sendMouseUp ####
+#### sendMouseDown ####
+> porthole.sendMouseUp(event)
+
+> porthole.sendMouseDown(event)
+
+#### sendKeyUp ####
+#### sendKeyDown ####
+> porthole.sendKeyUp(event)
+
+> porthole.sendKeyDown(event)
+
+
