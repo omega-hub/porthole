@@ -1,7 +1,7 @@
 ### Global Functions ###
 
 #### initialize ####
-> `initialize([int port], [string defaultPage])`
+> initialize([int port], [string defaultPage])
 
 Initializes and starts the porthole web server
 - `int port` (optional): the port used by the web server. Default: 4080
