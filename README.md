@@ -3,7 +3,7 @@
 #### initialize ####
 `initialize([int port], [string defaultPage])`
 
-Initialized and starts the porthole web server
+Initializes and starts the porthole web server
 - `int port` (optional): the port used by the web server. Default: 4080
 - `string defaultPage` (optional): the page to serve when no file is specified. Default: index.html
 
