@@ -23,9 +23,8 @@ The `PortholeService` class exposes all the basic methods offered by the porthol
 
 #### setConnectedCommand ####
 #### setDisconnectedCommand ####
-> setDisconnectedCommand(string cmd) 
-
-> setConnectedCommand(string cmd)
+> - setDisconnectedCommand(string cmd) 
+> - setConnectedCommand(string cmd)
 
 Sets a command to be called when a client connects or disconnects.
 - `string cmd`: command to be called when a client connects or disconnected, the token `%id%` will be substituted by the client id.
