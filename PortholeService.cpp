@@ -121,7 +121,7 @@ void PortholeService::notifyDisconnected(const String& id)
     if(!myDisconnectedCommand.empty())
     {
         PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
-        String cmd = StringUtils::replaceAll(myConnectedCommand, "%id%", id);
+        String cmd = StringUtils::replaceAll(myDisconnectedCommand, "%id%", id);
         i->queueCommand(cmd);
     }
 }

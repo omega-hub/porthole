@@ -1957,8 +1957,8 @@ bail3:
 
 		if (pollfd->revents & (POLLERR | POLLHUP)) {
 
-			fprintf(stderr, "Session Socket %p (fd=%d) dead\n",
-				(void *)wsi, pollfd->fd);
+			/*fprintf(stderr, "Session Socket %p (fd=%d) dead\n",
+				(void *)wsi, pollfd->fd);*/
 
 			libwebsocket_close_and_free_session(context, wsi,
 						     LWS_CLOSE_STATUS_NOSTATUS);
@@ -2269,8 +2269,8 @@ libwebsocket_callback_on_writable(struct libwebsocket_context *context,
 		}
 
 	if (n == context->fds_count)
-		fprintf(stderr, "libwebsocket_callback_on_writable: "
-				      "failed to find socket %d\n", wsi->sock);
+		/*fprintf(stderr, "libwebsocket_callback_on_writable: "
+				      "failed to find socket %d\n", wsi->sock);*/
 
 	/* external POLL support via protocol 0 */
 	context->protocols[0].callback(context, wsi,

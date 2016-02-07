@@ -17,6 +17,8 @@ porthole = {}
 porthole.cameraCanvas = null;
 porthole.pointerX = 0;
 porthole.pointerY = 0;
+porthole.connected = null;
+porthole.socket = null;
 
 porthole.sendMouseMove = function(e)
 {
@@ -270,6 +272,8 @@ try {
         var js = document.createElement("script");
         js.src = "./porthole_functions_binder.js";
         document.body.appendChild(js);
+        
+        if(porthole.connected != null) porthole.connected();
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -391,6 +395,8 @@ try {
 } catch (exception) {
     alert('<p>Error' + exception);
 }
+
+porthole.socket = socket;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Camera stream stuff
