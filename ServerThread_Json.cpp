@@ -363,6 +363,7 @@ void ServerThread::handleJsonMessage(per_session_data* data, recv_message* messa
             ev.htmlEvent = message->jsFunction;
             ev.args = message->args;
             // Call the function or python script
+            StringUtils::trim(message->jsFunction);
             svc->getFunctionsBinder()->callFunction(message->jsFunction, ev);
         }
     }
