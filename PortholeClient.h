@@ -59,12 +59,6 @@ public:
 
     const String& getId() { return clientId; }
 
-    // Create the device specifc html interface
-    string create(bool firstTime);
-
-    // Set device specifications
-    void setDeviceSpecifications(int width, int height, const String& orientation, const String& interfaceId);
-
     // Return an object that contains the device specifications
     PortholeDevice* getDevice() { return device; }
 
@@ -102,22 +96,15 @@ public:
     // size: the ratio of camera: 1.0 is full size
     void modCustomCamera(int width, int height);
 
-    // Start application XML parsing
-    static void parseXmlFile(const char* xmlPath);
-    static void parseNode(omega::xml::TiXmlElement* node);
-    static void parseElementDefinition(omega::xml::TiXmlElement* elem);
-    static void parseInterfaceDefinition(omega::xml::TiXmlElement* elem);
-    static void parseInclude(omega::xml::TiXmlElement* elem);
-
-    // Functions binder getter and setter
-    static PortholeFunctionsBinder* getPortholeFunctionsBinder() { return functionsBinder; }
-    static void setPortholeFunctionsBinder(PortholeFunctionsBinder* binder) { functionsBinder = binder;  functionsBinder->scriptNumber=0;}
-
     //! Global map of cameras by id
     static std::map<int, PortholeCamera*> CamerasMap;
 
     const Vector2f& getPointerPosition() { return pointerPosition; }
     void updatePointerPosition(int dx, int dy);
+
+    //! Resets the cache of preprocessed javascript / html files, forcing
+    //! a reload the next time they are requested from a client.
+    void clearCache();
 
 private:
     PortholeService* service;
@@ -136,18 +123,6 @@ private:
 
     // Create a Porthole custom camera and a PixelData associated
     void createCustomCamera(int width, int height, uint cameraMask = 0); 
-
-    // Functions binder object
-    static PortholeFunctionsBinder* functionsBinder;
-
-    // All the possible interfaces
-    static vector< Ref<PortholeInterfaceType> > interfaces; 
-
-    // A map between a device type and its GUI elements
-    static std::map<string, omega::xml::TiXmlElement* > interfacesMap;
-
-    // A map between an element id and the element data
-    static std::map<string, Ref<PortholeElement> > elementsMap;
 
     // Global canvas width and height and current pointer position. 
     // Used to convert differential mouse positions into absolute ones.

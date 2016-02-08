@@ -186,52 +186,6 @@ function getURLArg()
     return result;
 } 
 
-////////////////////////////////////////////////////////////////////////////////
-// SEND SPEC TO SERVER
-var SEND_SPEC_INTERVAL = 1000; // in Millis 
-var send_spec_waiting = false;
-var interface_id = undefined;
-    
-function sendSpec() 
-{
-    var w=window,d=document,e=d.documentElement,g=d.getElementsByTagName('body')[0],
-        viewportwidth=w.innerWidth||e.clientWidth||g.clientWidth,
-        viewportheight=w.innerHeight||e.clientHeight||g.clientHeight;
-
-    var orientation;
-    
-    var iid = getURLArg()["id"];
-    if(iid == undefined) iid = "default";
-    if(interface_id != undefined) iid = interface_id;
-
-    if (viewportwidth > viewportheight) {
-        orientation = "landscape";
-    } else {
-        orientation = "portrait";
-    }
-
-    var SpecMessage = {
-        "event_type": "device_spec",
-        "width": viewportwidth,
-        "height": viewportheight,
-        "orientation": orientation,
-        "first_time": firstTime,
-        "value": iid
-    }
-    socket.send(JSON.stringify(SpecMessage));
-
-    send_spec_waiting = false; // sendSpecTimeout could be called again
-}
-
-porthole.requestInterfaceRefresh = sendSpec;
-
-function sendSpecTimeout() {
-    if (!send_spec_waiting) {
-        send_spec_waiting = true;
-        window.setTimeout(sendSpec, SEND_SPEC_INTERVAL);
-    }
-}
-
 // Camera stream vars
 var img = new Image();
 var player = null;
@@ -272,8 +226,6 @@ try {
         var js = document.createElement("script");
         js.src = "./porthole_functions_binder.js";
         document.body.appendChild(js);
-        
-        if(porthole.connected != null) porthole.connected();
     }
 
     ////////////////////////////////////////////////////////////////////////////

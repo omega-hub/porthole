@@ -37,6 +37,7 @@
 #include "websockets/libwebsockets.h"
 #include "vjson/json.h"
 #include "PortholeClient.h"
+#include "PortholeFunctionsBinder.h"
 
 using namespace std;
 using namespace omicron;
@@ -91,15 +92,14 @@ public:
     static void parseJsonMessage(json_value *value, per_session_data* data, recv_message* message);
     static void handleJsonMessage(per_session_data* data, recv_message* message, 
         libwebsocket_context *context, libwebsocket *wsi);
-    static void sendHtmlElements(bool firstTime, per_session_data* data,
-        libwebsocket_context *context, libwebsocket *wsi);
         
     // Http
     static int callbackHttp(libwebsocket_context *context, libwebsocket *wsi,
         libwebsocket_callback_reasons reason, void *user, void *in, size_t len);
     static void sendFile(libwebsocket *wsi, const String& filename);
     static void sendFunctionBindings(libwebsocket *wsi);
-    
+    static void preprocessAndSendFile(libwebsocket *wsi, const String& path, const String& mime);
+
 public:
     static PortholeService* service;
 
@@ -115,6 +115,8 @@ public:
     // Thread process
     virtual void threadProc();
 
+    void clearCache();
+
 private:
     // Server params
     int port;
@@ -123,6 +125,7 @@ private:
     int n;
     unsigned int oldus;
     char* minterface;
+
 
     // SSL vars - NOT TESTED
     int use_ssl;

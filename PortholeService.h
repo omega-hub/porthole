@@ -60,7 +60,6 @@ public:
 
     //! Loads an xml interface file. Must be called after start. Can be called
     //! multiple times to load a different interface or to re-load an existing one.
-    void load(const String& interfaceFile);
     PortholeFunctionsBinder* getFunctionsBinder() { return myBinder; }
 
     void postPointerEvent(Event::Type type, int sourceId, float x, float y, uint flags, unsigned int userId);
@@ -115,6 +114,8 @@ public:
     //! Broadcasts a javascript call to all connected clients, excluding the
     //! one indicated in the optional origin parameter
     void broadcastjs(const String& js, const String& origin = "");
+
+    void clearCache();
 
 private:
     String myConnectedCommand;
