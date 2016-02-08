@@ -41,6 +41,7 @@ using namespace std;
 using namespace omicron;
 
 class ServerThread;
+class PortholeFunctionsBinder;
 
 ///////////////////////////////////////////////////////////////////////////////
 //! Implements an interface to handled device applications

@@ -34,9 +34,10 @@
 #define __PORTHOLE_CLIENT_H__
 
 #include <omega.h>
-#include "PortholeFunctionsBinder.h"
+#include <omegaToolkit.h>
 
 using namespace omega;
+using namespace omegaToolkit;
 using namespace omicron;
 using namespace std;
 
@@ -44,6 +45,41 @@ using namespace std;
 //static omega::xml::TiXmlDocument* xmlDoc;
 
 class PortholeService;
+
+///////////////////////////////////////////////////////////////////////////////
+// A omega Camera wrapper for Porthole
+struct PortholeCamera : ReferenceType
+{
+    int id;
+    float targetFps; // The desired output fps for this camera.
+    int highFps; // When the frame rate passes this fps, increase stream quality.
+    int lowFps; // When the frame rate is lower than this fps, decrease stream quality.
+    Camera* camera;
+    Ref<PixelData> canvas;
+    int canvasWidth, canvasHeight;
+    float size; // 1.0 is default value = device size
+    //unsigned int oldusStreamSent; // Timestamp of last stream sent via socket
+
+    Ref<Stat> fpsStat;
+    Ref<Stat> streamStat;
+
+    // H264 hardware encoder support
+    Ref<CameraStreamer> streamer;
+
+    PortholeCamera() :
+        targetFps(60),
+        highFps(15),
+        lowFps(5),
+        camera(NULL)
+    {}
+
+    ~PortholeCamera()
+    {
+        if(streamer != NULL) camera->removeListener(streamer);
+        if(camera != NULL) Engine::instance()->destroyCamera(camera);
+    }
+};
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //! Implements the HTML GUI Manager for Porthole Service
@@ -58,9 +94,6 @@ public:
     ~PortholeClient();
 
     const String& getId() { return clientId; }
-
-    // Return an object that contains the device specifications
-    PortholeDevice* getDevice() { return device; }
 
     bool isCameraReadyToStream() 
     { return (sessionCamera != NULL && sessionCamera->camera->isEnabled()); } 
@@ -108,9 +141,6 @@ public:
 
 private:
     PortholeService* service;
-
-    // The device for which an interface will be created
-    Ref<PortholeDevice> device;
 
     // The camera of this session
     Ref<PortholeCamera> sessionCamera;

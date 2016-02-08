@@ -1,9 +1,0 @@
-<gui>
-    <include  file="porthole/elements/touchController.xml"/>
-  
-    <interface minWidth="0" minHeight="0" id="default">
-        <default layout="free">
-            <element width="100%" height="100%" id="touchController"/>
-        </default>
-    </interface>
-</gui>

@@ -34,75 +34,11 @@
 #define __PORTHOLE_FUNCTIONS_BINDER__
 
 #include <omegaToolkit.h>
+#include "PortholeService.h"
 
 using namespace omicron;
 using namespace omega;
 using namespace omegaToolkit;
-
-///////////////////////////////////////////////////////////////////////////////
-// This will old a possible interface
-struct PortholeInterfaceType : public ReferenceType
-{
-    int minWidth;
-    int minHeight;
-    string id;
-    //string orientation;
-    string layout;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// A device specifications object
-struct PortholeDevice : public ReferenceType
-{
-    int deviceWidth;
-    int deviceHeight;
-    string deviceOrientation; // Portrait or Landscape
-    Ref<PortholeInterfaceType> interfaceType;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// An element object
-struct PortholeElement : ReferenceType
-{
-    string id;
-    string type;
-    string cameraType; // Defined if type is camera stream
-    string htmlValue;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// A omega Camera wrapper for Porthole
-struct PortholeCamera : ReferenceType
-{
-    int id;
-    float targetFps; // The desired output fps for this camera.
-    int highFps; // When the frame rate passes this fps, increase stream quality.
-    int lowFps; // When the frame rate is lower than this fps, decrease stream quality.
-    Camera* camera;
-    Ref<PixelData> canvas;
-    int canvasWidth, canvasHeight;
-    float size; // 1.0 is default value = device size
-    //unsigned int oldusStreamSent; // Timestamp of last stream sent via socket
-
-    Ref<Stat> fpsStat;
-    Ref<Stat> streamStat;
-
-    // H264 hardware encoder support
-    Ref<CameraStreamer> streamer;
-    
-    PortholeCamera() :
-        targetFps(60),
-        highFps(15),
-        lowFps(5),
-        camera(NULL)
-    {}
-    
-    ~PortholeCamera()
-    {
-        if(streamer != NULL) camera->removeListener(streamer);
-        if(camera != NULL) Engine::instance()->destroyCamera(camera);
-    }
-};
 
 ///////////////////////////////////////////////////////////////////////////////
 // An obj bound with a Javascript event
@@ -125,17 +61,15 @@ struct PortholeEvent
 class PortholeFunctionsBinder : public ReferenceType
 {
 public:
-    typedef void(*memberFunction)(PortholeEvent&);
-
-    void addPythonScript(std::string script, string key, string elemid)
+    void addPythonScript(std::string script, string key, string type)
     {
-        oflog(Verbose, "[porthole] added function binding %1% -> %2%", %key %script);
+        oflog(Verbose, "[porthole] added function binding %1%: %2% -> %3%", %type %key %script);
         pythonFunMap[key] = script;
-        pythonFunIdMap[key] = elemid;
+        pythonFunTypeMap[key] = type;
         scriptNumber++;
     }
 
-    void callFunction(std::string funcName, PortholeEvent &ev)
+    void callFunction(PortholeService* svc, std::string funcName, PortholeEvent &ev)
     {
         std::map<std::string, string>::const_iterator py_it;
         py_it = pythonFunMap.find(funcName);
@@ -154,9 +88,22 @@ public:
                 pythonScript = omicron::StringUtils::replaceAll(pythonScript, key, i.getValue());
             }
 
-            pythonScript = omicron::StringUtils::replaceAll(pythonScript, "%client_id%", "\"" + ev.clientId + "\"");
+            String call = omicron::StringUtils::replaceAll(pythonScript, "%client_id%", "\"" + ev.clientId + "\"");
 
-            pi->queueCommand(pythonScript);
+            String& type = pythonFunTypeMap[funcName];
+            if(type == "py")
+            {
+                pi->queueCommand(call);
+            }
+            else if(type == "mc")
+            {
+                MissionControlClient* mc = SystemManager::instance()->getMissionControlClient();
+                if(mc != NULL) mc->postCommand(call);
+            }
+            else if(type == "js")
+            {
+                svc->broadcastjs(call, ev.clientId);
+            }
         }
         else
         {
@@ -170,11 +117,11 @@ public:
         olog(Verbose, "[porthole] function binding reset");
         scriptNumber = 0;
         pythonFunMap.clear();
-        pythonFunIdMap.clear();
+        pythonFunTypeMap.clear();
     }
 
     std::map<std::string, string> pythonFunMap;
-    std::map<std::string, string> pythonFunIdMap;
+    std::map<std::string, string> pythonFunTypeMap;
     int scriptNumber;
 };
 #endif

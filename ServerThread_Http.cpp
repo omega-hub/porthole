@@ -130,7 +130,7 @@ void ServerThread::sendFunctionBindings(libwebsocket *wsi)
     std::map<std::string, string>::const_iterator py_it;
     for(py_it = functionsBinder->pythonFunMap.begin(); py_it != functionsBinder->pythonFunMap.end(); py_it++)
     {
-        content.append("var " + functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event = false;");
+        //content.append("var " + functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event = false;");
         content.append(" function ");
 
         Vector<String> toks = StringUtils::split(py_it->second, "%");
@@ -157,9 +157,9 @@ void ServerThread::sendFunctionBindings(libwebsocket *wsi)
         content.append("  \"\n"
             "  };\n"
             //"if(!" + functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event) {"
-            "  socket.send(JSON.stringify(JSONToSend));\n" +
+            "  socket.send(JSON.stringify(JSONToSend));\n"
             //"}" +
-            functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event = false;"
+            //functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event = false;"
             "};\n");
     }
 
@@ -199,6 +199,9 @@ void ServerThread::preprocessAndSendFile(libwebsocket *wsi, const String& path, 
             endToken = fileContent.find("}}", startToken);
             startToken += 2;
 
+            String callType = fileContent.substr(startToken, 2);
+            startToken += 2;
+
             String tok = fileContent.substr(startToken, endToken - startToken);
             oflog(Debug, "[ServerThread::preprocessAndSendFile] token %1%   %2%    %3%", %startToken %endToken %tok);
 
@@ -206,9 +209,9 @@ void ServerThread::preprocessAndSendFile(libwebsocket *wsi, const String& path, 
             String scriptId = boost::lexical_cast<string>(functionsBinder->scriptNumber);
             string key = "srv_func" + scriptId + "(event)";
 
-            functionsBinder->addPythonScript(tok, key, "srv_func" + scriptId);
+            functionsBinder->addPythonScript(tok, key, callType);
 
-            fileContent.replace(startToken - 2, endToken - startToken + 4, key);
+            fileContent.replace(startToken - 4, endToken - startToken + 6, key);
 
         } while(true);
         gPreprocCache[path] = fileContent;
