@@ -64,34 +64,16 @@ void PortholeService::start(int port, const String& defaultPage)
     myBinder = new PortholeFunctionsBinder();
     myBinder->clear();
 
-    PortholeClient::setPortholeFunctionsBinder(myBinder);
-
     portholeServer = new ServerThread(this, defaultPage);
     portholeServer->setPort(port);
     portholeServer->start();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeService::load(const String& interfaceFile)
+void PortholeService::clearCache()
 {
-    if(myBinder == NULL)
-    {
-        owarn("PortholeService::load called before PortholeService::start");
-    }
-    else
-    {
-        myBinder->clear();
-
-        String interfaceFilePath;
-        if(DataManager::findFile(interfaceFile, interfaceFilePath))
-        {
-            PortholeClient::parseXmlFile(interfaceFilePath.c_str());
-        }
-        else
-        {
-            ofwarn("PortholeService::load: could not find interface file %1%", %interfaceFile);
-        }
-    }
+    myBinder->clear();
+    portholeServer->clearCache();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -121,7 +103,7 @@ void PortholeService::notifyDisconnected(const String& id)
     if(!myDisconnectedCommand.empty())
     {
         PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
-        String cmd = StringUtils::replaceAll(myConnectedCommand, "%id%", id);
+        String cmd = StringUtils::replaceAll(myDisconnectedCommand, "%id%", id);
         i->queueCommand(cmd);
     }
 }

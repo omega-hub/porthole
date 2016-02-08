@@ -4,8 +4,8 @@
 </head>
 
 <body>
-    <div id="chat_area" style="width: 100%; height: 100%; overflow:scroll;"></div>
     <input type="text" name="text" style="width:100%" onkeypress="submitOnEnter(this, event)"></input>
+    <div id="chat_area"></div>
     
     <script src="porthole/res/porthole.js"></script>
     
@@ -18,7 +18,8 @@
 
         function submitOnEnter(inputElement, event) {
             if(event.keyCode == 13) {
-                porthole.call("postMessage('{0}', %client_id%)", inputElement.value)
+                event.txt = inputElement.value;
+                {{ postMessage('%event.txt%', %client_id%) }}
             }
         }
     </script>

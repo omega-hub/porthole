@@ -43,6 +43,10 @@
 using namespace omega;
 using namespace omicron;
 
+Dictionary<String, String> gPreprocCache;
+extern PortholeService* sServiceInstance;
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // this protocol server (always the first one) just knows how to do HTTP
 int ServerThread::callbackHttp(libwebsocket_context *context, libwebsocket *wsi,
@@ -103,7 +107,13 @@ void ServerThread::sendFile(libwebsocket *wsi, const String& filename)
     else if(StringUtils::endsWith(fullFilePath, ".html")) mime = "text/html";
     else if(StringUtils::endsWith(fullFilePath, ".css")) mime = "text/css";
 
-    if(libwebsockets_serve_http_file(wsi, fullFilePath.c_str(), mime.c_str()))
+    // If the file is an html or js file, preprocess it to generate function
+    // bindings
+    if(mime == "text/html" || mime == "application/javascript")
+    {
+        preprocessAndSendFile(wsi, fullFilePath, mime);
+    }
+    else if(libwebsockets_serve_http_file(wsi, fullFilePath.c_str(), mime.c_str()))
     {
         ofwarn("ServerThread::sendFile: failed sending %1%", %fullFilePath);
     }
@@ -116,7 +126,7 @@ void ServerThread::sendFunctionBindings(libwebsocket *wsi)
     string content = "";
 
     // Python scripts
-    PortholeFunctionsBinder* functionsBinder = PortholeClient::getPortholeFunctionsBinder();
+    PortholeFunctionsBinder* functionsBinder = sServiceInstance->getFunctionsBinder();
     std::map<std::string, string>::const_iterator py_it;
     for(py_it = functionsBinder->pythonFunMap.begin(); py_it != functionsBinder->pythonFunMap.end(); py_it++)
     {
@@ -126,58 +136,34 @@ void ServerThread::sendFunctionBindings(libwebsocket *wsi)
         Vector<String> toks = StringUtils::split(py_it->second, "%");
 
         content.append(py_it->first);
-        content.append("{ "
-            "JSONToSend = {"
-            "\"event_type\": \"input\","
-            "\"button\": event.button,");
+        content.append("{ \n"
+            "  JSONToSend = {\n"
+            "  \"event_type\": \"input\",\n");
         //"\"char\": getChar(event),");
 
         // Odd tokens are argument names "like(%in%, %this%)"
         for(int i = 1; i < toks.size(); i += 2)
         {
-            // Ignore special token %value% to keep compatibility with old interfaces.
             // Ignore special token %client_id%: this will be substituted server-side
             // with the name of the client sending the call
-            if(toks[i] != "value" && toks[i] != "client_id")
+            if(toks[i] != "client_id")
             {
-                content.append(ostr("\"%1%\": String(%1%),", %toks[i]));
+                content.append(ostr("  \"%1%\": String(%1%),\n", %toks[i]));
             }
         }
-        // Add special token %value% to keep compatibility with old interfaces.
-        content.append("\"value\": event.target.value,"
-            "\"function\": \"");
+        content.append("  \"function\": \"");
 
         content.append(py_it->first);
-        content.append("\""
-            "};"
+        content.append("  \"\n"
+            "  };\n"
             //"if(!" + functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event) {"
-            "socket.send(JSON.stringify(JSONToSend));" +
+            "  socket.send(JSON.stringify(JSONToSend));\n" +
             //"}" +
             functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event = false;"
-            "};");
+            "};\n");
     }
 
-    // Cpp functions
-    typedef void(*memberFunction)(PortholeEvent&);
-    std::map<std::string, memberFunction>::const_iterator cpp_it;
-    for(cpp_it = functionsBinder->cppFuncMap.begin(); cpp_it != functionsBinder->cppFuncMap.end(); cpp_it++)
-    {
-
-        content.append(" function ");
-        content.append(cpp_it->first);
-        content.append("{ "
-            "JSONToSend = {"
-            "\"event_type\": \"input\","
-            "\"button\": event.button,"
-            "\"char\": getChar(event),"
-            "\"value\": event.target.value,"
-            "\"function\": \"");
-        content.append(cpp_it->first);
-        content.append("\""
-            "};"
-            "socket.send(JSON.stringify(JSONToSend));"
-            "};");
-    }
+    content.append("if(porthole.connected != null) porthole.connected();");
 
     // Build Message = Header + Content
     char content_length[16];
@@ -192,4 +178,61 @@ void ServerThread::sendFunctionBindings(libwebsocket *wsi)
 
     // Send the Javascript file
     libwebsocket_write(wsi, (unsigned char*)msg.c_str(), msg.length(), LWS_WRITE_HTTP);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void ServerThread::preprocessAndSendFile(libwebsocket *wsi, const String& path, const String& mime)
+{
+    if(gPreprocCache.find(path) == gPreprocCache.end())
+    {
+        oflog(Verbose, "[ServerThread::preprocessAndSendFile] preprocessing <%1%>", %path);
+
+        String fileContent = DataManager::readTextFile(path);
+
+        int startToken = 0;
+        int endToken = 0;
+
+        do
+        {
+            startToken = fileContent.find("{{", 0);
+            if(startToken == string::npos) break;
+            endToken = fileContent.find("}}", startToken);
+            startToken += 2;
+
+            String tok = fileContent.substr(startToken, endToken - startToken);
+            oflog(Debug, "[ServerThread::preprocessAndSendFile] token %1%   %2%    %3%", %startToken %endToken %tok);
+
+            PortholeFunctionsBinder* functionsBinder = sServiceInstance->getFunctionsBinder();
+            String scriptId = boost::lexical_cast<string>(functionsBinder->scriptNumber);
+            string key = "srv_func" + scriptId + "(event)";
+
+            functionsBinder->addPythonScript(tok, key, "srv_func" + scriptId);
+
+            fileContent.replace(startToken - 2, endToken - startToken + 4, key);
+
+        } while(true);
+        gPreprocCache[path] = fileContent;
+    }
+
+    char buf[512];
+    char *p = buf;
+
+    String& data = gPreprocCache[path];
+
+    p += sprintf(p, "HTTP/1.0 200 OK\x0d\x0a"
+        "Server: libwebsockets\x0d\x0a"
+        "Content-Type: %s\x0d\x0a"
+        "Content-Length: %u\x0d\x0a"
+        "\x0d\x0a", mime.c_str(),
+        (unsigned int)data.length());
+
+    libwebsocket_write(wsi, (unsigned char *)buf, p - buf, LWS_WRITE_HTTP);
+    libwebsocket_write(wsi, (unsigned char *)data.c_str(), data.length(), LWS_WRITE_HTTP);
+
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void ServerThread::clearCache()
+{
+    gPreprocCache.clear();
 }

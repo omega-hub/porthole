@@ -33,12 +33,6 @@
 #ifndef __PORTHOLE_FUNCTIONS_BINDER__
 #define __PORTHOLE_FUNCTIONS_BINDER__
 
-#define PORTHOLE_EVENT_TOKEN_CAMERA_ID "%id%"
-#define PORTHOLE_EVENT_TOKEN_VALUE "%value%"
-#define PORTHOLE_EVENT_TOKEN_KEY "%key%"
-#define PORTHOLE_EVENT_TOKEN_MOUSE_BTN "%btn%"
-#define PORTHOLE_EVENT_TOKEN_EVENT "%event%"
-
 #include <omegaToolkit.h>
 
 using namespace omicron;
@@ -133,13 +127,9 @@ class PortholeFunctionsBinder : public ReferenceType
 public:
     typedef void(*memberFunction)(PortholeEvent&);
 
-    void addFunction(std::string funcName, memberFunction func)
-    {
-        cppFuncMap[funcName] = func;
-    }
-
     void addPythonScript(std::string script, string key, string elemid)
     {
+        oflog(Verbose, "[porthole] added function binding %1% -> %2%", %key %script);
         pythonFunMap[key] = script;
         pythonFunIdMap[key] = elemid;
         scriptNumber++;
@@ -147,10 +137,6 @@ public:
 
     void callFunction(std::string funcName, PortholeEvent &ev)
     {
-        std::map<std::string, memberFunction>::const_iterator cpp_it;
-        cpp_it = cppFuncMap.find(funcName);
-        if(cpp_it != cppFuncMap.end())	return (*cpp_it->second)(ev);
-
         std::map<std::string, string>::const_iterator py_it;
         py_it = pythonFunMap.find(funcName);
         if(py_it != pythonFunMap.end())
@@ -158,7 +144,7 @@ public:
             PythonInterpreter* pi = SystemManager::instance()->getScriptInterpreter();
 
             // Substitute special %value% token
-            String pythonScript = omicron::StringUtils::replaceAll(py_it->second, PORTHOLE_EVENT_TOKEN_VALUE, ev.value);
+            String pythonScript = py_it->second;
 
             // Substitute other argument tokens.
             typedef KeyValue<String, String> ArgItem;
@@ -168,36 +154,25 @@ public:
                 pythonScript = omicron::StringUtils::replaceAll(pythonScript, key, i.getValue());
             }
 
-            pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_KEY, boost::lexical_cast<std::string>(ev.key));
-            pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_MOUSE_BTN, boost::lexical_cast<std::string>(ev.mouseButton));
-            pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_EVENT, boost::lexical_cast<std::string>(ev.htmlEvent));
             pythonScript = omicron::StringUtils::replaceAll(pythonScript, "%client_id%", "\"" + ev.clientId + "\"");
 
-            if(ev.sessionCamera != NULL)
-                pythonScript = omicron::StringUtils::replaceAll(pythonScript, PORTHOLE_EVENT_TOKEN_CAMERA_ID, boost::lexical_cast<std::string>(ev.sessionCamera->id));
-
             pi->queueCommand(pythonScript);
+        }
+        else
+        {
+            owarn("[porthole] function binding not found: " + funcName);
         }
         return;
     }
 
-    bool isCppDefined(string funcName)
-    {
-        std::map<std::string, memberFunction>::const_iterator it;
-        it = cppFuncMap.find(funcName);
-        if(it != cppFuncMap.end()) return true;
-        return false;
-    }
-
     void clear()
     {
+        olog(Verbose, "[porthole] function binding reset");
         scriptNumber = 0;
-        cppFuncMap.clear();
         pythonFunMap.clear();
         pythonFunIdMap.clear();
     }
 
-    std::map<std::string, memberFunction> cppFuncMap;
     std::map<std::string, string> pythonFunMap;
     std::map<std::string, string> pythonFunIdMap;
     int scriptNumber;
