@@ -102,12 +102,12 @@ function correct(event) {
     {{py print('Hello from %client_id%' }}
 }
 
-// This function will fail due to a missing event argument
+> // This function will fail due to a missing event argument
 function wrong() {
     {{py print('Hello from %client_id%' }}
 }
 
-// This function work as the event argument is substituted by a local object
+> // This function work as the event argument is substituted by a local object
 function fixed() {
     event = {}
     {{py print('Hello from %client_id%' }}
