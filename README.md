@@ -43,11 +43,28 @@ Broadcasts javascript to all clients, excluding an optional origin.
 - `js`: the code to be executed
 - `origin`: optional client id of an origin client. The origin will be excluded from the broadcast.
 
+#### clearCache ####
+> clearCache()
+
+Clears the cache of all preprocessed html and js files, forcing a reload the next time the files are requested.
+
+*Example*
+
+This example sets up a basic web server that clear the cache every time a user disconnects. This 
+lets' users edit page code and test the changes without restarting the server.
+```python
+import porthole
+porthole.initialize()
+ps = porthole.getService()
+ps.setDisconnectedCommand('ps.clearCache()')
+```
+
+
 ----------------------------------------------------------------------------------------------------
 ### Porthole.js ###
 The `Porthole.js` interface is used in html files server by porthole to interface back with the server.
 
-> *Example*
+*Example*
 ```html
 <html>
 <head>
