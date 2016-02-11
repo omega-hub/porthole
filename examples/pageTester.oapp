@@ -1,0 +1,9 @@
+config:
+{
+    orun:
+    {
+        initScript = "pageTester.py";
+        appStart = "";
+    };    
+    pythonShellEnabled = true;
+};
