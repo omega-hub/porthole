@@ -114,7 +114,7 @@ function fixed() {
 }
 ```
 
-** Example: passing values **
+**Example: passing values**
 ```javascript
 x = 10
 function(event, y) {
@@ -145,6 +145,7 @@ specified. [Read more about mission control here](https://github.com/uic-evl/ome
 Invokes `command` on **all** other connected porthole clients.
 
 **Example: Synchronized dragging**
+
 Client
 ```javascript
 <html lang="en">
@@ -185,6 +186,7 @@ Client
 </body>
 </html>
 ```
+
 Server
 ```python
 # Basic porthole example
