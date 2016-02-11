@@ -95,19 +95,19 @@ Invokes `command` on the porthole server. Command can be any valid python expres
 
 **NOTE** server-side commands are expected to be executed from javascript event handlers that are passed an argument called `event` This argument is used to specify additional values that you want to pass to the server-side function (assuming they are not global values)
 
-> **Example: event object**
+**Example: event object**
 ```javascript
 // This function will work as it accepts an argument called event
 function correct(event) {
     {{py print('Hello from %client_id%' }}
 }
 
-> // This function will fail due to a missing event argument
+// This function will fail due to a missing event argument
 function wrong() {
     {{py print('Hello from %client_id%' }}
 }
 
-> // This function work as the event argument is substituted by a local object
+// This function work as the event argument is substituted by a local object
 function fixed() {
     event = {}
     {{py print('Hello from %client_id%' }}
