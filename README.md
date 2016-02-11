@@ -57,7 +57,7 @@ The `Porthole.js` interface is used in html files server by porthole to interfac
     <script>
         porthole.connected = function() {
             // Call the print function on the server, printing this client name
-            porthole.call("print('%client_id%')")
+            {{py print('%client_id%') }}
         }
     </script>
 </body>
@@ -69,15 +69,6 @@ Stores a function that will be called when a connection with the server is estab
 
 #### socket ####
 The websocket object used for the server connection
-
-#### call ####
-> porthole.call(pythonCode, ...)
-
-#### jscall ####
-> porthole.jscall(jscode, ...)
-
-#### mccall ####
-> porthole.mccall(jscode, ...)
 
 #### sendMouseMove ####
 > porthole.sendMouseMove(event)
@@ -93,5 +84,34 @@ The websocket object used for the server connection
 > porthole.sendKeyUp(event)
 
 > porthole.sendKeyDown(event)
+
+### Invoking server commands ###
+From a javascript file or html page, you can use the **double bracket notation** to invoke a command on another target (the server, another connected application or another webpage).
+
+#### Server call ####
+> `{{py **command**}}`
+
+Invokes `command` on the porthole server. Command can be any valid python expression, or an [omegalib quick command](https://github.com/uic-evl/omegalib/wiki/QuickCommands) such as :q. The special token `%client_id% will be substituted with the id string of this client.
+
+**NOTE** server-side commands are expected to be executed from javascript event handlers that are passed an argument called `event` This argument is used to specify additional values that you want to pass to the server-side function (assuming they are not global values)
+
+> **Example: event object**
+```javascript
+// This function will work as it accepts an argument called event
+function correct(event) {
+    {{py print('Hello from %client_id%' }}
+}
+
+// This function will fail due to a missing event argument
+function wrong() {
+    {{py print('Hello from %client_id%' }}
+}
+
+// This function work as the event argument is substituted by a local object
+function fixed() {
+    event = {}
+    {{py print('Hello from %client_id%' }}
+}
+```
 
 
