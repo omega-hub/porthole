@@ -114,4 +114,94 @@ function fixed() {
 }
 ```
 
+** Example: passing values **
+```javascript
+x = 10
+function(event, y) {
+    // This call will print on the server the value of client
+    // global variable x (10)
+    {{py print(%x%) }}
+    
+    // y is a local variable: if we want to pass it to the server-side call
+    // we need to add it to the event object.
+    event.y = y; 
+    {{py print(%y%) }}
 
+    // This call will print on the server the value of SERVER
+    // variable z
+    {{py print(z) }}
+}
+```
+
+#### Mission Control call ####
+> `{{mc[@client:] **command**}}`
+
+Invokes `command` on a specific mission control target (if specified after `@`) or on all clients if a target is not 
+specified. [Read more about mission control here](https://github.com/uic-evl/omegalib/wiki/MissionControl)
+
+#### Javascript call ####
+> `{{js **command**}}`
+
+Invokes `command` on **all** other connected porthole clients.
+
+**Example: Synchronized dragging**
+Client
+```javascript
+<html lang="en">
+<head>
+    <title>Drag Sync</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+    <script src="porthole/res/porthole.js"></script>
+</head>
+<body>
+    <style>
+        #box {
+            width: 200px; 
+            height: 200px; 
+            position: absolute; 
+            background-color: yellow
+        };
+    </style>
+    <div id="box"></div>
+    <script>
+        porthole.connected = function() {
+            $("#box").draggable({
+                drag: function(){
+                    var offset = $(this).offset();
+                    xPos = offset.left;
+                    yPos = offset.top;
+                    
+                    // Save the current position on the server, so new clients 
+                    // can retrieve it
+                    {{py savedX=%xPos%; savedY=%yPos% }}
+                    
+                    // Update the box position on other clients
+                    {{js o = $('#box').offset({ left:%xPos%, top:%yPos%}) }}
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+```
+Server
+```python
+# Basic porthole example
+import porthole
+
+# The box position. Will be updated by clients and read by new clients when they
+# connect.
+savedX = 0
+savedY = 0
+
+# Setup porthole
+porthole.initialize(4080, './dragSync.html')
+ps = porthole.getService()
+ps.setConnectedCommand("sendBoxPosition('%id%')")
+
+def sendBoxPosition(clientId):
+    ps.sendjs(
+        "$('#box').offset({left:" + str(savedX) + ", top:" + str(savedY) + "})", 
+        clientId)
+```
