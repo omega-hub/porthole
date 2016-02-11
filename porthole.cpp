@@ -91,6 +91,7 @@ BOOST_PYTHON_MODULE(porthole)
         PYAPI_GETTER(PortholeService, getPointerBounds)
         PYAPI_METHOD(PortholeService, setPointerSpeed)
         PYAPI_METHOD(PortholeService, getPointerSpeed)
+        PYAPI_METHOD(PortholeService, clearCache)
         ;
 
     def("initialize", initialize, initializeOverloads());
