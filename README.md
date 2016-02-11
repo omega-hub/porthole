@@ -48,7 +48,7 @@ Broadcasts javascript to all clients, excluding an optional origin.
 
 Clears the cache of all preprocessed html and js files, forcing a reload the next time the files are requested.
 
-*Example*
+**Example**
 
 This example sets up a basic web server that clear the cache every time a user disconnects. This 
 lets' users edit page code and test the changes without restarting the server.
