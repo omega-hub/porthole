@@ -93,15 +93,18 @@ public:
             String& type = pythonFunTypeMap[funcName];
             if(type == "py")
             {
+                oflog(Debug, "[Porthole::py] %1%", %call);
                 pi->queueCommand(call);
             }
             else if(type == "mc")
             {
+                oflog(Debug, "[Porthole::mc] %1%", %call);
                 MissionControlClient* mc = SystemManager::instance()->getMissionControlClient();
                 if(mc != NULL) mc->postCommand(call);
             }
             else if(type == "js")
             {
+                oflog(Debug, "[Porthole::js] %1%", %call);
                 svc->broadcastjs(call, ev.clientId);
             }
         }
