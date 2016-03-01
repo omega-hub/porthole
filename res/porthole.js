@@ -1,15 +1,5 @@
 var socket; 
 var JSONToSend = ''; 
-
-var runningInWebView = false;
-
-if(typeof OMEGA != 'undefined') {
-    console.log("Running in WebView")
-    runningInWebView = true;
-}
-else {
-    //setInterval("window.requestAnimFrame(omegaFrame)", 18)
-}
     
 ////////////////////////////////////////////////////////////////////////////////
 // Porthole Javascript API
@@ -75,60 +65,6 @@ porthole.sendKeyDown = function(e)
         "key": e.keyCode
     };
     socket.send(JSON.stringify(JSONEvent));
-}
-
-porthole.call = function() {
-    var theString = arguments[0];
-    
-    // start with the second argument (i = 1)
-    for (var i = 1; i < arguments.length; i++) {
-        // "gm" = RegEx options for Global search (more than one instance)
-        // and for Multiline search
-        var regEx = new RegExp("\\{" + (i - 1) + "\\}", "gm");
-        theString = theString.replace(regEx, arguments[i]);
-    }
-    var callMsg = {
-        "event_type": "input",
-        "value": "_call",
-        "function": theString
-    };
-    socket.send(JSON.stringify(callMsg));
-}
-
-porthole.jscall = function() {
-    var theString = arguments[0];
-    
-    // start with the second argument (i = 1)
-    for (var i = 1; i < arguments.length; i++) {
-        // "gm" = RegEx options for Global search (more than one instance)
-        // and for Multiline search
-        var regEx = new RegExp("\\{" + (i - 1) + "\\}", "gm");
-        theString = theString.replace(regEx, arguments[i]);
-    }
-    var callMsg = {
-        "event_type": "input",
-        "value": "_jscall",
-        "function": theString
-    };
-    socket.send(JSON.stringify(callMsg));
-}
-
-porthole.mccall = function() {
-    var theString = arguments[0];
-    
-    // start with the second argument (i = 1)
-    for (var i = 1; i < arguments.length; i++) {
-        // "gm" = RegEx options for Global search (more than one instance)
-        // and for Multiline search
-        var regEx = new RegExp("\\{" + (i - 1) + "\\}", "gm");
-        theString = theString.replace(regEx, arguments[i]);
-    }
-    var callMsg = {
-        "event_type": "input",
-        "value": "_mccall",
-        "function": theString
-    };
-    socket.send(JSON.stringify(callMsg));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -422,35 +358,3 @@ function cameraLoop() {
         ctx.drawImage(img, 0, 0, camera.width, camera.height);
     }
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// Wrapper around omegalib frame function, to use on a normal browser when we
-// are not running inside an omegalib webView
-var context = {};
-context.frame = 0;
-context.time = 0;
-context.dt = 0;
-var initialTime = Date.now() / 1000;
-context.time = initialTime;
-
-context.modelview = null;
-context.projection = null;
-context.cameraPosition = [0, 2, 0]
-
-context.tileTopLeft = null
-context.tileBottomLeft = null
-context.tileBottomRight = null
-context.activeCanvasRect = null
-context.activeRect = null
-
-function omegaFrame() {
-    // Update context
-    context.frame++;
-    curTime = (Date.now() / 1000) - initialTime;
-    context.dt = curTime - context.time;
-    context.time = curTime;
-    
-    // Call the user code frame function
-    frame(context)
-}
-
