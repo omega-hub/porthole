@@ -56,7 +56,7 @@ public:
     //! default page.
     void start(int port, const String& defaultPage);
 
-    bool isHardwareEncoderEnabled() { return myHardwareEncoderEnabled; }
+    const String& getStreamEncoderType() { return myStreamEncoderType; }
     bool isDynamicStreamQualityEnabled() { return myDynamicStreamQualityEnabled; }
 
     //! Loads an xml interface file. Must be called after start. Can be called
@@ -100,13 +100,11 @@ public:
     // Notification functions called from the websockets thread
     void notifyConnected(const String& id);
     void notifyDisconnected(const String& id);
-    void notifyCameraCreated(Camera* cam);
-    void notifyCameraDestroyed(Camera* cam);
     //! Called when the web server has started and is ready to receive
     //! connections.
     void notifyServerStarted();
 
-    PortholeClient* createClient(const String& name);
+    PortholeClient* createClient(const String& name, libwebsocket* wsi);
     void destroyClient(PortholeClient* gui);
     PortholeClient* findClient(const String& name);
 
@@ -132,7 +130,7 @@ private:
     Vector2i myPointerBounds;
     float myPointerSpeed;
 
-    bool myHardwareEncoderEnabled;
+    String myStreamEncoderType;
     bool myDynamicStreamQualityEnabled;
 };
 

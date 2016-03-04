@@ -35,6 +35,7 @@
 
 #include <omega.h>
 #include <omegaToolkit.h>
+#include "PortholeCamera.h"
 
 using namespace omega;
 using namespace omegaToolkit;
@@ -46,91 +47,38 @@ using namespace std;
 
 class PortholeService;
 
-///////////////////////////////////////////////////////////////////////////////
-// A omega Camera wrapper for Porthole
-struct PortholeCamera : ReferenceType
-{
-    int id;
-    float targetFps; // The desired output fps for this camera.
-    int highFps; // When the frame rate passes this fps, increase stream quality.
-    int lowFps; // When the frame rate is lower than this fps, decrease stream quality.
-    Camera* camera;
-    Ref<PixelData> canvas;
-    int canvasWidth, canvasHeight;
-    float size; // 1.0 is default value = device size
-    //unsigned int oldusStreamSent; // Timestamp of last stream sent via socket
-
-    Ref<Stat> fpsStat;
-    Ref<Stat> streamStat;
-
-    // H264 hardware encoder support
-    Ref<CameraStreamer> streamer;
-
-    PortholeCamera() :
-        targetFps(60),
-        highFps(15),
-        lowFps(5),
-        camera(NULL)
-    {}
-
-    ~PortholeCamera()
-    {
-        if(streamer != NULL) camera->removeListener(streamer);
-        if(camera != NULL) Engine::instance()->destroyCamera(camera);
-    }
-};
-
+struct libwebsocket;
 
 ///////////////////////////////////////////////////////////////////////////////
 //! Implements the HTML GUI Manager for Porthole Service
 class PortholeClient: public ReferenceType
 {
 public:
+    enum WebsocketSendType { WsSendText, WsSendBinary };
+
+public:
 
     // Constructor
-    PortholeClient(PortholeService* owner, const String& clientId);
+    PortholeClient(PortholeService* owner, const String& clientId, libwebsocket* wsi);
 
     // Destructor
     ~PortholeClient();
 
     const String& getId() { return clientId; }
 
-    bool isCameraReadyToStream() 
-    { return (sessionCamera != NULL && sessionCamera->camera->isEnabled()); } 
-
-    // Get Porthole camera object for this client connected
-    PortholeCamera* getSessionCamera() { return sessionCamera; } 
     PortholeService* getService()
     { return service; }
 
     //! @internal Return true if javascript commands are queued to be sent
     //! to the client.
-    bool isJavascriptQueued()
-    { 
-        javascriptQueueLock.lock();
-        bool queued = !javascriptQueue.empty();
-        javascriptQueueLock.unlock();
-        return queued;
-    }
+    bool isJavascriptQueued();
 
     //! Queues a javascript command to be invoked on the client.
-    void calljs(const String& command)
-    { 
-        javascriptQueueLock.lock();
-        javascriptQueue.push_back(command);
-        javascriptQueueLock.unlock();
-    }
+    void calljs(const String& command);
 
     //! Creates a JSON message containing all the queued javascript callbacks
     //! then flushes the queue.
     String flushJavascriptQueueToJson();
-
-    // Mod the camera with id cameraId 
-    // size: the ratio of camera: 1.0 is full size
-    void modCustomCamera(int width, int height);
-
-    //! Global map of cameras by id
-    static std::map<int, PortholeCamera*> CamerasMap;
 
     const Vector2f& getPointerPosition() { return pointerPosition; }
     void updatePointerPosition(int dx, int dy);
@@ -139,11 +87,20 @@ public:
     //! a reload the next time they are requested from a client.
     void clearCache();
 
+    void sendCameraStreams(libwebsocket* wsi);
+    void addCamera(PortholeCamera*);
+    void removeCamera(PortholeCamera*);
+
+    void sendClientData();
+    int send(const void* data, size_t size, WebsocketSendType sendType = WsSendBinary);
+    int send(const String& text);
+
 private:
     PortholeService* service;
 
-    // The camera of this session
-    Ref<PortholeCamera> sessionCamera;
+    typedef List< Ref<PortholeCamera> > CameraList;
+    CameraList myCameras;
+    Dictionary<String, bool> myCameraInitialized;
 
     String clientId;
 
@@ -160,6 +117,10 @@ private:
     Vector2i canvasSize;
     bool normalizedPointerPosition;
     float pointerSpeed;
+
+    size_t mySendBufferSize;
+    char* mySendBuffer;
+    libwebsocket* mySocket;
 };
 
 #endif

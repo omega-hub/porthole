@@ -12,6 +12,7 @@ add_library(porthole MODULE
     PortholeClient.h
     porthole.cpp
     PortholeService.cpp
+    PortholeCamera.cpp
     PortholeClient.cpp
     ServerThread.cpp
     ServerThread_Json.cpp

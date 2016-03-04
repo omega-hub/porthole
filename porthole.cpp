@@ -35,6 +35,7 @@
 
 #include "PortholeService.h"
 #include "PortholeClient.h"
+#include "PortholeCamera.h"
 #include "base64.h"
 
 #define PORTHOLE_VERSION "2"
@@ -50,7 +51,7 @@ PortholeService* getService()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-bool initialize(int port = 4080, const String& defaultPage = "porthole/res/index.html")
+PortholeService* initialize(int port = 4080, const String& defaultPage = "porthole/res/index.html")
 {
     // The service gets created only on the master node.
     if(SystemManager::instance()->isMaster() && !sServiceInstance)
@@ -60,9 +61,9 @@ bool initialize(int port = 4080, const String& defaultPage = "porthole/res/index
         svcManager->addService(sServiceInstance);
         sServiceInstance->start(port, defaultPage);
 
-        return true;
+        return sServiceInstance;
     }
-    return false;
+    return NULL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -92,9 +93,22 @@ BOOST_PYTHON_MODULE(porthole)
         PYAPI_METHOD(PortholeService, setPointerSpeed)
         PYAPI_METHOD(PortholeService, getPointerSpeed)
         PYAPI_METHOD(PortholeService, clearCache)
+        PYAPI_REF_GETTER(PortholeService, findClient)
         ;
 
-    def("initialize", initialize, initializeOverloads());
+    PYAPI_REF_BASE_CLASS(PortholeClient)
+        PYAPI_METHOD(PortholeClient, addCamera)
+        PYAPI_METHOD(PortholeClient, removeCamera)
+        PYAPI_GETTER(PortholeClient, getId)
+        PYAPI_GETTER(PortholeClient, getPointerPosition)
+        PYAPI_METHOD(PortholeClient, calljs)
+        ;
+
+    PYAPI_REF_BASE_CLASS_WITH_CTOR(PortholeCamera)
+        PYAPI_METHOD(PortholeCamera, initialize)
+        ;
+
+        def("initialize", initialize, PYAPI_RETURN_REF, initializeOverloads());
     def("getService", getService, PYAPI_RETURN_REF);
     def("base64EncodeImage", base64EncodeImage);
 }

@@ -53,7 +53,6 @@ struct PortholeEvent
     char key;
     const String& clientId;
     std::string value;
-    PortholeCamera* sessionCamera;
     Dictionary<String, String> args;
 };
 

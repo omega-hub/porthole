@@ -52,7 +52,6 @@ int ServerThread::callbackWebsocket(struct libwebsocket_context *context,
             enum libwebsocket_callback_reasons reason,
                            void *user, void *in, size_t len)
 {
-    int n;
     struct per_session_data *data = (per_session_data*) user;
 
     switch (reason) {
@@ -67,7 +66,7 @@ int ServerThread::callbackWebsocket(struct libwebsocket_context *context,
         String cliName = ostr("%1%:%2%:%3%", %fd %cliip %cliname);
         service->notifyConnected(cliName);
         // Allocate gui manager
-        data->client = service->createClient(cliName);
+        data->client = service->createClient(cliName, wsi);
         data->userId = sUserIdStart + sUserIdCounter++;
         data->oldus = 0;
 
@@ -77,44 +76,8 @@ int ServerThread::callbackWebsocket(struct libwebsocket_context *context,
     /* On socket writable from server to client */
     case LWS_CALLBACK_SERVER_WRITEABLE:
     {
-        // Check if we have stream to send: if not, pass the token
-        if (data->client->isCameraReadyToStream() )
-        {
-            int res = 0;    
-            if(data->client->getSessionCamera()->streamer != NULL)
-            {
-                res = streamH264(context, wsi, data);
-            } else
-            {
-                res = streamJpeg(context, wsi, data);
-            }
-            if(res != 0) return res;
-        }
-
-        // See if we have javascript callbacks that we need to send to the
-        // client
-        if(data->client->isJavascriptQueued())
-        {
-            String toSend = data->client->flushJavascriptQueueToJson();
-            //ofmsg("send %1%", %toSend);
-            // Send the base64 image
-            unsigned char* buf;
-            buf = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + toSend.length() + LWS_SEND_BUFFER_POST_PADDING];
-            unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
-            n = sprintf((char *)p, "%s",toSend.c_str());
-
-            // WEBSOCKET WRITE
-            n = libwebsocket_write(wsi, p, n, LWS_WRITE_TEXT);
-            if (n < 0) {
-                fprintf(stderr, "ERROR writing to socket");
-                return 1;
-            }
-            // Free the buffer
-            delete[] buf;
-        }
-        // Pass the token
+        data->client->sendClientData();
         libwebsocket_callback_on_writable(context, wsi);
-
         break;
     }
 
@@ -167,124 +130,3 @@ int ServerThread::callbackWebsocket(struct libwebsocket_context *context,
     }
     return 0;
 }
-
-
-///////////////////////////////////////////////////////////////////////////////
-int ServerThread::streamJpeg(libwebsocket_context *context, libwebsocket *wsi, per_session_data* data)
-{
-    //PortholeCamera* pc = data->guiManager->getSessionCamera();
-    PortholeCamera* pc = NULL;
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    unsigned long long millisecondsSinceEpoch =
-        (unsigned long long)(tv.tv_sec) * 1000 +
-        (unsigned long long)(tv.tv_usec) / 1000;
-
-    if((millisecondsSinceEpoch - data->oldus) < (1000 / pc->targetFps))
-    {
-        libwebsocket_callback_on_writable(context, wsi);
-        return 0;
-    }
-
-    // Each time we send a frame, we also try to increase the frame rate, one
-    // frame at a time (cap at 50fps max)
-    //if(pc->targetFps < 50) pc->targetFps++;
-
-    // Get the corresponding camera to be modified
-    Camera* camera = pc->camera;
-    PixelData* canvas = pc->canvas;
-
-    // Get camera image as JPEG/PNG and base64 encode it.
-    ByteArray* png = ImageUtils::encode(canvas, ImageUtils::FormatJpeg);
-    std::string base64image = base64_encode(png->getData(), png->getSize());
-
-    // String to be send: base64 image and camera id
-    string toSend = "{\"event_type\":\"stream\",\"base64image\":\"";
-    toSend.append(base64image.c_str());
-    toSend.append("\",\"camera_id\":" + boost::lexical_cast<string>(pc->id) +
-        "}");
-
-    // Send the base64 image
-    unsigned char* buf;
-    buf = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + toSend.length() + LWS_SEND_BUFFER_POST_PADDING];
-    unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
-    int n = sprintf((char *)p, "%s", toSend.c_str());
-
-    // WEBSOCKET WRITE
-    n = libwebsocket_write(wsi, p, n, LWS_WRITE_TEXT);
-    if(n < 0) {
-        fprintf(stderr, "ERROR writing to socket");
-        return 1;
-    }
-
-    // Free the buffer
-    delete[] buf;
-
-    // Save new timestamp
-    data->oldus = millisecondsSinceEpoch;
-    libwebsocket_callback_on_writable(context, wsi);
-    return 0;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-int ServerThread::streamH264(libwebsocket_context *context, libwebsocket *wsi, per_session_data* data)
-{
-    PortholeCamera* pc = data->client->getSessionCamera();
-    IEncoder* e = pc->streamer->lockEncoder();
-
-    if(e == NULL)
-    {
-        //libwebsocket_callback_on_writable(context, wsi);
-        pc->streamer->unlockEncoder();
-        return 0;
-    }
-
-    if(!e->dataAvailable())
-    {
-        //libwebsocket_callback_on_writable(context, wsi);
-        pc->streamer->unlockEncoder();
-        return 0;
-    }
-
-    const void* bitstream;
-    uint32_t size;
-    if(e->lockBitstream(&bitstream, &size))
-    {
-        // Now send the bitstream as binary data
-        unsigned char* buf = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + size + LWS_SEND_BUFFER_POST_PADDING];
-        unsigned char* p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
-
-        // Record bandwidth. 
-        // Estimate bandwidth by multiplying current bitstream size by fps.
-        // then convert bytes/sec to Kbps
-        double bw = (double)size * (double)pc->targetFps / 128.0f;
-        pc->streamStat->addSample(bw);
-
-        memcpy(p, bitstream, size);
-
-        //ofmsg("H264 sending %1% bytes", %size);
-
-        // WEBSOCKET WRITE
-        int n = libwebsocket_write(wsi, p, size, LWS_WRITE_BINARY);
-        if(n < 0) {
-            fprintf(stderr, "ERROR writing to socket");
-            pc->streamer->unlockEncoder();
-            return 1;
-        }
-
-        delete[] buf;
-
-
-        e->unlockBitstream();
-    }
-    else
-    {
-        omsg("Bitstream lock failed");
-        oexit(0);
-    }
-
-    //libwebsocket_callback_on_writable(context, wsi);
-    pc->streamer->unlockEncoder();
-    return 0;
-}
-

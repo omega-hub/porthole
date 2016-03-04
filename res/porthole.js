@@ -217,11 +217,21 @@ try {
     function handleMessage(message) {
         // Received image stream. Save it in the img variable
         if (message.event_type == "stream") {
-            image = "data:image/jpeg;base64," + message.base64image;
+            image = "data:image/png;base64," + message.base64image;
+            camera = document.getElementById(message.element_id);
             img.src = image;
             
+            if(!cameraLoopEnabled) {
+                cameraLoopEnabled = true;
+                // Combine setInterval and requestAnimationFrame in order to get a desired fps
+                ctx = camera.getContext("2d");
+                clearInterval(cameraLoopCallback);
+                cameraLoopCallback = setInterval("window.requestAnimFrame(cameraLoop)",
+                   1000 / FPS_TARGET);
+            }
+            
             // Keep framerate of the camera
-            now = new Date().getTime();
+            /*now = new Date().getTime();
             dt = now - lastT;
             lastT = now;
             //console.log("fps: " + parseInt(1000 / dt));
@@ -243,26 +253,29 @@ try {
                     socket.send(JSON.stringify(JSONEvent));
                     overstart = now;
                 }
+            }*/
+        }
+        else if(message.event_type == "camera_init") {
+            camera = document.getElementById(message.element_id);
+            if(camera == null) return;
+            camera.width = camera.parentNode.clientWidth;
+            camera.height = camera.parentNode.clientHeight;
+            if(message.encoder_type == 'llenc') {
+                player = new Player({useWorker: true});
+                player.canvas = camera;
+                player.onFrameDrawEnd = frameDrawEnd;
+            } else {
+                ctx = camera.getContext("2d");
+
+                // OK, we have the camera, so start camera loop
+                cameraLoopEnabled = true;
+
+                // Combine setInterval and requestAnimationFrame in order to get a desired fps
+                clearInterval(cameraLoopCallback);
+                cameraLoopCallback = setInterval("window.requestAnimFrame(cameraLoop)",
+                                   1000 / FPS_TARGET);
             }
         }
-        
-        // Received HTML data, place it in porthole_content div.
-        else if (message.event_type == "html_elements") {
-            console.log('exec ' + message.innerHTML)
-            document.getElementById("porthole_content").innerHTML = message.innerHTML;
-            
-            // If we have a camera stream element (i.e. a canvas called camera-canvas)
-            // We register a frame callback. Otherwise, this function will do 
-            // nothing.
-            initializeCameraStreams();
-            
-            // Add events listeners
-            if (!isTouchable) {
-                // avoid resize message when touchable keyboard appears on mobile devices
-                addEvent(window, "resize", sendSpecTimeout);
-            }
-        }
-        
         // Received Javascript code. Execute it.
         else if(message.event_type == "javascript")
         {
@@ -315,41 +328,6 @@ window.requestAnimFrame = (function () {
               callback();
           };
       })();
-
-////////////////////////////////////////////////////////////////////////////////
-function initializeCameraStreams() {
-    // camera canvas can have two different ids. If we find a camera-canvas, we
-    // initialize jpeg streaming. If we find camera-h264-stream, we initialize
-    // H264 stream.
-    camera = document.getElementById('camera-canvas');
-
-    if (camera == null) {
-        camera = document.getElementById('camera-h264-stream');
-        if(camera == null) return;
-
-        player = new Player({useWorker: true});
-        player.canvas = camera;
-        player.onFrameDrawEnd = frameDrawEnd;
-        
-        camera.width = camera.parentNode.clientWidth;
-        camera.height = camera.parentNode.clientHeight;
-    } else {
-        camera.width = camera.parentNode.clientWidth;
-        camera.height = camera.parentNode.clientHeight;
-        
-        ctx = camera.getContext("2d");
-
-        // OK, we have the camera, so start camera loop
-        cameraLoopEnabled = true;
-
-        // Combine setInterval and requestAnimationFrame in order to get a desired fps
-        clearInterval(cameraLoopCallback);
-        cameraLoopCallback = setInterval("window.requestAnimFrame(cameraLoop)",
-                           1000 / FPS_TARGET);
-    }
-
-    porthole.cameraCanvas = camera;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main camera rendering loop 

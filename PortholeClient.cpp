@@ -32,26 +32,21 @@
  ******************************************************************************/
 #include "PortholeClient.h"
 #include "PortholeService.h"
+#include "PortholeCamera.h"
 #include "HTML.h"
 #include <omicron/xml/tinyxml.h>
 #include <iostream>
+#include "websockets/private-libwebsockets.h"
 
 using namespace omega;
 using namespace std;
 
-std::map<int, PortholeCamera*> PortholeClient::CamerasMap;
-
-// define initial image quality: {0,1}
-#define IMAGE_QUALITY 1
-
 ///////////////////////////////////////////////////////////////////////////////
-PortholeClient::PortholeClient(PortholeService* owner, const String& cliid):
-service(owner), clientId(cliid), pointerSpeed(1)
+PortholeClient::PortholeClient(PortholeService* owner, const String& cliid, libwebsocket* wsi) :
+service(owner), clientId(cliid), pointerSpeed(1), mySocket(wsi), mySendBuffer(NULL), mySendBufferSize(0)
 {
     ofmsg("Porthole GUI client connected: %1%", %clientId);
     
-    this->sessionCamera = NULL;
-
     // Get canvas size from service first. If canvas size is (0,0), read it 
     // from display config. Having a canvas size different from display config
     // ne is useful for graphical servers that want to send web events to other 
@@ -122,144 +117,6 @@ void PortholeClient::updatePointerPosition(int dx, int dy)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/* 
-*	Camera creation function
-*/
-void PortholeClient::createCustomCamera(int width, int height, uint cameraMask)
-{
-    // Get the global engine
-    Engine* myEngine = Engine::instance();
-
-    // Initialize camera size
-    // Workaround. This avoid a canvas drawing bug
-    // Round down width to a multiple of 4.
-    //int width = (int)( widthPercent * IMAGE_QUALITY * device->deviceWidth / 4 ) * 4;
-    //int height = (int)( heightPercent * IMAGE_QUALITY * device->deviceHeight / 4 ) * 4;
-    //cout << "Width: " << width  << " - height: " << height << endl;
-
-    uint flags = Camera::DrawScene | Camera::DrawOverlay;
-    Camera* camera = myEngine->createCamera(flags);
-    camera->setMask(cameraMask);
-    // Set the camera name using the client id and camera id
-    String cameraName = ostr("%1%-%2%", %clientId %camera->getCameraId());
-    camera->setName(cameraName);
-    service->notifyCameraCreated(camera);
-    
-    oflog(Verbose, "[PortholeClient::createCustomCamera]: %1% <%2%x%3%>", %cameraName %width %height);
-
-    DisplayTileConfig* dtc = camera->getCustomTileConfig();
-    // Setup projection
-    dtc->enabled = true;
-    dtc->setPixelSize(width, height);
-    // Setup a default projection
-
-    float as = (float)width / height;
-    float base = 1.0f;
-
-    Camera* defaultCamera = myEngine->getDefaultCamera();
-    Vector3f ho = defaultCamera->getHeadOffset();
-
-    dtc->setCorners(
-        Vector3f(-base * as, base, -2) + ho,
-        Vector3f(-base * as, -base, -2) + ho,
-        Vector3f(base * as, -base, -2) + ho);
-
-    // Initialize the camera position to be the same as the main camera.
-    camera->setPosition(defaultCamera->getPosition());
-    camera->setHeadOffset(defaultCamera->getHeadOffset());
-
-    // Create the Porthole camera object, storing the new camera and other
-    // related objects.
-    Ref<PortholeCamera> pc = new PortholeCamera();
-    pc->id = camera->getCameraId();
-    pc->camera = camera;
-    //pc->camera = defaultCamera;
-    pc->canvasWidth = width;
-    pc->canvasHeight = height;
-    pc->size = IMAGE_QUALITY;
-
-    pc->fpsStat = Stat::create(ostr("Stream %1% fps", %pc->id), StatsManager::Fps);
-    pc->streamStat = Stat::create(ostr("Stream %1% bw(Kbps)", %pc->id), StatsManager::Count1);
-    pc->fpsStat->addSample(pc->targetFps);
-    pc->streamStat->addSample(0);
-
-    // Save new camera
-    PortholeClient::CamerasMap[pc->id] = pc; // Global map
-    this->sessionCamera = pc; // Session
-
-    // If low latency hardware encoding is available, use that. Otherwise, 
-    // fall back to the old JPEG encoding & streaming.
-    if(service->isHardwareEncoderEnabled())
-    {
-        if(pc->camera->getListener() != NULL)
-        {
-            pc->streamer = (CameraStreamer*)pc->camera->getListener();
-        }
-        else
-        {
-            pc->streamer = new CameraStreamer("llenc");
-            pc->camera->addListener(pc->streamer);
-        }
-    } 
-    else
-    {
-        PixelData* sessionCanvas = new PixelData(PixelData::FormatRgb,  width,  height);
-        pc->camera->getOutput(0)->setReadbackTarget(sessionCanvas);
-        pc->camera->getOutput(0)->setEnabled(true);
-
-        pc->canvas = sessionCanvas;
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void PortholeClient::modCustomCamera(int width, int height)
-{ 
-    // Retrieve the camera to be modified
-    PortholeCamera* portholeCamera = this->sessionCamera;
-
-    Camera* sessionCamera = portholeCamera->camera;
-
-    // Get the global engine
-    Engine* myEngine = Engine::instance();
-
-    // Initialize camera size
-    // Workaround. This avoid a canvas drawing bug
-    // Round down width to a multiple of 4.
-    //int width = (int)(widthPercent * portholeCamera->size * device->deviceWidth / 4) * 4;
-    //int height = (int)(heightPercent * portholeCamera->size * device->deviceHeight / 4) * 4;
-
-    oflog(Verbose, "[PortholeClient::modCustomCamera]: %1% (%2%x%3%)", 
-        %sessionCamera->getName() %width %height);
-
-    DisplayTileConfig* dtc = sessionCamera->getCustomTileConfig();
-    // Setup projection
-    dtc->enabled = true;
-    dtc->setPixelSize(width, height);
-
-    float as = (float)width / height;
-    float base = 1.0f;
-
-    Camera* defaultCamera = myEngine->getDefaultCamera();
-    Vector3f ho = defaultCamera->getHeadOffset();
-
-    dtc->setCorners(
-        Vector3f(-base * as, base, -2) + ho,
-        Vector3f(-base * as, -base, -2) + ho,
-        Vector3f(base * as, -base, -2) + ho);
-        
-    if(!service->isHardwareEncoderEnabled() || portholeCamera->streamer == NULL)
-    {
-        // Set new camera target
-        portholeCamera->canvas = new PixelData(PixelData::FormatRgb, width, height);
-        sessionCamera->getOutput(0)->setReadbackTarget(portholeCamera->canvas);
-        sessionCamera->getOutput(0)->setEnabled(true);
-    }
-
-    portholeCamera->canvasWidth = width;
-    portholeCamera->canvasHeight = height;
-}
-
-///////////////////////////////////////////////////////////////////////////////
 String PortholeClient::flushJavascriptQueueToJson()
 {
     String json = "{\"event_type\":\"javascript\",\"commands\":[";
@@ -277,4 +134,76 @@ String PortholeClient::flushJavascriptQueueToJson()
 
     json.append("]}");
     return json;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+bool PortholeClient::isJavascriptQueued()
+{
+    javascriptQueueLock.lock();
+    bool queued = !javascriptQueue.empty();
+    javascriptQueueLock.unlock();
+    return queued;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void PortholeClient::calljs(const String& command)
+{
+    javascriptQueueLock.lock();
+    javascriptQueue.push_back(command);
+    javascriptQueueLock.unlock();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void PortholeClient::addCamera(PortholeCamera* cam)
+{
+    myCameras.push_back(cam);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void PortholeClient::removeCamera(PortholeCamera* cam)
+{
+    myCameras.remove(cam);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+void PortholeClient::sendClientData()
+{
+    foreach(PortholeCamera* c, myCameras)
+    {
+        // If the camera has not been initialized yet for this client, do it now.
+        if(myCameraInitialized.find(c->getElementId()) == myCameraInitialized.end())
+        {
+            myCameraInitialized[c->getElementId()] = true;
+            String json = ostr("{'event_type':'camera_init', "
+                "'element_id':'%1%', 'encoder_type':'%2%'}",
+                %c->getElementId() % c->getStreamer()->getEncoderName());
+            send(json);
+        }
+        c->sendStream(this);
+    }
+    if(isJavascriptQueued()) send(flushJavascriptQueueToJson());
+}
+
+///////////////////////////////////////////////////////////////////////////////
+int PortholeClient::send(const void* data, size_t size, WebsocketSendType sendType)
+{
+    size_t totalSize = size + LWS_SEND_BUFFER_PRE_PADDING + LWS_SEND_BUFFER_POST_PADDING;
+    if(totalSize > mySendBufferSize)
+    {
+        free(mySendBuffer);
+        mySendBuffer = (char*)malloc(totalSize);
+        mySendBufferSize = totalSize;
+    }
+
+    void* p = &mySendBuffer[LWS_SEND_BUFFER_PRE_PADDING];
+    memcpy(p, data, size);
+    
+    if(sendType == WsSendBinary) return libwebsocket_write(mySocket, (unsigned char*)p, size, LWS_WRITE_BINARY);
+    return libwebsocket_write(mySocket, (unsigned char*)p, size, LWS_WRITE_TEXT);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+int PortholeClient::send(const String& text)
+{
+    return send(text.c_str(), text.length(), WsSendText);
 }

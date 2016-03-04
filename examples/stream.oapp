@@ -3,7 +3,7 @@ config:
     systemConfig="system/desktop.cfg";
     orun:
     {
-        initScript = "porthole/examples/input.py";
+        initScript = "porthole/examples/stream.py";
         appStart = "";
     };    
     pythonShellEnabled = true;

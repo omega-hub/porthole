@@ -40,13 +40,9 @@ using namespace omicron;
 ///////////////////////////////////////////////////////////////////////////////
 PortholeService::PortholeService():
 myPointerBounds(Vector2i::Zero()), myPointerSpeed(1), myBinder(NULL),
-#ifdef llenc_ENABLED
-myHardwareEncoderEnabled(true),
-#else
-myHardwareEncoderEnabled(false),
-#endif
 myDynamicStreamQualityEnabled(false)
 {
+    myStreamEncoderType = "png";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -109,30 +105,6 @@ void PortholeService::notifyDisconnected(const String& id)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void PortholeService::notifyCameraCreated(Camera* cam)
-{
-    if(!myCameraCreatedCommand.empty())
-    {
-        PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
-        String idstr = ostr("%1%", %cam->getCameraId());
-        String cmd = StringUtils::replaceAll(myCameraCreatedCommand, "%id%", idstr);
-        i->queueCommand(cmd);
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void PortholeService::notifyCameraDestroyed(Camera* cam)
-{
-    if(!myCameraDestroyedCommand.empty())
-    {
-        PythonInterpreter* i = SystemManager::instance()->getScriptInterpreter();
-        String idstr = ostr("%1%", %cam->getCameraId());
-        String cmd = StringUtils::replaceAll(myCameraDestroyedCommand, "%id%", idstr);
-        i->queueCommand(cmd);
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////
 void PortholeService::postPointerEvent(Event::Type type, int sourceId, float x, float y, uint flags, unsigned int userId)
 {
     lockEvents();
@@ -154,9 +126,9 @@ void PortholeService::postKeyEvent(Event::Type type, char key, uint flags, unsig
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-PortholeClient* PortholeService::createClient(const String& name)
+PortholeClient* PortholeService::createClient(const String& name, libwebsocket* wsi)
 {
-    PortholeClient* cli = new PortholeClient(this, name);
+    PortholeClient* cli = new PortholeClient(this, name, wsi);
     myClients.push_back(cli);
     return cli;
 }
