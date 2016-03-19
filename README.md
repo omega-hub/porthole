@@ -110,27 +110,6 @@ From a javascript file or html page, you can use the **double bracket notation**
 
 Invokes `command` on the porthole server. Command can be any valid python expression, or an [omegalib quick command](https://github.com/uic-evl/omegalib/wiki/QuickCommands) such as :q. The special token `%client_id% will be substituted with the id string of this client.
 
-**NOTE** server-side commands are expected to be executed from javascript event handlers that are passed an argument called `event` This argument is used to specify additional values that you want to pass to the server-side function (assuming they are not global values)
-
-**Example: event object**
-```javascript
-// This function will work as it accepts an argument called event
-function correct(event) {
-    {{py print('Hello from %client_id%' }}
-}
-
-// This function will fail due to a missing event argument
-function wrong() {
-    {{py print('Hello from %client_id%' }}
-}
-
-// This function work as the event argument is substituted by a local object
-function fixed() {
-    event = {}
-    {{py print('Hello from %client_id%' }}
-}
-```
-
 **Example: passing values**
 ```javascript
 x = 10
@@ -139,10 +118,8 @@ function(event, y) {
     // global variable x (10)
     {{py print(%x%) }}
     
-    // y is a local variable: if we want to pass it to the server-side call
-    // we need to add it to the event object.
     event.y = y; 
-    {{py print(%y%) }}
+    {{py print(%event.y%) }}
 
     // This call will print on the server the value of SERVER
     // variable z
