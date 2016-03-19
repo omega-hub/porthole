@@ -59,8 +59,7 @@ int ServerThread::callbackHttp(libwebsocket_context *context, libwebsocket *wsi,
     {
     case LWS_CALLBACK_HTTP:
         /* Function Binder Javascript */
-        if(!strcmp((char*)in, "/porthole_functions_binder.js")) sendFunctionBindings(wsi);
-        else sendFile(wsi, (char*)in);
+        sendFile(wsi, (char*)in);
         break;
 
     // On connection, we could add any filtering function Now it's: accept any
@@ -120,64 +119,30 @@ void ServerThread::sendFile(libwebsocket *wsi, const String& filename)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void ServerThread::sendFunctionBindings(libwebsocket *wsi)
+String buildRemoteCallSite(const String& key, const String& remoteCall)
 {
-    // Build Content. Socket var is used to hold the JS socket object
-    string content = "";
+    String content = "";
+    Vector<String> toks = StringUtils::split(remoteCall, "%");
 
-    // Python scripts
-    PortholeFunctionsBinder* functionsBinder = sServiceInstance->getFunctionsBinder();
-    std::map<std::string, string>::const_iterator py_it;
-    for(py_it = functionsBinder->pythonFunMap.begin(); py_it != functionsBinder->pythonFunMap.end(); py_it++)
+    content.append("JSONToSend = {\"event_type\": \"input\",");
+
+    // Odd tokens are argument names "like(%in%, %this%)"
+    for(int i = 1; i < toks.size(); i += 2)
     {
-        //content.append("var " + functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event = false;");
-        content.append(" function ");
-
-        Vector<String> toks = StringUtils::split(py_it->second, "%");
-
-        content.append(py_it->first);
-        content.append("{ \n"
-            "  JSONToSend = {\n"
-            "  \"event_type\": \"input\",\n");
-        //"\"char\": getChar(event),");
-
-        // Odd tokens are argument names "like(%in%, %this%)"
-        for(int i = 1; i < toks.size(); i += 2)
+        // Ignore special token %client_id%: this will be substituted server-side
+        // with the name of the client sending the call
+        if(toks[i] != "client_id")
         {
-            // Ignore special token %client_id%: this will be substituted server-side
-            // with the name of the client sending the call
-            if(toks[i] != "client_id")
-            {
-                content.append(ostr("  \"%1%\": String(%1%),\n", %toks[i]));
-            }
+            content.append(ostr("  \"%1%\": String(%1%),", %toks[i]));
         }
-        content.append("  \"function\": \"");
-
-        content.append(py_it->first);
-        content.append("  \"\n"
-            "  };\n"
-            //"if(!" + functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event) {"
-            "  socket.send(JSON.stringify(JSONToSend));\n"
-            //"}" +
-            //functionsBinder->pythonFunIdMap[py_it->first] + "_skip_next_event = false;"
-            "};\n");
     }
+    content.append("  \"function\": \"");
 
-    content.append("if(porthole.connected != null) porthole.connected();");
-
-    // Build Message = Header + Content
-    char content_length[16];
-    sprintf(content_length, "%d", content.length());
-    string msg = "HTTP/1.0 200 OK\x0d\x0a"
-        "Server: libwebsockets\x0d\x0a"
-        "Content-Type: application/javascript\x0d\x0a"
-        "Content-Length: ";
-    msg.append(content_length);
-    msg.append("\x0d\x0a\x0d\x0a");
-    msg.append(content);
-
-    // Send the Javascript file
-    libwebsocket_write(wsi, (unsigned char*)msg.c_str(), msg.length(), LWS_WRITE_HTTP);
+    content.append(key);
+    content.append("  \""
+        "  };"
+        "  socket.send(JSON.stringify(JSONToSend));");
+    return content;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -202,6 +167,7 @@ void ServerThread::preprocessAndSendFile(libwebsocket *wsi, const String& path, 
             String callType = fileContent.substr(startToken, 2);
             startToken += 2;
 
+            // tok = target function call
             String tok = fileContent.substr(startToken, endToken - startToken);
             oflog(Debug, "[ServerThread::preprocessAndSendFile] token %1%   %2%    %3%", %startToken %endToken %tok);
 
@@ -211,7 +177,8 @@ void ServerThread::preprocessAndSendFile(libwebsocket *wsi, const String& path, 
 
             functionsBinder->addPythonScript(tok, key, callType);
 
-            fileContent.replace(startToken - 4, endToken - startToken + 6, key);
+            String callSite = buildRemoteCallSite(key, tok);
+            fileContent.replace(startToken - 4, endToken - startToken + 6, callSite);
 
         } while(true);
         gPreprocCache[path] = fileContent;

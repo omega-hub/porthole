@@ -159,9 +159,10 @@ try {
         // Request the porthole functions binder script. This script is generated 
         // by the porthole server and contains the code necessary to forward 
         // html events to python/C++ server callbacks.
-        var js = document.createElement("script");
-        js.src = "./porthole_functions_binder.js";
-        document.body.appendChild(js);
+        //var js = document.createElement("script");
+        //js.src = "./porthole_functions_binder.js";
+        //document.body.appendChild(js);
+        if(porthole.connected != null) porthole.connected()
     }
 
     ////////////////////////////////////////////////////////////////////////////
