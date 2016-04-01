@@ -1,4 +1,4 @@
-module_version(4.1)
+module_version(4.2)
 
 # PORTHOLE Add websockets lib and zlib if on windows
 if(OMEGA_OS_WIN)
