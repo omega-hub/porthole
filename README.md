@@ -1,3 +1,5 @@
+Porthole is a framework that helps Virtual Environment applications developers to generate decoupled HTML5 interfaces. The goal is to ease the interaction between VE systems and smartphones, tablets, laptops or desktop computers, without the need of ad-hoc client applications
+
 ### Global Functions ###
 
 #### initialize ####
