@@ -70,7 +70,7 @@ PortholeService* initialize(int port = 4080, const String& defaultPage = "portho
 String base64EncodeImage(PixelData* image, ImageUtils::ImageFormat format)
 {
     Ref<ByteArray> bytes = ImageUtils::encode(image, format);
-    return base64_encode(bytes->getData(), bytes->getSize());
+    return base64_encode(bytes->getData(), (size_t)bytes->getSize());
 }
 
 ///////////////////////////////////////////////////////////////////////////////

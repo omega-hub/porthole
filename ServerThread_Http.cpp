@@ -159,9 +159,9 @@ void ServerThread::preprocessAndSendFile(libwebsocket *wsi, const String& path, 
 
         do
         {
-            startToken = fileContent.find("{{", 0);
+            startToken = (int)fileContent.find("{{", 0);
             if(startToken == string::npos) break;
-            endToken = fileContent.find("}}", startToken);
+            endToken = (int)fileContent.find("}}", startToken);
             startToken += 2;
 
             String callType = fileContent.substr(startToken, 2);
